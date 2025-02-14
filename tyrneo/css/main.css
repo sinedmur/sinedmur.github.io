@@ -163,20 +163,4 @@ body, html {
   background: #d21e64; /* Фон, как у .mainmenu */
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
-}
-
-/* Медиа-запросы для адаптивности */
-@media (max-width: 412px) {
-  .menu__container {
-    grid-template-columns: repeat(auto-fit, minmax(3.75rem, 1fr));
-    gap: 2rem;
-    margin-top: 10rem;
-  }
-  .audio__container {
-    bottom: 1rem;
-  }
-  .undermenu__container {
-    padding: 0.375rem 1rem 0 1rem;
-    gap: 1rem;
-  }
 }/*# sourceMappingURL=main.css.map */
