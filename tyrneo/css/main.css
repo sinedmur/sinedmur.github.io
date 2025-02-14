@@ -166,18 +166,10 @@ body, html {
 }
 
 /* Медиа-запросы для адаптивности */
-@media (max-width: 480px) {
-  .title {
-    font-size: 1.5rem;
-    margin-left: 1rem;
-  }
-  .balance {
-    margin-left: 1rem;
-    margin-top: 2rem;
-  }
+@media (max-width: 412px) {
   .menu__container {
     grid-template-columns: repeat(auto-fit, minmax(3.75rem, 1fr));
-    gap: 1rem;
+    gap: 2rem;
     margin-top: 10rem;
   }
   .audio__container {
@@ -186,13 +178,5 @@ body, html {
   .undermenu__container {
     padding: 0.375rem 1rem 0 1rem;
     gap: 1rem;
-  }
-}
-@media (max-height: 600px) {
-  .audio__container {
-    bottom: 1rem;
-  }
-  .undermenu__container {
-    padding: 0.375rem 1rem 0 1rem;
   }
 }/*# sourceMappingURL=main.css.map */
