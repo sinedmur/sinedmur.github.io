@@ -69,11 +69,11 @@ body, html {
 
 .menu__container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(75px, 75px));
-  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
+  gap: 20px;
   margin-top: 220px;
   margin-left: 5px;
-  padding: 0 15px;
+  padding: 0 75px 0 15px;
 }
 
 .btn_buy, .btn_copyright, .btn_settings, .btn_missions {
