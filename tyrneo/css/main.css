@@ -23,7 +23,6 @@ body, html {
 
 .mainmenu {
   background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
-  max-width: 412px;
   width: 100%;
   min-height: 100vh;
   padding-top: 90px;
@@ -49,7 +48,6 @@ body, html {
 
 .balanc {
   display: flex;
-  max-width: 412px;
   width: 100%;
   margin-left: 49px;
 }
@@ -72,8 +70,7 @@ body, html {
   grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
   gap: 20px;
   margin-top: 220px;
-  margin-left: 5px;
-  padding: 0 77px 0 15px;
+  justify-content: space-between;
 }
 
 .btn_buy, .btn_copyright, .btn_settings, .btn_missions {
@@ -98,10 +95,9 @@ body, html {
   height: 50px;
   background: #915382;
   position: fixed; /* Фиксируем контейнер на экране */
-  bottom: 54px; /* Размещаем внизу экрана */
+  bottom: 9%; /* Размещаем внизу экрана */
   left: 50%; /* Сдвигаем на 50% от левого края */
   transform: translateX(-50%); /* Центрируем по горизонтали */
-  max-width: 412px; /* Максимальная ширина, как у .mainmenu */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
 }
 
@@ -109,7 +105,6 @@ body, html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 380px;
   width: 100%;
   margin: 0 auto;
   height: 55px;
@@ -159,17 +154,7 @@ body, html {
   white-space: nowrap;
   padding: 6px 30px 0 25px;
   width: 100%; /* Ширина контейнера */
-  max-width: 412px; /* Максимальная ширина, как у .mainmenu */
   background: #d21e64; /* Фон, как у .mainmenu */
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
-}
-
-/* Медиа-запрос для экранов меньше 480px */
-@media (max-width: 480px) {
-  .menu__container {
-    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); /* Еще меньше колонки */
-    gap: 20px; /* Увеличиваем отступы между элементами */
-    padding: 15px; /* Добавляем отступы внутри контейнера */
-  }
 }/*# sourceMappingURL=main.css.map */
