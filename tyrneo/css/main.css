@@ -163,4 +163,12 @@ body, html {
   background: #d21e64; /* Фон, как у .mainmenu */
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+}
+
+/* Медиа-запрос для экранов меньше 480px */
+@media (max-width: 480px) {
+  .menu__container {
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); /* Еще меньше колонки */
+    gap: 5px; /* Минимальные отступы */
+  }
 }/*# sourceMappingURL=main.css.map */
