@@ -1,0 +1,155 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+
+body, html {
+    overflow-x: hidden;
+    width: 100%;
+}
+.wrapper {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
+}
+
+.mainmenu {
+    background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
+    //max-width: 412px;
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 90px;
+    padding-bottom: 110px;
+}
+
+.title {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 36px;
+    color: #fff;
+    margin-left: 31px;
+}
+
+.balance {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    margin-left: 49px;
+    margin-top: 56px;
+}
+
+.balanc {
+    display: flex;
+   // max-width: 412px;
+    width: 100%;
+    margin-left: 49px;
+}
+
+.token {
+    margin-top: 17px;
+}
+
+.value {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 32px;
+    color: #fff;
+    margin-top: 13px;
+    margin-left: 5px;
+}
+
+.menu__container {
+    display: flex;
+    justify-content: center;
+    // align-items: center;
+    // margin-top: 20%;
+    padding: 90% 0 0 0;
+    gap: 5%;
+}
+
+.btn_buy, .btn_settings, .btn_missions {
+    cursor: pointer;
+}
+
+.audio__container {
+    border-radius: 11px;
+    width: 100%;
+    height: 50px;
+    //margin-top: 41px;
+    background: #915382;
+    position: fixed; /* Фиксируем контейнер на экране */
+    bottom: 56px; /* Размещаем внизу экрана */
+    left: 50%; /* Сдвигаем на 50% от левого края */
+    transform: translateX(-50%); /* Центрируем по горизонтали */
+    //max-width: 412px; /* Максимальная ширина, как у .mainmenu */
+    z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+}
+
+.buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin: 0 auto;
+    height: 55px;
+}
+
+.song {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Центрируем содержимое по горизонтали */
+    justify-content: center; /* Центрируем содержимое по вертикали */
+    text-align: center; /* Центрируем текст внутри */
+    flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
+}
+
+.songautor {
+    font-weight: 400;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.songtitle {
+    font-weight: 400;
+    font-size: 16px;
+    color: #fff;
+}
+
+.btn_play {
+    margin-left: 10px;
+    cursor: pointer;
+}
+
+.btn_next {
+    cursor: pointer;
+    margin-right: 10px;
+}
+.undermenu__container {
+    position: fixed; /* Фиксируем контейнер на экране */
+    bottom: 0; /* Размещаем внизу экрана */
+    left: 50%; /* Сдвигаем на 50% от левого края */
+    transform: translateX(-50%); /* Центрируем по горизонтали */
+    display: flex;
+    justify-content: center; /* Центрируем элементы внутри контейнера */
+    align-items: center;
+    gap: 36px;
+    // overflow-x: auto;
+    white-space: nowrap;
+    padding: 6px 30px 0 25px;
+    width: 100%; /* Ширина контейнера */
+    //max-width: 412px; /* Максимальная ширина, как у .mainmenu */
+    background: #d21e64; /* Фон, как у .mainmenu */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
+    z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+}
+.btn_menu, .btn_music, .btn_airdrop, .btn_friends, .btn_wallet {
+    cursor: pointer;
+}
