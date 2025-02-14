@@ -1,6 +1,18 @@
 const musicBtn = document.querySelector('.btn_music')
 const menuBtn = document.querySelector('.btn_menu')
+const airdropBtn = document.querySelector('.btn_airdrop')
+const friendsBtn = document.querySelector('.btn_friends')
+const walletBtn = document.querySelector('.btn_wallet')
+const missionsBtn = document.querySelector('.btn_missions')
+const buyBtn = document.querySelector('.btn_buy')
+const settingsBtn = document.querySelector('.btn_settings')
 
 
 musicBtn.addEventListener('click', function() {window.location.href = 'music.html'})
 menuBtn.addEventListener('click', function() {window.location.href = 'index.html'})
+airdropBtn.addEventListener('click', function() {window.location.href = 'airdrop.html'})
+friendsBtn.addEventListener('click', function() {window.location.href = 'friends.html'})
+walletBtn.addEventListener('click', function() {window.location.href = 'wallet.html'})
+missionsBtn.addEventListener('click', function() {window.location.href = 'missions.html'})
+buyBtn.addEventListener('click', function() {window.location.href = 'buy.html'})
+settingsBtn.addEventListener('click', function() {window.location.href = 'settings.html'})
