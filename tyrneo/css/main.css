@@ -68,7 +68,7 @@ body, html {
 .menu__container {
   display: flex;
   justify-content: center;
-  padding: 70% 0 0 0;
+  padding: 80% 0 0 0;
   gap: 5%;
 }
 
@@ -137,7 +137,6 @@ body, html {
   justify-content: center; /* Центрируем элементы внутри контейнера */
   align-items: center;
   gap: 36px;
-  overflow-x: auto;
   white-space: nowrap;
   padding: 6px 30px 0 25px;
   width: 100%; /* Ширина контейнера */
