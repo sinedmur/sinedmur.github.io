@@ -168,7 +168,8 @@ body, html {
 /* Медиа-запрос для экранов меньше 480px */
 @media (max-width: 480px) {
   .menu__container {
-    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); /* Еще меньше колонки */
-    gap: 5px; /* Минимальные отступы */
+    grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); /* Еще меньше колонки */
+    gap: 10px; /* Увеличиваем отступы между элементами */
+    padding: 10px; /* Добавляем отступы внутри контейнера */
   }
 }/*# sourceMappingURL=main.css.map */
