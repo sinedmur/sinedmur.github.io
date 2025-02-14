@@ -126,7 +126,7 @@ body, html {
 }
 
 .songtitle {
-  font-weight: 300;
+  font-weight: 400;
   font-size: 16px;
   color: #fff;
 }
@@ -142,6 +142,8 @@ body, html {
 }
 
 .undermenu__container {
+  position: sticky; /* Липкое позиционирование */
+  bottom: 0; /* Прилипает к нижнему краю */
   display: flex; /* Используем flexbox */
   justify-content: space-between; /* Равномерное распределение элементов */
   align-items: center; /* Выравнивание по центру по вертикали */
