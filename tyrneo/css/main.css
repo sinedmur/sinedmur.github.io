@@ -68,7 +68,7 @@ body, html {
 .menu__container {
   display: flex;
   justify-content: center;
-  padding: 50% 0 0 0;
+  padding: 70% 0 0 0;
   gap: 5%;
 }
 
