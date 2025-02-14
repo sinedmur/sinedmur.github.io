@@ -169,7 +169,7 @@ body, html {
 @media (max-width: 480px) {
   .menu__container {
     grid-template-columns: repeat(auto-fit, minmax(75px, 1fr)); /* Еще меньше колонки */
-    gap: 10px; /* Увеличиваем отступы между элементами */
-    padding: 10px; /* Добавляем отступы внутри контейнера */
+    gap: 20px; /* Увеличиваем отступы между элементами */
+    padding: 15px; /* Добавляем отступы внутри контейнера */
   }
 }/*# sourceMappingURL=main.css.map */
