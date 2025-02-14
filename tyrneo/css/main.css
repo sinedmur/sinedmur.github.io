@@ -66,28 +66,14 @@ body, html {
 }
 
 .menu__container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
-  gap: 10%;
-  margin-top: 220px;
-  padding: 0 10% 0 10%;
-  justify-content: space-between;
+  display: flex;
+  justify-content: center;
+  padding: 20% 0 0 0;
+  gap: 1%;
 }
 
-.btn_buy, .btn_copyright, .btn_settings, .btn_missions {
+.btn_buy, .btn_settings, .btn_missions {
   cursor: pointer;
-}
-
-.btn_buy {
-  margin-left: 20px;
-}
-
-.btn_copyright {
-  margin-left: 47px;
-}
-
-.btn_settings {
-  margin-top: -20px;
 }
 
 .audio__container {
