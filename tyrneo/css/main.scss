@@ -6,12 +6,11 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+
 body, html {
     overflow-x: hidden;
     width: 100%;
-    height: 100%;
 }
-
 .wrapper {
     min-height: 100vh;
     width: 100%;
@@ -26,10 +25,8 @@ body, html {
     max-width: 412px;
     width: 100%;
     min-height: 100vh;
-    padding: 50px 20px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
+    padding-top: 90px;
+    padding-bottom: 3px;
 }
 
 .title {
@@ -37,8 +34,7 @@ body, html {
     font-weight: 700;
     font-size: 36px;
     color: #fff;
-    margin-bottom: 20px;
-    margin-top: 50px;
+    margin-left: 31px;
 }
 
 .balance {
@@ -46,17 +42,19 @@ body, html {
     font-weight: 700;
     font-size: 16px;
     color: #fff;
-    margin-bottom: 20px;
+    margin-left: 49px;
+    margin-top: 56px;
 }
 
 .balanc {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    max-width: 412px;
+    width: 100%;
+    margin-left: 49px;
 }
 
 .token {
-    font-size: 16px;
+    margin-top: 17px;
 }
 
 .value {
@@ -64,52 +62,59 @@ body, html {
     font-weight: 700;
     font-size: 32px;
     color: #fff;
+    margin-top: 13px;
+    margin-left: 5px;
 }
 
 .menu__container {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-    width: 100%;
-    margin-top: auto;
-    padding: 0 10px;
+    grid-template-columns: repeat(auto-fit, minmax(75px, 75px));
+    gap: 28px;
+    margin-top: 220px;
+    margin-left: 5px;
+    padding: 0 15px;
 }
 
-.btn {
+.btn_buy, .btn_copyright, .btn_settings, .btn_missions {
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.2);
-    padding: 10px;
-    border-radius: 10px;
-    text-align: center;
-    color: #fff;
-    font-size: 16px;
-    transition: background 0.3s ease;
 }
 
-.btn:hover {
-    background: rgba(255, 255, 255, 0.3);
+.btn_buy {
+    margin-left: 20px;
 }
 
+.btn_copyright {
+    margin-left: 47px;
+}
+
+.btn_settings {
+    margin-top: -20px;
+}
 .audio__container {
     border-radius: 11px;
     width: 100%;
-    padding: 10px;
+    height: 50px;
+    margin-top: 41px;
     background: #915382;
-    margin-top: 20px;
 }
 
 .buttons {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    max-width: 380px;
     width: 100%;
+    margin: 0 auto;
+    height: 55px;
 }
 
 .song {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    text-align: center;
+    align-items: center; /* Центрируем содержимое по горизонтали */
+    justify-content: center; /* Центрируем содержимое по вертикали */
+    text-align: center; /* Центрируем текст внутри */
+    flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
 }
 
 .songautor {
@@ -124,8 +129,12 @@ body, html {
     color: #fff;
 }
 
-.btn_play, .btn_next {
+.btn_play {
+    margin-left: 10px;
     cursor: pointer;
-    color: #fff;
-    font-size: 24px;
+}
+
+.btn_next {
+    cursor: pointer;
+    margin-right: 10px;
 }
