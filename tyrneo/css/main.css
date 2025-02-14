@@ -70,9 +70,8 @@ body, html {
   grid-template-columns: repeat(auto-fit, minmax(75px, 1fr));
   gap: 5%;
   margin-top: 220px;
-  padding: 0 5% 0 5%;
+  padding: 0 10% 0 10%;
   justify-content: space-between;
-  align-items: center;
 }
 
 .btn_buy, .btn_copyright, .btn_settings, .btn_missions {
