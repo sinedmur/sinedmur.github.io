@@ -124,6 +124,7 @@ body, html {
 }
 
 .songtitle {
+    
     font-weight: 400;
     font-size: 16px;
     color: #fff;
@@ -137,4 +138,13 @@ body, html {
 .btn_next {
     cursor: pointer;
     margin-right: 10px;
+}
+.undermenu__container {
+    display: flex; /* Используем flexbox */
+    justify-content: space-between; /* Равномерное распределение элементов */
+    align-items: center; /* Выравнивание по центру по вертикали */
+    gap: 36px; /* Отступ между элементами */
+    overflow-x: auto; /* Добавляем горизонтальную прокрутку, если элементы не помещаются */
+    white-space: nowrap; /* Запрещаем перенос элементов на новую строку */
+    padding: 6px 25px 0 25px;
 }
