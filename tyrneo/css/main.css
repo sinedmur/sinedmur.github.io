@@ -68,8 +68,8 @@ body, html {
 .menu__container {
   display: flex;
   justify-content: center;
-  padding: 20% 0 0 0;
-  gap: 1%;
+  padding: 30% 0 0 0;
+  gap: 1.5%;
 }
 
 .btn_buy, .btn_settings, .btn_missions {
