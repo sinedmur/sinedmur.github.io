@@ -9,6 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
         src: './audio/chains.mp3' // Путь к аудиофайлу
     };
 
+    // Кэш для хранения загруженных страниц
+    const pageCache = {};
+
     // Находим все кнопки с атрибутом data-page
     const buttons = document.querySelectorAll('[data-page]');
 
@@ -22,30 +25,56 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция для загрузки страницы
     function loadPage(page) {
-        fetch(page)
-            .then(response => response.text())
-            .then(html => {
-                // Сохраняем состояние аудио перед заменой контента
-                if (audio) {
-                    audioState.playing = !audio.paused;
-                    audioState.currentTime = audio.currentTime;
-                }
+        // Сохраняем состояние аудио перед загрузкой нового контента
+        if (audio) {
+            audioState.playing = !audio.paused;
+            audioState.currentTime = audio.currentTime;
+        }
 
-                // Заменяем содержимое wrapper на загруженный контент
-                document.querySelector('.wrapper').innerHTML = html;
+        // Проверяем, есть ли страница в кэше
+        if (pageCache[page]) {
+            // Используем закэшированный контент
+            updateContent(pageCache[page]);
+            restoreAudioState();
+            updateActiveButton(page);
+            setupPlayPauseButton();
+        } else {
+            // Загружаем контент страницы, если его нет в кэше
+            fetch(page)
+                .then(response => response.text())
+                .then(html => {
+                    // Парсим загруженный HTML
+                    const parser = new DOMParser();
+                    const newDocument = parser.parseFromString(html, 'text/html');
+                    const newContent = newDocument.querySelector('.mainmenu'); // Извлекаем только нужный контент
 
-                // Восстанавливаем состояние аудио после загрузки нового контента
-                restoreAudioState();
+                    // Сохраняем загруженный контент в кэше
+                    pageCache[page] = newContent.innerHTML;
 
-                // После загрузки страницы обновляем активную кнопку
-                updateActiveButton(page);
+                    // Обновляем содержимое страницы
+                    updateContent(newContent.innerHTML);
 
-                // Настраиваем кнопку воспроизведения/паузы
-                setupPlayPauseButton();
-            })
-            .catch(error => {
-                console.error('Error loading page:', error);
-            });
+                    // Восстанавливаем состояние аудио после загрузки нового контента
+                    restoreAudioState();
+
+                    // После загрузки страницы обновляем активную кнопку
+                    updateActiveButton(page);
+
+                    // Настраиваем кнопку воспроизведения/паузы
+                    setupPlayPauseButton();
+                })
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                });
+        }
+    }
+
+    // Функция для обновления содержимого страницы
+    function updateContent(content) {
+        const mainmenu = document.querySelector('.mainmenu');
+        if (mainmenu) {
+            mainmenu.innerHTML = content;
+        }
     }
 
     // Функция для восстановления состояния аудио
