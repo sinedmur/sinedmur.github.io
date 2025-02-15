@@ -15,12 +15,39 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(page)
             .then(response => response.text())
             .then(html => {
-                // Заменяем содержимое mainmenu на загруженный контент
+                // Заменяем содержимое wrapper на загруженный контент
                 document.querySelector('.wrapper').innerHTML = html;
+
+                // После загрузки страницы обновляем активную кнопку
+                updateActiveButton(page);
             })
             .catch(error => {
                 console.error('Error loading page:', error);
             });
+    }
+
+    // Функция для обновления активной кнопки
+    function updateActiveButton(page) {
+        // Убираем активное состояние у всех кнопок
+        buttons.forEach(button => {
+            const img = button.querySelector('img');
+            if (img) {
+                // Возвращаем исходное изображение для неактивных кнопок
+                const defaultSrc = img.getAttribute('data-default');
+                img.src = defaultSrc;
+            }
+        });
+
+        // Находим кнопку, соответствующую текущей странице, и меняем её изображение
+        const activeButton = document.querySelector(`[data-page="${page}"]`);
+        if (activeButton) {
+            const img = activeButton.querySelector('img');
+            if (img) {
+                // Устанавливаем активное изображение
+                const activeSrc = img.getAttribute('data-active');
+                img.src = activeSrc;
+            }
+        }
     }
 
     // Делегирование событий для кнопки воспроизведения аудио
@@ -55,4 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
             loadPage(page);
         }
     });
+
+    // При загрузке страницы обновляем активную кнопку
+    const currentPage = window.location.pathname.split('/').pop();
+    updateActiveButton(currentPage);
 });
