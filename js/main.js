@@ -1,18 +1,58 @@
-const musicBtn = document.querySelector('.btn_music')
-const menuBtn = document.querySelector('.btn_menu')
-const airdropBtn = document.querySelector('.btn_airdrop')
-const friendsBtn = document.querySelector('.btn_friends')
-const walletBtn = document.querySelector('.btn_wallet')
-const missionsBtn = document.querySelector('.btn_missions')
-const buyBtn = document.querySelector('.btn_buy')
-const settingsBtn = document.querySelector('.btn_settings')
+document.addEventListener('DOMContentLoaded', () => {
+    // Находим все кнопки с атрибутом data-page
+    const buttons = document.querySelectorAll('[data-page]');
 
+    // Добавляем обработчик событий для каждой кнопки
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            const page = button.getAttribute('data-page'); // Получаем значение атрибута data-page
+            loadPage(page); // Загружаем страницу
+        });
+    });
 
-musicBtn.addEventListener('click', function() {window.location.href = 'music.html'})
-menuBtn.addEventListener('click', function() {window.location.href = 'index.html'})
-airdropBtn.addEventListener('click', function() {window.location.href = 'airdrop.html'})
-friendsBtn.addEventListener('click', function() {window.location.href = 'friends.html'})
-walletBtn.addEventListener('click', function() {window.location.href = 'wallet.html'})
-missionsBtn.addEventListener('click', function() {window.location.href = 'missions.html'})
-buyBtn.addEventListener('click', function() {window.location.href = 'buy.html'})
-settingsBtn.addEventListener('click', function() {window.location.href = 'settings.html'})
+    // Функция для загрузки страницы
+    function loadPage(page) {
+        fetch(page)
+            .then(response => response.text())
+            .then(html => {
+                // Заменяем содержимое mainmenu на загруженный контент
+                document.querySelector('.wrapper').innerHTML = html;
+            })
+            .catch(error => {
+                console.error('Error loading page:', error);
+            });
+    }
+
+    // Делегирование событий для кнопки воспроизведения аудио
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.btn_play')) {
+            const audio = document.querySelector('.audio');
+            if (audio) {
+                if (audio.paused) {
+                    audio.play();
+                    event.target.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Меняем иконку на паузу
+                } else {
+                    audio.pause();
+                    event.target.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Меняем иконку на воспроизведение
+                }
+            }
+        }
+    });
+
+    // Делегирование событий для кнопки следующего трека
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.btn_next')) {
+            // Здесь можно добавить логику для переключения на следующий трек
+            console.log('Next track');
+        }
+    });
+
+    // Делегирование событий для кнопок навигации в undermenu
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('[data-page]')) {
+            const button = event.target.closest('[data-page]');
+            const page = button.getAttribute('data-page');
+            loadPage(page);
+        }
+    });
+});
