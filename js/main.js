@@ -1,4 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Глобальный аудиоэлемент
+    const audio = document.querySelector('.audio');
+
     // Глобальная переменная для хранения состояния аудио
     let audioState = {
         playing: false,
@@ -23,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(response => response.text())
             .then(html => {
                 // Сохраняем состояние аудио перед заменой контента
-                const audio = document.querySelector('.audio');
                 if (audio) {
                     audioState.playing = !audio.paused;
                     audioState.currentTime = audio.currentTime;
@@ -38,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // После загрузки страницы обновляем активную кнопку
                 updateActiveButton(page);
 
-                // Добавляем обработчик для кнопки воспроизведения/паузы
+                // Настраиваем кнопку воспроизведения/паузы
                 setupPlayPauseButton();
             })
             .catch(error => {
@@ -48,9 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция для восстановления состояния аудио
     function restoreAudioState() {
-        const audio = document.querySelector('.audio');
         if (audio) {
-            audio.src = audioState.src; // Устанавливаем источник аудио
             audio.currentTime = audioState.currentTime; // Восстанавливаем текущее время
             if (audioState.playing) {
                 audio.play(); // Воспроизводим аудио, если оно было запущено
@@ -85,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Функция для настройки кнопки воспроизведения/паузы
     function setupPlayPauseButton() {
         const playButton = document.querySelector('.btn_play');
-        const audio = document.querySelector('.audio');
 
         if (playButton && audio) {
             // Обновляем иконку кнопки в зависимости от состояния аудио
