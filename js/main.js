@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Глобальная переменная для хранения состояния аудио
+    let audioState = {
+        playing: false,
+        currentTime: 0,
+        src: './audio/chains.mp3' // Путь к аудиофайлу
+    };
+
     // Находим все кнопки с атрибутом data-page
     const buttons = document.querySelectorAll('[data-page]');
 
@@ -15,15 +22,40 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch(page)
             .then(response => response.text())
             .then(html => {
+                // Сохраняем состояние аудио перед заменой контента
+                const audio = document.querySelector('.audio');
+                if (audio) {
+                    audioState.playing = !audio.paused;
+                    audioState.currentTime = audio.currentTime;
+                }
+
                 // Заменяем содержимое wrapper на загруженный контент
                 document.querySelector('.wrapper').innerHTML = html;
 
+                // Восстанавливаем состояние аудио после загрузки нового контента
+                restoreAudioState();
+
                 // После загрузки страницы обновляем активную кнопку
                 updateActiveButton(page);
+
+                // Добавляем обработчик для кнопки воспроизведения/паузы
+                setupPlayPauseButton();
             })
             .catch(error => {
                 console.error('Error loading page:', error);
             });
+    }
+
+    // Функция для восстановления состояния аудио
+    function restoreAudioState() {
+        const audio = document.querySelector('.audio');
+        if (audio) {
+            audio.src = audioState.src; // Устанавливаем источник аудио
+            audio.currentTime = audioState.currentTime; // Восстанавливаем текущее время
+            if (audioState.playing) {
+                audio.play(); // Воспроизводим аудио, если оно было запущено
+            }
+        }
     }
 
     // Функция для обновления активной кнопки
@@ -50,21 +82,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Делегирование событий для кнопки воспроизведения аудио
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('.btn_play')) {
-            const audio = document.querySelector('.audio');
-            if (audio) {
+    // Функция для настройки кнопки воспроизведения/паузы
+    function setupPlayPauseButton() {
+        const playButton = document.querySelector('.btn_play');
+        const audio = document.querySelector('.audio');
+
+        if (playButton && audio) {
+            // Обновляем иконку кнопки в зависимости от состояния аудио
+            const updateButtonIcon = () => {
+                if (audio.paused) {
+                    playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Иконка воспроизведения
+                } else {
+                    playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Иконка паузы
+                }
+            };
+
+            // Обновляем иконку при загрузке страницы
+            updateButtonIcon();
+
+            // Добавляем обработчик для кнопки воспроизведения/паузы
+            playButton.addEventListener('click', () => {
                 if (audio.paused) {
                     audio.play();
-                    event.target.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Меняем иконку на паузу
                 } else {
                     audio.pause();
-                    event.target.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Меняем иконку на воспроизведение
                 }
-            }
+                updateButtonIcon(); // Обновляем иконку после изменения состояния
+            });
+
+            // Обновляем иконку при изменении состояния аудио
+            audio.addEventListener('play', updateButtonIcon);
+            audio.addEventListener('pause', updateButtonIcon);
         }
-    });
+    }
 
     // Делегирование событий для кнопки следующего трека
     document.addEventListener('click', (event) => {
@@ -86,4 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // При загрузке страницы обновляем активную кнопку
     const currentPage = window.location.pathname.split('/').pop();
     updateActiveButton(currentPage);
+
+    // Восстанавливаем состояние аудио при первой загрузке страницы
+    restoreAudioState();
+
+    // Настраиваем кнопку воспроизведения/паузы при первой загрузке страницы
+    setupPlayPauseButton();
 });
