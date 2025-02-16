@@ -33,7 +33,7 @@ body, html {
   font-style: normal;
   font-weight: 700;
   font-size: 36px;
-  color: #000;
+  color: #fff;
   margin-left: 31px;
 }
 
@@ -203,10 +203,13 @@ body, html {
   margin-top: 2px;
   margin-right: 20px;
 }
+
 #user-info {
   display: flex;
   align-items: center;
   gap: 10px;
+  float: right;
+  padding: 0 5% 5% 0;
 }
 
 #avatar {
