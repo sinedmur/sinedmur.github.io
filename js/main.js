@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Можно также отобразить имя пользователя
                 const usernameElement = document.createElement('p');
-                usernameElement.textContent = user.first_name + ' ' + (user.last_name || '');
+                usernameElement.textContent = user.first_name;
                 document.getElementById('user-info').appendChild(usernameElement);
             } else {
                 console.error('User data is not available');
