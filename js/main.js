@@ -1,7 +1,30 @@
-
-
-
 document.addEventListener('DOMContentLoaded', () => {
+    // Инициализация TON Connect
+    function initializeTonConnect() {
+        const tonConnectElement = document.getElementById('ton-connect');
+        if (tonConnectElement) {
+            console.log('TON Connect element found:', tonConnectElement);
+
+            // Убедитесь, что старый экземпляр уничтожен (если это возможно)
+            if (window.tonConnectUI) {
+                window.tonConnectUI = null;
+            }
+
+            // Создаем новый экземпляр TON Connect
+            window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://127.0.0.1:5501/tonconnect-manifest.json',
+                buttonRootId: 'ton-connect'
+            });
+
+            console.log('TON Connect initialized');
+        } else {
+            console.error('TON Connect element not found');
+        }
+    }
+
+    // Инициализация при первой загрузке страницы
+    initializeTonConnect();
+
     // Глобальный аудиоэлемент
     const audio = document.querySelector('.audio');
 
@@ -11,6 +34,22 @@ document.addEventListener('DOMContentLoaded', () => {
         currentTime: 0,
         src: './audio/chains.mp3' // Путь к аудиофайлу
     };
+
+    // Находим элемент для отображения значения value
+    const valueDisplay = document.querySelector('.value');
+    // Обработчик события завершения воспроизведения аудио
+    if (audio) {
+        audio.addEventListener('ended', () => {
+            if (valueDisplay) {
+                // Получаем текущее значение value
+                let currentValue = parseInt(valueDisplay.textContent, 10);
+                // Увеличиваем значение на 10
+                currentValue += 10;
+                // Обновляем отображаемое значение
+                valueDisplay.textContent = currentValue;
+            }
+        });
+    }
 
     // Кэш для хранения загруженных страниц
     const pageCache = {};
@@ -65,12 +104,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Настраиваем кнопку воспроизведения/паузы
                     setupPlayPauseButton();
+
+                    // Инициализация TON Connect с задержкой
+                    setTimeout(() => {
+                        initializeTonConnect();
+                    }, 100); // Задержка 100 мс
                 })
                 .catch(error => {
                     console.error('Error loading page:', error);
                 });
         }
     }
+
+
+    // Остальные функции (updateContent, restoreAudioState, updateActiveButton, setupPlayPauseButton) остаются без изменений
 
     // Функция для обновления содержимого страницы
     function updateContent(content) {
@@ -174,3 +221,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Настраиваем кнопку воспроизведения/паузы при первой загрузке страницы
     setupPlayPauseButton();
 });
+
