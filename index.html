@@ -23,6 +23,7 @@
     <link rel="preload" href="./img/Wallet.svg" as="image" />
     <link rel="stylesheet" href="./css/main.css" />
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
     <audio class="audio" src="./audio/chains.mp3" preload="auto"></audio>
@@ -38,6 +39,9 @@
                 <div class="btn_missions" data-page="missions.html"><img src="./img/Missions.svg" data-default="./img/Missions.svg" alt="btn" /></div>
                 <div class="btn_buy" data-page="buy.html"><img src="./img/Buy.svg" data-default="./img/Buy.svg" alt="btn" /></div>
                 <div class="btn_settings" data-page="settings.html"><img src="./img/Settings.svg" data-default="./img/Settings.svg" alt="btn" /></div>
+            </div>
+            <div id="user-info">
+                <img id="avatar" src="" alt="User Avatar" style="display:none;">
             </div>
         </div>
             <div class="audio__container">
