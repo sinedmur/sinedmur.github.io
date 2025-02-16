@@ -30,14 +30,16 @@
     <div class="wrapper">
         <div class="mainmenu">
             <div class="title">Главное меню</div>
-            <div class="balance">БАЛАНС</div>
-            <div class="balanc">
-                <div class="token"><img src="./img/token.svg" alt="token"></div>
-                <div class="value">0</div>
+            <div class="obj">
+                <div class="balance">БАЛАНС</div>
+                <div id="user-info">
+                    <img id="avatar" src="" alt="User Avatar" style="display:none;">
+                </div>
             </div>
-            <div id="user-info">
-                <img id="avatar" src="" alt="User Avatar">
-            </div>
+                <div class="balanc">
+                    <div class="token"><img src="./img/token.svg" alt="token"></div>
+                    <div class="value">0</div>
+                </div>
             <div class="menu__container">
                 <div class="btn_missions" data-page="missions.html"><img src="./img/Missions.svg" data-default="./img/Missions.svg" alt="btn" /></div>
                 <div class="btn_buy" data-page="buy.html"><img src="./img/Buy.svg" data-default="./img/Buy.svg" alt="btn" /></div>
