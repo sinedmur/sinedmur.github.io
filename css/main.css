@@ -33,7 +33,7 @@ body, html {
   font-style: normal;
   font-weight: 700;
   font-size: 36px;
-  color: #fff;
+  color: #000;
   margin-left: 31px;
 }
 
@@ -48,6 +48,9 @@ body, html {
 
 .obj {
   display: flex;
+  width: 100%;
+  justify-content: space-between;
+  padding-right: 5%;
 }
 
 .balanc {
@@ -212,7 +215,6 @@ body, html {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-left: 80%;
 }
 
 #avatar {
@@ -229,6 +231,6 @@ body, html {
 
 #user-info p {
   font-size: 16px;
-  color: #333;
+  color: #fff;
   margin: 0;
 }/*# sourceMappingURL=main.css.map */
