@@ -25,20 +25,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // Функция для отображения аватарки и имени пользователя
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
-        const userNameElement = document.createElement('p'); // Создаем элемент для имени пользователя
-
+        const userInfoElement = document.getElementById('user-info');
+    
         // Получаем данные из localStorage
         const userAvatar = localStorage.getItem('userAvatar');
         const userName = localStorage.getItem('userName');
-
-        if (userAvatar && avatarElement) {
-            avatarElement.src = userAvatar;
-            avatarElement.style.display = 'block';
+    
+        // Если аватарка есть, используем её, иначе — заглушку
+        if (avatarElement) {
+            if (userAvatar) {
+                avatarElement.src = userAvatar;
+            } else {
+                // Устанавливаем заглушку для аватарки
+                avatarElement.src = './img/token.svg'; // Путь к изображению-заглушке
+            }
+            avatarElement.style.display = 'block'; // Показываем элемент
         }
-
-        if (userName) {
-            userNameElement.textContent = userName;
-            document.getElementById('user-info').appendChild(userNameElement);
+    
+        // Отображаем имя пользователя только один раз
+        if (userName && userInfoElement) {
+            // Проверяем, есть ли уже элемент с именем пользователя
+            if (!userInfoElement.querySelector('p')) {
+                const userNameElement = document.createElement('p'); // Создаем элемент для имени пользователя
+                userNameElement.textContent = userName;
+                userInfoElement.appendChild(userNameElement); // Добавляем имя пользователя
+            }
         }
     }
 
@@ -211,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
     // Функция для настройки кнопки воспроизведения/паузы
     function setupPlayPauseButton() {
         const playButton = document.querySelector('.btn_play');
