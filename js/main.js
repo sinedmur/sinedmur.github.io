@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Создаем новый экземпляр TON Connect
             window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: 'https://127.0.0.1:5501/tonconnect-manifest.json',
+                manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
                 buttonRootId: 'ton-connect'
             });
 
