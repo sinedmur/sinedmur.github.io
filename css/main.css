@@ -208,8 +208,8 @@ body, html {
   display: flex;
   align-items: center;
   gap: 10px;
-  float: right;
-  padding: 0 5% 5% 0;
+  margin-left: 80%;
+  margin-bottom: 10%;
 }
 
 #avatar {
