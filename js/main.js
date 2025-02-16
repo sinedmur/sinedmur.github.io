@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user) {
                 // Сохраняем данные пользователя в localStorage
                 localStorage.setItem('userAvatar', user.photo_url);
-                localStorage.setItem('userName', user.first_name);
+                localStorage.setItem('userName', user.first_name + ' ' + (user.last_name || ''));
 
                 // Отображаем аватарку пользователя
                 displayUserInfo();
