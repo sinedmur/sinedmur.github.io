@@ -20,23 +20,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playAudio() {
         if (!audioBuffer) return;
+
+        // Если аудио уже воспроизводится, остановите его
+        if (sourceNode) {
+            sourceNode.stop();
+            sourceNode.disconnect();
+        }
+
+        // Создаем новый источник
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
         sourceNode.connect(gainNode);
-        startTime = audioContext.currentTime - pausedAt;
+
+        // Начинаем воспроизведение с сохраненной позиции
+        startTime = audioContext.currentTime;
         sourceNode.start(0, pausedAt);
         isPlaying = true;
 
+        // Обработка завершения воспроизведения
         sourceNode.onended = () => {
             isPlaying = false;
-            pausedAt = 0;
+            pausedAt = 0; // Сбрасываем позицию воспроизведения
         };
     }
 
     function pauseAudio() {
         if (sourceNode) {
-            sourceNode.stop();
+            // Сохраняем текущую позицию воспроизведения
             pausedAt = audioContext.currentTime - startTime;
+            sourceNode.stop();
+            sourceNode.disconnect();
             isPlaying = false;
         }
     }
