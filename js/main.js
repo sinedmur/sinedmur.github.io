@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function pauseAudio() {
         if (!isPlaying) return;
         audioSource.stop();
-        pausedTime = audioContext.currentTime - startTime;
+        pausedTime += audioContext.currentTime - startTime;
         isPlaying = false;
         updatePlayButton();
     }
