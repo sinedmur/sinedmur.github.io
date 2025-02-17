@@ -1,4 +1,62 @@
 document.addEventListener('DOMContentLoaded', () => {
+    let audioContext;
+    let audioBuffer;
+    let sourceNode;
+    let isPlaying = false;
+    let startTime = 0;
+    let pausedAt = 0;
+    let gainNode;
+
+    async function loadAudio() {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioContext.createGain();
+            gainNode.connect(audioContext.destination);
+        }
+        const response = await fetch('./audio/chains.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    }
+
+    function playAudio() {
+        if (!audioBuffer) return;
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+        sourceNode.connect(gainNode);
+        startTime = audioContext.currentTime - pausedAt;
+        sourceNode.start(0, pausedAt);
+        isPlaying = true;
+
+        sourceNode.onended = () => {
+            isPlaying = false;
+            pausedAt = 0;
+        };
+    }
+
+    function pauseAudio() {
+        if (sourceNode) {
+            sourceNode.stop();
+            pausedAt = audioContext.currentTime - startTime;
+            isPlaying = false;
+        }
+    }
+
+    const playButton = document.querySelector('.btn_play');
+    if (playButton) {
+        playButton.addEventListener('click', async () => {
+            if (!audioBuffer) await loadAudio();
+            if (isPlaying) {
+                pauseAudio();
+                playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
+            } else {
+                playAudio();
+                playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
+            }
+        });
+    }
+
+    loadAudio();
+
     function initializeTelegramAuth() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             const webApp = Telegram.WebApp;
@@ -18,62 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const avatarElement = document.getElementById('avatar');
         const userAvatar = localStorage.getItem('userAvatar');
         if (avatarElement) {
-            avatarElement.src = userAvatar ? userAvatar : './img/token.svg';
+            avatarElement.src = userAvatar || './img/token.svg';
             avatarElement.style.display = 'block';
         }
     }
 
     initializeTelegramAuth();
     displayUserInfo();
-
-    let audioContext;
-    let audioBuffer;
-    let sourceNode;
-    let startTime = 0;
-    let pausedAt = 0;
-    let isPlaying = false;
-
-    async function loadAudio() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        const response = await fetch('./audio/chains.mp3');
-        const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-    }
-
-    function playAudio() {
-        if (!audioBuffer) return;
-        if (isPlaying) return;
-        sourceNode = audioContext.createBufferSource();
-        sourceNode.buffer = audioBuffer;
-        sourceNode.connect(audioContext.destination);
-        startTime = audioContext.currentTime - pausedAt;
-        sourceNode.start(0, pausedAt);
-        isPlaying = true;
-        sourceNode.onended = () => {
-            isPlaying = false;
-            pausedAt = 0;
-        };
-    }
-
-    function pauseAudio() {
-        if (isPlaying) {
-            sourceNode.stop();
-            pausedAt = audioContext.currentTime - startTime;
-            isPlaying = false;
-        }
-    }
-
-    document.querySelector('.btn_play').addEventListener('click', () => {
-        if (isPlaying) {
-            pauseAudio();
-        } else {
-            playAudio();
-        }
-    });
-
-    loadAudio();
 
     function initializeTonConnect() {
         const tonConnectElement = document.getElementById('ton-connect');
@@ -105,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageCache[page]) {
             updateContent(pageCache[page]);
             updateActiveButton(page);
-            initializeTonConnect();
         } else {
             fetch(page)
                 .then(response => response.text())
@@ -116,7 +124,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     pageCache[page] = newContent.innerHTML;
                     updateContent(newContent.innerHTML);
                     updateActiveButton(page);
-                    initializeTonConnect();
+                    setTimeout(() => {
+                        initializeTonConnect();
+                    }, 100);
                 })
                 .catch(error => {
                     console.error('Error loading page:', error);
@@ -136,33 +146,18 @@ document.addEventListener('DOMContentLoaded', () => {
         buttons.forEach(button => {
             const img = button.querySelector('img');
             if (img) {
-                const defaultSrc = img.getAttribute('data-default');
-                img.src = defaultSrc;
+                img.src = img.getAttribute('data-default');
             }
         });
+
         const activeButton = document.querySelector(`[data-page="${page}"]`);
         if (activeButton) {
             const img = activeButton.querySelector('img');
             if (img) {
-                const activeSrc = img.getAttribute('data-active');
-                img.src = activeSrc;
+                img.src = img.getAttribute('data-active');
             }
         }
     }
-
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('.btn_next')) {
-            console.log('Next track');
-        }
-    });
-
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('[data-page]')) {
-            const button = event.target.closest('[data-page]');
-            const page = button.getAttribute('data-page');
-            loadPage(page);
-        }
-    });
 
     const currentPage = window.location.pathname.split('/').pop();
     updateActiveButton(currentPage);
