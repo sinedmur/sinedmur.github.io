@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user) {
                 // Сохраняем данные пользователя в localStorage
                 localStorage.setItem('userAvatar', user.photo_url);
+                // localStorage.setItem('userName', user.first_name);
 
                 // Отображаем аватарку пользователя
                 displayUserInfo();
@@ -24,10 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Функция для отображения аватарки и имени пользователя
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
-
+        const userInfoElement = document.getElementById('user-info');
+    
         // Получаем данные из localStorage
         const userAvatar = localStorage.getItem('userAvatar');
-
+        // const userName = localStorage.getItem('userName');
+    
         // Если аватарка есть, используем её, иначе — заглушку
         if (avatarElement) {
             if (userAvatar) {
@@ -38,6 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             avatarElement.style.display = 'block'; // Показываем элемент
         }
+    
+        // // Отображаем имя пользователя только один раз
+        // if (userName && userInfoElement) {
+        //     // Проверяем, есть ли уже элемент с именем пользователя
+        //     if (!userInfoElement.querySelector('p')) {
+        //         const userNameElement = document.createElement('p'); // Создаем элемент для имени пользователя
+        //         userNameElement.textContent = userName;
+        //         userInfoElement.appendChild(userNameElement); // Добавляем имя пользователя
+        //     }
+        // }
     }
 
     // Инициализация Telegram Auth при загрузке страницы
@@ -51,6 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const tonConnectElement = document.getElementById('ton-connect');
         if (tonConnectElement) {
             console.log('TON Connect element found:', tonConnectElement);
+
+            // Убедитесь, что старый экземпляр уничтожен (если это возможно)
+            if (window.tonConnectUI) {
+                window.tonConnectUI = null;
+            }
 
             // Создаем новый экземпляр TON Connect
             window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
@@ -67,76 +85,30 @@ document.addEventListener('DOMContentLoaded', () => {
     // Инициализация при первой загрузке страницы
     initializeTonConnect();
 
-    // Глобальные переменные для Web Audio API
-    let audioContext;
-    let audioSource;
-    let audioBuffer;
-    let isPlaying = false;
-    let currentTime = 0;
+    // Глобальный аудиоэлемент
+    const audio = document.querySelector('.audio');
 
-    // Инициализация AudioContext
-    function initializeWebAudio() {
-        if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        }
-    }
+    // Глобальная переменная для хранения состояния аудио
+    let audioState = {
+        playing: false,
+        currentTime: 0,
+        src: './audio/chains.mp3' // Путь к аудиофайлу
+    };
 
-    // Загрузка аудиофайла
-    function loadAudioFile(src) {
-        return fetch(src)
-            .then(response => response.arrayBuffer())
-            .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
-            .then(buffer => {
-                audioBuffer = buffer;
-            })
-            .catch(error => console.error('Ошибка при загрузке аудио:', error));
-    }
-
-    // Воспроизведение аудио
-    function playAudio() {
-        if (!audioBuffer) return;
-
-        if (!audioSource || audioSource.state === 'stopped') {
-            audioSource = audioContext.createBufferSource();
-            audioSource.buffer = audioBuffer;
-            audioSource.connect(audioContext.destination);
-
-            // Установка начального времени воспроизведения
-            audioSource.start(0, currentTime);
-            isPlaying = true;
-        }
-    }
-
-    // Пауза аудио
-    function pauseAudio() {
-        if (audioSource) {
-            currentTime = audioContext.currentTime - audioSource.context.currentTime + currentTime;
-            audioSource.stop();
-            isPlaying = false;
-        }
-    }
-
-    // Обновление состояния кнопки
-    function updatePlayPauseButton(button) {
-        if (isPlaying) {
-            button.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Иконка паузы
-        } else {
-            button.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Иконка воспроизведения
-        }
-    }
-
-    // Обработчик завершения воспроизведения
-    function onAudioEnded() {
-        isPlaying = false;
-        currentTime = 0;
-
-        const valueDisplay = document.querySelector('.value');
-        if (valueDisplay) {
-            let currentValue = parseInt(valueDisplay.textContent, 10) || 0;
-            valueDisplay.textContent = currentValue + 10;
-        }
-
-        updatePlayPauseButton(document.querySelector('.btn_play'));
+    // Находим элемент для отображения значения value
+    const valueDisplay = document.querySelector('.value');
+    // Обработчик события завершения воспроизведения аудио
+    if (audio) {
+        audio.addEventListener('ended', () => {
+            if (valueDisplay) {
+                // Получаем текущее значение value
+                let currentValue = parseInt(valueDisplay.textContent, 10);
+                // Увеличиваем значение на 10
+                currentValue += 10;
+                // Обновляем отображаемое значение
+                valueDisplay.textContent = currentValue;
+            }
+        });
     }
 
     // Кэш для хранения загруженных страниц
@@ -156,23 +128,27 @@ document.addEventListener('DOMContentLoaded', () => {
     // Функция для загрузки страницы
     function loadPage(page) {
         // Сохраняем состояние аудио перед загрузкой нового контента
-        if (isPlaying) {
-            pauseAudio(); // Приостанавливаем воспроизведение, но сохраняем состояние
+        if (audio) {
+            audioState.playing = !audio.paused;
+            audioState.currentTime = audio.currentTime;
         }
 
         // Проверяем, есть ли страница в кэше
         if (pageCache[page]) {
+            // Используем закэшированный контент
             updateContent(pageCache[page]);
-            restoreAudioState(); // Восстанавливаем состояние аудио
+            restoreAudioState();
             updateActiveButton(page);
             setupPlayPauseButton();
         } else {
+            // Загружаем контент страницы, если его нет в кэше
             fetch(page)
                 .then(response => response.text())
                 .then(html => {
+                    // Парсим загруженный HTML
                     const parser = new DOMParser();
                     const newDocument = parser.parseFromString(html, 'text/html');
-                    const newContent = newDocument.querySelector('.mainmenu');
+                    const newContent = newDocument.querySelector('.mainmenu'); // Извлекаем только нужный контент
 
                     // Сохраняем загруженный контент в кэше
                     pageCache[page] = newContent.innerHTML;
@@ -203,6 +179,8 @@ document.addEventListener('DOMContentLoaded', () => {
         displayUserInfo();
     }
 
+    // Остальные функции (updateContent, restoreAudioState, updateActiveButton, setupPlayPauseButton) остаются без изменений
+
     // Функция для обновления содержимого страницы
     function updateContent(content) {
         const mainmenu = document.querySelector('.mainmenu');
@@ -213,41 +191,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция для восстановления состояния аудио
     function restoreAudioState() {
-        if (audioBuffer && !isPlaying) {
-            playAudio();
+        if (audio) {
+            audio.currentTime = audioState.currentTime; // Восстанавливаем текущее время
+            if (audioState.playing) {
+                audio.play(); // Воспроизводим аудио, если оно было запущено
+            }
         }
     }
 
     // Функция для обновления активной кнопки
     function updateActiveButton(page) {
+        // Убираем активное состояние у всех кнопок
         buttons.forEach(button => {
             const img = button.querySelector('img');
             if (img) {
+                // Возвращаем исходное изображение для неактивных кнопок
                 const defaultSrc = img.getAttribute('data-default');
                 img.src = defaultSrc;
             }
         });
 
+        // Находим кнопку, соответствующую текущей странице, и меняем её изображение
         const activeButton = document.querySelector(`[data-page="${page}"]`);
         if (activeButton) {
             const img = activeButton.querySelector('img');
             if (img) {
+                // Устанавливаем активное изображение
                 const activeSrc = img.getAttribute('data-active');
                 img.src = activeSrc;
             }
         }
     }
-
     // Функция для настройки кнопки воспроизведения/паузы
     function setupPlayPauseButton() {
         const playButton = document.querySelector('.btn_play');
 
-        if (playButton) {
+        if (playButton && audio) {
+            // Обновляем иконку кнопки в зависимости от состояния аудио
             const updateButtonIcon = () => {
-                if (isPlaying) {
-                    playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Иконка паузы
-                } else {
+                if (audio.paused) {
                     playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Иконка воспроизведения
+                } else {
+                    playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Иконка паузы
                 }
             };
 
@@ -256,15 +241,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Добавляем обработчик для кнопки воспроизведения/паузы
             playButton.addEventListener('click', () => {
-                if (isPlaying) {
-                    pauseAudio();
+                if (audio.paused) {
+                    audio.play();
                 } else {
-                    playAudio();
+                    audio.pause();
                 }
                 updateButtonIcon(); // Обновляем иконку после изменения состояния
             });
+
+            // Обновляем иконку при изменении состояния аудио
+            audio.addEventListener('play', updateButtonIcon);
+            audio.addEventListener('pause', updateButtonIcon);
         }
     }
+
+    // Делегирование событий для кнопки следующего трека
+    document.addEventListener('click', (event) => {
+        if (event.target.closest('.btn_next')) {
+            // Здесь можно добавить логику для переключения на следующий трек
+            console.log('Next track');
+        }
+    });
 
     // Делегирование событий для кнопок навигации в undermenu
     document.addEventListener('click', (event) => {
@@ -279,17 +276,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentPage = window.location.pathname.split('/').pop();
     updateActiveButton(currentPage);
 
-    // Инициализация Web Audio API
-    initializeWebAudio();
-    loadAudioFile('./audio/chains.mp3').then(() => {
-        console.log('Аудио загружено');
-    });
+    // Восстанавливаем состояние аудио при первой загрузке страницы
+    restoreAudioState();
 
     // Настраиваем кнопку воспроизведения/паузы при первой загрузке страницы
     setupPlayPauseButton();
-
-    // Устанавливаем обработчик завершения воспроизведения
-    if (audioSource) {
-        audioSource.onended = onAudioEnded;
-    }
 });
