@@ -119,9 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Обновление состояния кнопки
     function updatePlayPauseButton(button) {
         if (isPlaying) {
-            button.innerHTML = '❚❚'; // Иконка паузы
+            button.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Иконка паузы
         } else {
-            button.innerHTML = '▶'; // Иконка воспроизведения
+            button.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Иконка воспроизведения
         }
     }
 
@@ -156,16 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Функция для загрузки страницы
     function loadPage(page) {
         // Сохраняем состояние аудио перед загрузкой нового контента
-        if (audioSource) {
-            if (isPlaying) {
-                pauseAudio();
-            }
+        if (isPlaying) {
+            pauseAudio(); // Приостанавливаем воспроизведение, но сохраняем состояние
         }
 
         // Проверяем, есть ли страница в кэше
         if (pageCache[page]) {
             updateContent(pageCache[page]);
-            restoreAudioState();
+            restoreAudioState(); // Восстанавливаем состояние аудио
             updateActiveButton(page);
             setupPlayPauseButton();
         } else {
@@ -247,9 +245,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (playButton) {
             const updateButtonIcon = () => {
                 if (isPlaying) {
-                    playButton.innerHTML = '❚❚'; // Иконка паузы
+                    playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />'; // Иконка паузы
                 } else {
-                    playButton.innerHTML = '▶'; // Иконка воспроизведения
+                    playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />'; // Иконка воспроизведения
                 }
             };
 
@@ -289,4 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Настраиваем кнопку воспроизведения/паузы при первой загрузке страницы
     setupPlayPauseButton();
+
+    // Устанавливаем обработчик завершения воспроизведения
+    if (audioSource) {
+        audioSource.onended = onAudioEnded;
+    }
 });
