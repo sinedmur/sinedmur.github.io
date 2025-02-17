@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (user) {
                 // Сохраняем данные пользователя в localStorage
                 localStorage.setItem('userAvatar', user.photo_url);
-                localStorage.setItem('userName', user.first_name);
+                // localStorage.setItem('userName', user.first_name);
 
                 // Отображаем аватарку пользователя
                 displayUserInfo();
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
         // Получаем данные из localStorage
         const userAvatar = localStorage.getItem('userAvatar');
-        const userName = localStorage.getItem('userName');
+        // const userName = localStorage.getItem('userName');
     
         // Если аватарка есть, используем её, иначе — заглушку
         if (avatarElement) {
@@ -72,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Создаем новый экземпляр TON Connect
             window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
+                manifestUrl: 'https://127.0.0.1:5501/tonconnect-manifest.json',
                 buttonRootId: 'ton-connect'
             });
 
