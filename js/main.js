@@ -50,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let startTime = 0;
     let pausedTime = 0;
     let isPlaying = false;
+    let gainNode = audioContext.createGain();
 
     fetch('./audio/chains.mp3')
         .then(response => response.arrayBuffer())
@@ -61,7 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isPlaying) return;
         audioSource = audioContext.createBufferSource();
         audioSource.buffer = audioBuffer;
-        audioSource.connect(audioContext.destination);
+        audioSource.connect(gainNode);
+        gainNode.connect(audioContext.destination);
         audioSource.start(0, pausedTime);
         startTime = audioContext.currentTime - pausedTime;
         isPlaying = true;
@@ -75,8 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function pauseAudio() {
         if (!isPlaying) return;
-        audioSource.stop();
         pausedTime += audioContext.currentTime - startTime;
+        audioSource.stop();
         isPlaying = false;
         updatePlayButton();
     }
