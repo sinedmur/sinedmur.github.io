@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Инициализация Telegram Web App
     function initializeTelegramAuth() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             const webApp = Telegram.WebApp;
@@ -19,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
         const userAvatar = localStorage.getItem('userAvatar');
-
         if (avatarElement) {
             avatarElement.src = userAvatar || './img/token.svg';
             avatarElement.style.display = 'block';
@@ -46,64 +44,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeTonConnect();
 
-    // Используем Web Audio API для непрерывного воспроизведения
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     let audioBuffer;
-    let sourceNode;
+    let audioSource;
     let startTime = 0;
-    let pausedAt = 0;
+    let pausedTime = 0;
     let isPlaying = false;
 
-    async function loadAudio() {
-        if (!audioBuffer) {
-            const response = await fetch('./audio/chains.mp3');
-            const arrayBuffer = await response.arrayBuffer();
-            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        }
-    }
+    fetch('./audio/chains.mp3')
+        .then(response => response.arrayBuffer())
+        .then(data => audioContext.decodeAudioData(data))
+        .then(buffer => { audioBuffer = buffer; })
+        .catch(error => console.error('Error loading audio:', error));
 
-    async function playAudio() {
-        if (!audioBuffer) {
-            await loadAudio();
-        }
-        if (sourceNode) {
-            sourceNode.stop();
-        }
-        sourceNode = audioContext.createBufferSource();
-        sourceNode.buffer = audioBuffer;
-        sourceNode.connect(audioContext.destination);
-        startTime = audioContext.currentTime - pausedAt;
-        sourceNode.start(0, pausedAt);
+    function playAudio() {
+        if (isPlaying) return;
+        audioSource = audioContext.createBufferSource();
+        audioSource.buffer = audioBuffer;
+        audioSource.connect(audioContext.destination);
+        audioSource.start(0, pausedTime);
+        startTime = audioContext.currentTime - pausedTime;
         isPlaying = true;
-
-        sourceNode.onended = () => {
+        updatePlayButton();
+        audioSource.onended = () => {
             isPlaying = false;
-            pausedAt = 0;
+            pausedTime = 0;
+            updatePlayButton();
         };
     }
 
     function pauseAudio() {
-        if (sourceNode) {
-            sourceNode.stop();
-            pausedAt += audioContext.currentTime - startTime;
-            isPlaying = false;
+        if (!isPlaying) return;
+        audioSource.stop();
+        pausedTime = audioContext.currentTime - startTime;
+        isPlaying = false;
+        updatePlayButton();
+    }
+
+    function updatePlayButton() {
+        const playButton = document.querySelector('.btn_play');
+        if (playButton) {
+            playButton.innerHTML = isPlaying
+                ? '<img class="img__src" src="./img/Pausemini.svg" alt="Pause" />'
+                : '<img class="img__src" src="./img/Playmini.svg" alt="Play" />';
         }
     }
 
-    document.querySelector('.btn_play')?.addEventListener('click', () => {
-        if (audioContext.state === 'suspended') {
-            audioContext.resume();
-        }
-        isPlaying ? pauseAudio() : playAudio();
-    });
+    const playButton = document.querySelector('.btn_play');
+    if (playButton) {
+        playButton.addEventListener('click', () => {
+            isPlaying ? pauseAudio() : playAudio();
+        });
+    }
 
     const pageCache = {};
     const buttons = document.querySelectorAll('[data-page]');
-    
     buttons.forEach(button => {
         button.addEventListener('click', () => {
-            const page = button.getAttribute('data-page');
-            loadPage(page);
+            loadPage(button.getAttribute('data-page'));
         });
     });
 
@@ -111,6 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageCache[page]) {
             updateContent(pageCache[page]);
             updateActiveButton(page);
+            setTimeout(() => initializeTonConnect(), 100);
         } else {
             fetch(page)
                 .then(response => response.text())
@@ -121,13 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     pageCache[page] = newContent.innerHTML;
                     updateContent(newContent.innerHTML);
                     updateActiveButton(page);
-                    setTimeout(() => {
-                        initializeTonConnect();
-                    }, 100);
+                    setTimeout(() => initializeTonConnect(), 100);
                 })
-                .catch(error => {
-                    console.error('Error loading page:', error);
-                });
+                .catch(error => console.error('Error loading page:', error));
         }
         displayUserInfo();
     }
@@ -142,37 +137,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateActiveButton(page) {
         buttons.forEach(button => {
             const img = button.querySelector('img');
-            if (img) {
-                const defaultSrc = img.getAttribute('data-default');
-                img.src = defaultSrc;
-            }
+            if (img) img.src = img.getAttribute('data-default');
         });
-
         const activeButton = document.querySelector(`[data-page="${page}"]`);
         if (activeButton) {
             const img = activeButton.querySelector('img');
-            if (img) {
-                const activeSrc = img.getAttribute('data-active');
-                img.src = activeSrc;
-            }
+            if (img) img.src = img.getAttribute('data-active');
         }
     }
-
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('.btn_next')) {
-            console.log('Next track');
-        }
-    });
-
-    document.addEventListener('click', (event) => {
-        if (event.target.closest('[data-page]')) {
-            const button = event.target.closest('[data-page]');
-            const page = button.getAttribute('data-page');
-            loadPage(page);
-        }
-    });
-
-    const currentPage = window.location.pathname.split('/').pop();
-    updateActiveButton(currentPage);
-    loadAudio();
 });
