@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Инициализация Telegram Web App
     function initializeTelegramAuth() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             const webApp = Telegram.WebApp;
@@ -34,7 +35,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.tonConnectUI) {
                 window.tonConnectUI = null;
             }
-
             window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
                 manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
                 buttonRootId: 'ton-connect'
@@ -46,42 +46,63 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeTonConnect();
 
-    const audio = document.querySelector('.audio');
-    
-    function saveAudioState() {
-        if (audio) {
-            sessionStorage.setItem('audioTime', audio.currentTime);
-            sessionStorage.setItem('audioPlaying', !audio.paused);
+    // Используем Web Audio API для непрерывного воспроизведения
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    let audioBuffer;
+    let sourceNode;
+    let startTime = 0;
+    let pausedAt = 0;
+    let isPlaying = false;
+
+    async function loadAudio() {
+        if (!audioBuffer) {
+            const response = await fetch('./audio/chains.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
         }
     }
 
-    function restoreAudioState() {
-        if (!audio) return;
-
-        const savedTime = sessionStorage.getItem('audioTime');
-        const wasPlaying = sessionStorage.getItem('audioPlaying') === 'true';
-
-        if (savedTime) {
-            audio.currentTime = parseFloat(savedTime);
+    async function playAudio() {
+        if (!audioBuffer) {
+            await loadAudio();
         }
-        
-        if (wasPlaying) {
-            audio.play().catch(err => console.warn('Playback error:', err));
+        if (sourceNode) {
+            sourceNode.stop();
+        }
+        sourceNode = audioContext.createBufferSource();
+        sourceNode.buffer = audioBuffer;
+        sourceNode.connect(audioContext.destination);
+        startTime = audioContext.currentTime - pausedAt;
+        sourceNode.start(0, pausedAt);
+        isPlaying = true;
+
+        sourceNode.onended = () => {
+            isPlaying = false;
+            pausedAt = 0;
+        };
+    }
+
+    function pauseAudio() {
+        if (sourceNode) {
+            sourceNode.stop();
+            pausedAt += audioContext.currentTime - startTime;
+            isPlaying = false;
         }
     }
 
-    if (audio) {
-        restoreAudioState();
-        audio.addEventListener('timeupdate', saveAudioState);
-    }
+    document.querySelector('.btn_play')?.addEventListener('click', () => {
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        isPlaying ? pauseAudio() : playAudio();
+    });
 
     const pageCache = {};
     const buttons = document.querySelectorAll('[data-page]');
-
+    
     buttons.forEach(button => {
         button.addEventListener('click', () => {
             const page = button.getAttribute('data-page');
-            saveAudioState();
             loadPage(page);
         });
     });
@@ -89,9 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPage(page) {
         if (pageCache[page]) {
             updateContent(pageCache[page]);
-            restoreAudioState();
             updateActiveButton(page);
-            setupPlayPauseButton();
         } else {
             fetch(page)
                 .then(response => response.text())
@@ -101,12 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const newContent = newDocument.querySelector('.mainmenu');
                     pageCache[page] = newContent.innerHTML;
                     updateContent(newContent.innerHTML);
-                    restoreAudioState();
                     updateActiveButton(page);
-                    setupPlayPauseButton();
-                    setTimeout(() => initializeTonConnect(), 100);
+                    setTimeout(() => {
+                        initializeTonConnect();
+                    }, 100);
                 })
-                .catch(error => console.error('Error loading page:', error));
+                .catch(error => {
+                    console.error('Error loading page:', error);
+                });
         }
         displayUserInfo();
     }
@@ -122,7 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
         buttons.forEach(button => {
             const img = button.querySelector('img');
             if (img) {
-                img.src = img.getAttribute('data-default');
+                const defaultSrc = img.getAttribute('data-default');
+                img.src = defaultSrc;
             }
         });
 
@@ -130,28 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeButton) {
             const img = activeButton.querySelector('img');
             if (img) {
-                img.src = img.getAttribute('data-active');
+                const activeSrc = img.getAttribute('data-active');
+                img.src = activeSrc;
             }
-        }
-    }
-
-    function setupPlayPauseButton() {
-        const playButton = document.querySelector('.btn_play');
-        if (playButton && audio) {
-            const updateButtonIcon = () => {
-                playButton.innerHTML = audio.paused ?
-                    '<img class="img__src" src="./img/Playmini.svg" alt="btn" />' :
-                    '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
-            };
-
-            updateButtonIcon();
-            playButton.addEventListener('click', () => {
-                audio.paused ? audio.play() : audio.pause();
-                updateButtonIcon();
-            });
-
-            audio.addEventListener('play', updateButtonIcon);
-            audio.addEventListener('pause', updateButtonIcon);
         }
     }
 
@@ -165,13 +168,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target.closest('[data-page]')) {
             const button = event.target.closest('[data-page]');
             const page = button.getAttribute('data-page');
-            saveAudioState();
             loadPage(page);
         }
     });
 
     const currentPage = window.location.pathname.split('/').pop();
     updateActiveButton(currentPage);
-    restoreAudioState();
-    setupPlayPauseButton();
+    loadAudio();
 });
