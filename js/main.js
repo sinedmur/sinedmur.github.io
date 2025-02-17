@@ -52,14 +52,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let isPlaying = false;
     let gainNode = audioContext.createGain();
 
-    fetch('./audio/chains.mp3')
-        .then(response => response.arrayBuffer())
-        .then(data => audioContext.decodeAudioData(data))
-        .then(buffer => { audioBuffer = buffer; })
-        .catch(error => console.error('Error loading audio:', error));
+    async function loadAudio() {
+        try {
+            const response = await fetch('./audio/chains.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        } catch (error) {
+            console.error('Error loading audio:', error);
+        }
+    }
 
     function playAudio() {
-        if (isPlaying) return;
+        if (isPlaying || !audioBuffer) return;
         audioSource = audioContext.createBufferSource();
         audioSource.buffer = audioBuffer;
         audioSource.connect(gainNode);
@@ -68,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startTime = audioContext.currentTime - pausedTime;
         isPlaying = true;
         updatePlayButton();
+        
         audioSource.onended = () => {
             isPlaying = false;
             pausedTime = 0;
@@ -95,9 +100,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const playButton = document.querySelector('.btn_play');
     if (playButton) {
         playButton.addEventListener('click', () => {
-            isPlaying ? pauseAudio() : playAudio();
+            if (isPlaying) {
+                pauseAudio();
+            } else {
+                if (audioContext.state === 'suspended') {
+                    audioContext.resume().then(playAudio);
+                } else {
+                    playAudio();
+                }
+            }
         });
     }
+
+    loadAudio();
 
     const pageCache = {};
     const buttons = document.querySelectorAll('[data-page]');
