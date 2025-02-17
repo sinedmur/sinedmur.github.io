@@ -111,20 +111,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Загрузка страниц
     const pageCache = {};
 
-    // Обработчик для кнопок с data-page
-    function handlePageButtonClick(event) {
-        const page = event.currentTarget.getAttribute('data-page');
-        loadPage(page);
-    }
-
-    // Инициализация кнопок
-    function initializePageButtons() {
-        const buttons = document.querySelectorAll('[data-page]');
-        buttons.forEach(button => {
-            button.removeEventListener('click', handlePageButtonClick); // Удаляем старый обработчик
-            button.addEventListener('click', handlePageButtonClick); // Добавляем новый
-        });
-    }
+    // Делегирование событий для кнопок с data-page
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-page]');
+        if (button) {
+            const page = button.getAttribute('data-page');
+            loadPage(page);
+        }
+    });
 
     // Загрузка страницы
     function loadPage(page) {
@@ -142,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         pageCache[page] = newContent.innerHTML;
                         updateContent(newContent.innerHTML);
                         updateActiveButton(page);
-                        initializePageButtons(); // Переинициализируем кнопки после загрузки новой страницы
                         setTimeout(() => {
                             initializeTonConnect();
                         }, 100);
@@ -183,9 +176,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
-    // Инициализация кнопок при загрузке страницы
-    initializePageButtons();
 
     // Определение текущей страницы
     const currentPage = window.location.pathname.split('/').pop();
