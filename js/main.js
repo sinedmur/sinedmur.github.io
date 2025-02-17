@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pausedAt = 0;
     let gainNode;
 
+    // Загрузка аудио
     async function loadAudio() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -18,14 +19,12 @@ document.addEventListener('DOMContentLoaded', () => {
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     }
 
+    // Воспроизведение аудио
     function playAudio() {
         if (!audioBuffer) return;
 
-        // Если аудио уже воспроизводится, остановите его
-        if (sourceNode) {
-            sourceNode.stop();
-            sourceNode.disconnect();
-        }
+        // Если аудио уже воспроизводится, ничего не делаем
+        if (isPlaying) return;
 
         // Создаем новый источник
         sourceNode = audioContext.createBufferSource();
@@ -44,16 +43,19 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Пауза аудио
     function pauseAudio() {
-        if (sourceNode) {
+        if (sourceNode && isPlaying) {
             // Сохраняем текущую позицию воспроизведения
             pausedAt = audioContext.currentTime - startTime;
             sourceNode.stop();
             sourceNode.disconnect();
+            sourceNode = null; // Удаляем ссылку на источник
             isPlaying = false;
         }
     }
 
+    // Кнопка воспроизведения/паузы
     const playButton = document.querySelector('.btn_play');
     if (playButton) {
         playButton.addEventListener('click', async () => {
@@ -68,8 +70,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Загрузка аудио при старте
     loadAudio();
 
+    // Telegram Auth
     function initializeTelegramAuth() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             const webApp = Telegram.WebApp;
@@ -85,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Отображение информации о пользователе
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
         const userAvatar = localStorage.getItem('userAvatar');
@@ -97,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTelegramAuth();
     displayUserInfo();
 
+    // TON Connect
     function initializeTonConnect() {
         const tonConnectElement = document.getElementById('ton-connect');
         if (tonConnectElement) {
@@ -114,15 +120,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initializeTonConnect();
 
+    // Загрузка страниц
     const pageCache = {};
     const buttons = document.querySelectorAll('[data-page]');
-    buttons.forEach(button => {
-        button.addEventListener('click', () => {
-            const page = button.getAttribute('data-page');
-            loadPage(page);
-        });
-    });
 
+    // Обработчик для кнопок с data-page
+    function handlePageButtonClick(event) {
+        const page = event.currentTarget.getAttribute('data-page');
+        loadPage(page);
+    }
+
+    // Инициализация кнопок
+    function initializePageButtons() {
+        buttons.forEach(button => {
+            button.removeEventListener('click', handlePageButtonClick); // Удаляем старый обработчик
+            button.addEventListener('click', handlePageButtonClick); // Добавляем новый
+        });
+    }
+
+    // Загрузка страницы
     function loadPage(page) {
         if (pageCache[page]) {
             updateContent(pageCache[page]);
@@ -134,12 +150,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const parser = new DOMParser();
                     const newDocument = parser.parseFromString(html, 'text/html');
                     const newContent = newDocument.querySelector('.mainmenu');
-                    pageCache[page] = newContent.innerHTML;
-                    updateContent(newContent.innerHTML);
-                    updateActiveButton(page);
-                    setTimeout(() => {
-                        initializeTonConnect();
-                    }, 100);
+                    if (newContent) {
+                        pageCache[page] = newContent.innerHTML;
+                        updateContent(newContent.innerHTML);
+                        updateActiveButton(page);
+                        initializePageButtons(); // Переинициализируем кнопки после загрузки новой страницы
+                        setTimeout(() => {
+                            initializeTonConnect();
+                        }, 100);
+                    } else {
+                        console.error('Mainmenu content not found in the loaded page');
+                    }
                 })
                 .catch(error => {
                     console.error('Error loading page:', error);
@@ -148,6 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayUserInfo();
     }
 
+    // Обновление контента
     function updateContent(content) {
         const mainmenu = document.querySelector('.mainmenu');
         if (mainmenu) {
@@ -155,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Обновление активной кнопки
     function updateActiveButton(page) {
         buttons.forEach(button => {
             const img = button.querySelector('img');
@@ -172,6 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Инициализация кнопок при загрузке страницы
+    initializePageButtons();
+
+    // Определение текущей страницы
     const currentPage = window.location.pathname.split('/').pop();
     updateActiveButton(currentPage);
 });
