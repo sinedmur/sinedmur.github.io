@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Аудио-логика (оставьте без изменений, если она работает)
     let audioContext;
     let audioBuffer;
     let sourceNode;
@@ -21,27 +20,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playAudio() {
         if (!audioBuffer) return;
+
+        // Если аудио уже воспроизводится, ничего не делаем
         if (isPlaying) return;
 
+        // Создаем новый источник
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
         sourceNode.connect(gainNode);
+
+        // Начинаем воспроизведение с сохраненной позиции
         startTime = audioContext.currentTime;
-        sourceNode.start(0, pausedAt);
+        sourceNode.start(0, pausedAt); // Используем pausedAt для продолжения с нужного места
         isPlaying = true;
 
+        // Обработка завершения воспроизведения
         sourceNode.onended = () => {
             isPlaying = false;
-            pausedAt = 0;
+            pausedAt = 0; // Сбрасываем позицию воспроизведения
         };
     }
 
     function pauseAudio() {
         if (sourceNode && isPlaying) {
+            // Сохраняем текущую позицию воспроизведения
             pausedAt = audioContext.currentTime - startTime;
             sourceNode.stop();
             sourceNode.disconnect();
-            sourceNode = null;
+            sourceNode = null; // Удаляем ссылку на источник
             isPlaying = false;
         }
     }
