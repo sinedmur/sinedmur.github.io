@@ -42,15 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
             avatarElement.style.display = 'block'; // Показываем элемент
         }
     
-        // Отображаем имя пользователя только один раз
-        if (userName && userInfoElement) {
-            // Проверяем, есть ли уже элемент с именем пользователя
-            if (!userInfoElement.querySelector('p')) {
-                const userNameElement = document.createElement('p'); // Создаем элемент для имени пользователя
-                userNameElement.textContent = userName;
-                userInfoElement.appendChild(userNameElement); // Добавляем имя пользователя
-            }
-        }
+        // // Отображаем имя пользователя только один раз
+        // if (userName && userInfoElement) {
+        //     // Проверяем, есть ли уже элемент с именем пользователя
+        //     if (!userInfoElement.querySelector('p')) {
+        //         const userNameElement = document.createElement('p'); // Создаем элемент для имени пользователя
+        //         userNameElement.textContent = userName;
+        //         userInfoElement.appendChild(userNameElement); // Добавляем имя пользователя
+        //     }
+        // }
     }
 
     // Инициализация Telegram Auth при загрузке страницы
