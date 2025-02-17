@@ -117,6 +117,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Загрузка страниц
     const pageCache = {};
 
+    // Список всех страниц для предварительной загрузки
+    const pagesToPreload = [
+        'missions.html',
+        'buy.html',
+        'settings.html',
+        'music.html',
+        'airdrop.html',
+        'friends.html',
+        'wallet.html'
+    ];
+
+    // Функция для предварительной загрузки всех страниц
+    async function preloadPages() {
+        try {
+            const fetchPromises = pagesToPreload.map(async (page) => {
+                const response = await fetch(page);
+                const html = await response.text();
+                const parser = new DOMParser();
+                const newDocument = parser.parseFromString(html, 'text/html');
+                const newContent = newDocument.querySelector('.mainmenu');
+                if (newContent) {
+                    pageCache[page] = newContent.innerHTML;
+                } else {
+                    console.error(`Mainmenu content not found in ${page}`);
+                }
+            });
+
+            await Promise.all(fetchPromises);
+            console.log('All pages preloaded successfully!');
+        } catch (error) {
+            console.error('Error preloading pages:', error);
+        }
+    }
+
     // Делегирование событий для кнопок с data-page
     document.addEventListener('click', (event) => {
         const button = event.target.closest('[data-page]');
@@ -132,26 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
             updateContent(pageCache[page]);
             updateActiveButton(page);
         } else {
-            fetch(page)
-                .then(response => response.text())
-                .then(html => {
-                    const parser = new DOMParser();
-                    const newDocument = parser.parseFromString(html, 'text/html');
-                    const newContent = newDocument.querySelector('.mainmenu');
-                    if (newContent) {
-                        pageCache[page] = newContent.innerHTML;
-                        updateContent(newContent.innerHTML);
-                        updateActiveButton(page);
-                        setTimeout(() => {
-                            initializeTonConnect();
-                        }, 100);
-                    } else {
-                        console.error('Mainmenu content not found in the loaded page');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error loading page:', error);
-                });
+            console.error(`Page ${page} not found in cache`);
         }
         displayUserInfo();
     }
@@ -183,7 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Определение текущей страницы
-    const currentPage = window.location.pathname.split('/').pop();
-    updateActiveButton(currentPage);
+    // Предварительная загрузка всех страниц при загрузке сайта
+    preloadPages().then(() => {
+        // Определение текущей страницы
+        const currentPage = window.location.pathname.split('/').pop();
+        updateActiveButton(currentPage);
+    });
 });
