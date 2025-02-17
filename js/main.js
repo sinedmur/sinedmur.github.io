@@ -122,6 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'missions.html',
         'buy.html',
         'settings.html',
+        'index.html',
         'music.html',
         'airdrop.html',
         'friends.html',
