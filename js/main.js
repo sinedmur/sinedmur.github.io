@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Аудио-логика (оставьте без изменений, если она работает)
     let audioContext;
     let audioBuffer;
     let sourceNode;
@@ -7,7 +8,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let pausedAt = 0;
     let gainNode;
 
-    // Загрузка аудио
     async function loadAudio() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -19,43 +19,33 @@ document.addEventListener('DOMContentLoaded', () => {
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
     }
 
-    // Воспроизведение аудио
     function playAudio() {
         if (!audioBuffer) return;
-
-        // Если аудио уже воспроизводится, ничего не делаем
         if (isPlaying) return;
 
-        // Создаем новый источник
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
         sourceNode.connect(gainNode);
-
-        // Начинаем воспроизведение с сохраненной позиции
         startTime = audioContext.currentTime;
         sourceNode.start(0, pausedAt);
         isPlaying = true;
 
-        // Обработка завершения воспроизведения
         sourceNode.onended = () => {
             isPlaying = false;
-            pausedAt = 0; // Сбрасываем позицию воспроизведения
+            pausedAt = 0;
         };
     }
 
-    // Пауза аудио
     function pauseAudio() {
         if (sourceNode && isPlaying) {
-            // Сохраняем текущую позицию воспроизведения
             pausedAt = audioContext.currentTime - startTime;
             sourceNode.stop();
             sourceNode.disconnect();
-            sourceNode = null; // Удаляем ссылку на источник
+            sourceNode = null;
             isPlaying = false;
         }
     }
 
-    // Кнопка воспроизведения/паузы
     const playButton = document.querySelector('.btn_play');
     if (playButton) {
         playButton.addEventListener('click', async () => {
@@ -70,10 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Загрузка аудио при старте
     loadAudio();
 
-    // Telegram Auth
+    // Telegram Auth (оставьте без изменений, если это не связано с проблемой)
     function initializeTelegramAuth() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             const webApp = Telegram.WebApp;
@@ -89,7 +78,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Отображение информации о пользователе
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
         const userAvatar = localStorage.getItem('userAvatar');
@@ -102,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTelegramAuth();
     displayUserInfo();
 
-    // TON Connect
+    // TON Connect (оставьте без изменений, если это не связано с проблемой)
     function initializeTonConnect() {
         const tonConnectElement = document.getElementById('ton-connect');
         if (tonConnectElement) {
