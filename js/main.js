@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceNode.connect(gainNode);
 
         // Начинаем воспроизведение с сохраненной позиции
-        startTime = audioContext.currentTime;
-        sourceNode.start(0, pausedAt); // Используем pausedAt для продолжения с нужного места
+        startTime = audioContext.currentTime - pausedAt; // Исправлено: учитываем pausedAt
+        sourceNode.start(0, pausedAt); // Начинаем с сохраненной позиции
         isPlaying = true;
 
         // Обработка завершения воспроизведения
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function pauseAudio() {
         if (sourceNode && isPlaying) {
             // Сохраняем текущую позицию воспроизведения
-            pausedAt = audioContext.currentTime - startTime;
+            pausedAt = audioContext.currentTime - startTime; // Исправлено: сохраняем корректное значение
             sourceNode.stop();
             sourceNode.disconnect();
             sourceNode = null; // Удаляем ссылку на источник
