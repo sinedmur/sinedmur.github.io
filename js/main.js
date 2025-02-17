@@ -110,7 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загрузка страниц
     const pageCache = {};
-    const buttons = document.querySelectorAll('[data-page]');
 
     // Обработчик для кнопок с data-page
     function handlePageButtonClick(event) {
@@ -120,6 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Инициализация кнопок
     function initializePageButtons() {
+        const buttons = document.querySelectorAll('[data-page]');
         buttons.forEach(button => {
             button.removeEventListener('click', handlePageButtonClick); // Удаляем старый обработчик
             button.addEventListener('click', handlePageButtonClick); // Добавляем новый
@@ -167,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Обновление активной кнопки
     function updateActiveButton(page) {
+        const buttons = document.querySelectorAll('[data-page]');
         buttons.forEach(button => {
             const img = button.querySelector('img');
             if (img) {
