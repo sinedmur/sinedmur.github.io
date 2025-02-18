@@ -7,52 +7,63 @@ document.addEventListener('DOMContentLoaded', () => {
     let pausedAt = 0;
     let gainNode;
 
+    const playButton = document.querySelector('.btn_play');
+
     async function loadAudio() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             gainNode = audioContext.createGain();
             gainNode.connect(audioContext.destination);
         }
-        const response = await fetch('./audio/chains.mp3');
-        const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        if (playButton) {
+            playButton.classList.add('loading');
+        }
+
+        try {
+            const response = await fetch('./audio/chains.mp3');
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            if (playButton) {
+                playButton.classList.remove('loading');
+            }
+        } catch (error) {
+            console.error('Error loading audio:', error);
+            if (playButton) {
+                playButton.classList.remove('loading');
+            }
+        }
     }
 
-    function playAudio() {
-        if (!audioBuffer) return;
-
-        // Если аудио уже воспроизводится, ничего не делаем
-        if (isPlaying) return;
-
-        // Создаем новый источник
+    function createSourceNode() {
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
         sourceNode.connect(gainNode);
 
-        // Начинаем воспроизведение с сохраненной позиции
-        startTime = audioContext.currentTime - pausedAt; // Исправлено: учитываем pausedAt
-        sourceNode.start(0, pausedAt); // Начинаем с сохраненной позиции
-        isPlaying = true;
-
-        // Обработка завершения воспроизведения
         sourceNode.onended = () => {
             isPlaying = false;
-            pausedAt = 0; // Сбрасываем позицию воспроизведения
         };
+    }
+
+    function playAudio() {
+        if (!audioBuffer || isPlaying) return;
+
+        createSourceNode();
+        sourceNode.start(0, pausedAt);
+        startTime = audioContext.currentTime;
+        isPlaying = true;
     }
 
     function pauseAudio() {
         if (sourceNode && isPlaying) {
-            // Сохраняем текущую позицию воспроизведения
-            pausedAt = audioContext.currentTime - startTime; // Исправлено: сохраняем корректное значение
+            pausedAt += audioContext.currentTime - startTime;
             sourceNode.stop();
             sourceNode.disconnect();
-            sourceNode = null; // Удаляем ссылку на источник
+            sourceNode = null;
             isPlaying = false;
         }
     }
 
-    const playButton = document.querySelector('.btn_play');
     if (playButton) {
         playButton.addEventListener('click', async () => {
             if (!audioBuffer) await loadAudio();
@@ -65,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
     loadAudio();
 
     // Telegram Auth (оставьте без изменений, если это не связано с проблемой)
