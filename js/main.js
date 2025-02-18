@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     loadAudio();
 
-    // Telegram Auth (оставьте без изменений, если это не связано с проблемой)
+    // Telegram Auth
     function initializeTelegramAuth() {
         if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
             const webApp = Telegram.WebApp;
@@ -106,17 +106,30 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTelegramAuth();
     displayUserInfo();
 
-    // TON Connect (оставьте без изменений, если это не связано с проблемой)
+    // TON Connect (с добавлением проверки на уже зарегистрированный элемент)
     function initializeTonConnect() {
         const tonConnectElement = document.getElementById('ton-connect');
+        
         if (tonConnectElement) {
-            if (window.tonConnectUI) {
-                window.tonConnectUI = null;
+            // Проверяем, зарегистрирован ли уже кастомный элемент 'tc-root'
+            if (!customElements.get('tc-root')) {
+                // Если элемент не зарегистрирован, инициализируем TonConnect UI
+                try {
+                    window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                        manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
+                        buttonRootId: 'ton-connect',
+                        language: 'ru',
+                        uiPreferences: {
+                            borderRadius: 's',
+                        }
+                    });
+                    console.log('TON Connect UI initialized successfully');
+                } catch (error) {
+                    console.error('Error initializing TON Connect UI:', error);
+                }
+            } else {
+                console.log('TON Connect UI is already initialized');
             }
-            window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
-                buttonRootId: 'ton-connect'
-            });
         } else {
             console.error('TON Connect element not found');
         }
@@ -176,6 +189,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (pageCache[page]) {
             updateContent(pageCache[page]);
             updateActiveButton(page);
+            if (page === 'wallet.html') {
+                initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
+            }
         } else {
             console.error(`Page ${page} not found in cache`);
         }
