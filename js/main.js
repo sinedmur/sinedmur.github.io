@@ -95,27 +95,50 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // Функция для отправки данных на сервер
-async function sendUserDataToServer(user) {
-    const userData = {
-        id: user.id,
-        username: user.username || "",
-        photo_url: user.photo_url || "",
-        language_code: user.language_code || "en"
-    };
-
-    try {
-        const response = await fetch("http://localhost:3000/addUser", {
+    function sendUserDataToServer(userData) {
+        fetch("http://localhost:3000/addUser", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(userData)
-        });
-
-        const result = await response.json();
-        console.log("User added:", result);
-    } catch (error) {
-        console.error("Error sending user data:", error);
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(userData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log("User data added successfully");
+            } else {
+                console.error("Error adding user data");
+            }
+        })
+        .catch(error => console.error("Error sending user data:", error));
     }
-}
+    
+    // Функция для получения данных из Telegram Web
+    function getTelegramUserData() {
+        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+            const webApp = Telegram.WebApp;
+            const user = webApp.initDataUnsafe.user;
+            if (user) {
+                const userData = {
+                    id: user.id,
+                    username: user.username,
+                    photo_url: user.photo_url,
+                    language_code: user.language_code,
+                };
+                sendUserDataToServer(userData);
+            } else {
+                console.error("User data not found");
+            }
+        } else {
+            console.error("Telegram Web App is not available");
+        }
+    }
+    
+    // Вызываем функцию для отправки данных при загрузке приложения
+    document.addEventListener("DOMContentLoaded", () => {
+        getTelegramUserData();
+    });
 
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
