@@ -93,6 +93,29 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Telegram Web App is not available');
         }
     }
+    
+    // Функция для отправки данных на сервер
+async function sendUserDataToServer(user) {
+    const userData = {
+        id: user.id,
+        username: user.username || "",
+        photo_url: user.photo_url || "",
+        language_code: user.language_code || "en"
+    };
+
+    try {
+        const response = await fetch("http://localhost:3000/addUser", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData)
+        });
+
+        const result = await response.json();
+        console.log("User added:", result);
+    } catch (error) {
+        console.error("Error sending user data:", error);
+    }
+}
 
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
