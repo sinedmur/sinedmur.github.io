@@ -100,8 +100,8 @@ body, html {
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  margin: 0 auto;
   height: 55px;
+  padding: 0 10px; /* Это поможет избежать сдвигов при изменении размеров */
 }
 
 .song {
@@ -125,13 +125,17 @@ body, html {
   color: #fff;
 }
 
-.btn_play {
-  margin-left: 10px;
+.btn_play, .btn_next {
+  width: 40px; /* Фиксированная ширина для кнопок */
+  height: 40px; /* Фиксированная высота для кнопок */
   cursor: pointer;
+  background-size: contain; /* Для корректного отображения иконок */
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .btn_next {
-  cursor: pointer;
   margin-right: 10px;
 }
 
@@ -159,7 +163,7 @@ body, html {
 .playlist__container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  margin-top: 56px;
+  margin-top: 15%;
   gap: 28px;
   padding: 0 29px;
 }
@@ -169,6 +173,7 @@ body, html {
 }
 
 .mymusic {
+  padding-left: 5%;
   padding-top: 40px;
   font-weight: 400;
   font-size: 20px;
@@ -183,7 +188,7 @@ body, html {
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding-left: 29px;
+  padding-left: 5%;
   justify-content: space-between;
 }
 
@@ -196,19 +201,20 @@ body, html {
 }
 
 .song2 {
-  margin-left: 10px;
+  padding-left: 5%;
 }
 
 .duration {
-  margin-left: 110px;
+  margin-left: auto;
   font-weight: 400;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
+  padding-right: 5%;
 }
 
 .info {
   margin-top: 2px;
-  margin-right: 20px;
+  padding-right: 5%;
 }
 
 #user-info {
@@ -259,4 +265,85 @@ body, html {
 .btn_play.loading img {
   /* Или используйте пульсацию: */
   animation: pulse 1s ease-in-out infinite;
+}
+
+.airdrop__container {
+  margin-top: 15%;
+  display: flex;
+  width: 100%;
+  font-weight: 400;
+  font-size: 18px;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 11px;
+  text-align: center;
+  align-items: center;
+}
+
+.description {
+  justify-content: center;
+  padding: 5px 5px 5px 5px;
+}
+
+.inv__container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.inv__se {
+  display: flex;
+  width: 85%;
+  justify-content: space-between;
+  flex-direction: column;
+  padding-left: 4%;
+  padding-top: 4%;
+  padding-bottom: 4%;
+}
+
+.invite__container, .invitepr__container {
+  margin-top: 15%;
+  display: flex;
+  width: 85%;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  justify-content: space-between;
+}
+
+.invitepr__container {
+  margin-top: 3%;
+}
+
+.invite {
+  font-weight: 400;
+  font-size: 24px;
+  color: #fff;
+  width: 90%;
+}
+
+.inviteprvalue, .invitedes, .invitevalue {
+  font-weight: 400;
+  font-size: 14px;
+  color: #fff;
+}
+
+.inviteprvalue, .invitevalue {
+  color: #f52476;
+  padding-left: 1%;
+  padding-right: 1%;
+}
+
+.inv__de {
+  padding-top: 1%;
+  display: flex;
+  align-items: center;
+}
+
+.inviteimg, .inviteprimg {
+  margin-left: auto;
+  margin-right: 5%;
+  align-items: center;
+  display: flex;
 }/*# sourceMappingURL=main.css.map */
