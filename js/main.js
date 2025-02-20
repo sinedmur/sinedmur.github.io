@@ -231,4 +231,24 @@ document.addEventListener('DOMContentLoaded', () => {
         const currentPage = window.location.pathname.split('/').pop();
         updateActiveButton(currentPage);
     });
+
+    // Использование MutationObserver для отслеживания появления элемента с классом .refresh
+    const observer = new MutationObserver(() => {
+        const refreshButton = document.querySelector('.refresh');
+
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function () {
+                // Добавляем класс для вращения картинки внутри кнопки
+                this.classList.add('rotate');
+    
+                // Убираем класс через время, чтобы анимация могла повториться
+                setTimeout(() => {
+                    this.classList.remove('rotate');
+                }, 500);  // Это время должно совпадать с длительностью анимации
+            });
+        }
+    });
+
+    // Начинаем наблюдение за изменениями в DOM
+    observer.observe(document.body, { childList: true, subtree: true });
 });
