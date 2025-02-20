@@ -439,4 +439,129 @@ body, html {
 
 .refresh__container {
   display: flex;
+}
+
+.wrappertitle {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #ffffff;
+}
+
+.hometitle {
+  background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
+  width: 100%;
+  min-height: 100vh;
+}
+
+.topmenu__container {
+  display: flex;
+  padding-top: 2%;
+  padding-left: 2%;
+  padding-right: 2%;
+}
+
+.subscribe__container {
+  display: flex;
+  border: 2px solid #fff;
+  border-radius: 20px;
+  justify-content: space-between;
+  text-align: center;
+  align-items: center;
+  font-weight: 400;
+  font-size: 24px;
+  color: #fff;
+  padding: 0 1% 0 1%;
+  gap: 1%;
+  width: 300px;
+  height: 75px;
+}
+
+.telegramicon {
+  padding-top: 2%;
+  cursor: pointer;
+}
+
+.youtubeicon {
+  padding-top: 2%;
+  cursor: pointer;
+}
+
+.language__container {
+  margin-left: auto;
+  display: flex;
+  border: 2px solid #fff;
+  border-radius: 20px;
+  justify-content: space-between;
+  text-align: center;
+  align-items: center;
+  font-weight: 400;
+  font-size: 24px;
+  color: #fff;
+  padding: 0 2% 0 1%;
+  gap: 10%;
+  height: 75px;
+  margin-right: 1%;
+}
+
+.flag {
+  padding-top: 6%;
+  cursor: pointer;
+}
+
+.whitepaper__container {
+  display: flex;
+  border: 2px solid #fff;
+  border-radius: 20px;
+  justify-content: space-between;
+  text-align: center;
+  align-items: center;
+  font-weight: 400;
+  font-size: 24px;
+  color: #fff;
+  padding: 0 1% 0 1%;
+  gap: 10%;
+  height: 75px;
+  cursor: pointer;
+}
+
+.title2 {
+  width: 100%;
+  padding-top: 10%;
+  text-align: center;
+  font-weight: 700;
+  font-size: 64px;
+  color: #fff;
+}
+
+.description2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 70%;
+  padding-top: 2%;
+  font-weight: 400;
+  font-size: 24px;
+  text-align: center;
+  color: #fff;
+  line-height: 150%;
+}
+
+.obj2 {
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.playgame__container {
+  padding-top: 10%;
+  justify-content: center;
+  display: flex;
+}
+
+.playgame {
+  cursor: pointer;
 }/*# sourceMappingURL=main.css.map */
