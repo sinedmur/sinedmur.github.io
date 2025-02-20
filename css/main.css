@@ -306,7 +306,7 @@ body, html {
 .invite__container, .invitepr__container {
   margin-top: 15%;
   display: flex;
-  width: 85%;
+  width: 90%;
   border: 1px solid #fff;
   border-radius: 20px;
   justify-content: space-between;
@@ -345,5 +345,98 @@ body, html {
   margin-left: auto;
   margin-right: 5%;
   align-items: center;
+  display: flex;
+}
+
+.invbtns {
+  display: flex;
+  gap: 2%;
+  padding-top: 37%;
+}
+.invbtns .invite_btn {
+  position: relative;
+  display: inline-block;
+  width: 325px;
+  height: 60px;
+  cursor: pointer;
+}
+.invbtns .copy_btn {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+}
+.invbtns .invite-img, .invbtns .copy-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity 0.3s ease;
+}
+.invbtns .invite-img-active, .invbtns .copy-img-active {
+  display: none;
+}
+.invbtns .invite_btn:hover .invite-img {
+  opacity: 0;
+}
+.invbtns .invite_btn:hover .invite-img-active {
+  display: block;
+}
+.invbtns .copy_btn:hover .copy-img {
+  opacity: 0;
+}
+.invbtns .copy_btn:hover .copy-img-active {
+  display: block;
+}
+
+.friends {
+  display: flex;
+  align-items: center;
+  font-weight: 400;
+  font-size: 16px;
+  color: #fff;
+  padding-top: 4%;
+}
+
+.friend {
+  display: flex;
+  flex-direction: column;
+  font-weight: 400;
+  font-size: 24px;
+  color: #fff;
+  padding-left: 5%;
+  padding-top: 1%;
+}
+
+.friendname {
+  padding-left: 2%;
+}
+
+.refresh {
+  display: inline-block;
+  position: relative;
+  margin-left: auto;
+  padding-right: 5%;
+  cursor: pointer;
+}
+
+.refresh img {
+  transition: transform 0.5s ease;
+  transform-origin: center center; /* Убедитесь, что вращение происходит вокруг центра кнопки */
+  will-change: transform; /* Для улучшения производительности */
+}
+
+.refresh.rotate img {
+  transform: rotate(360deg);
+}
+
+.friends__container {
+  width: 100%;
+  padding-top: 5%;
+}
+
+.refresh__container {
   display: flex;
 }/*# sourceMappingURL=main.css.map */
