@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'missions.html',
         'buy.html',
         'settings.html',
-        'index.html',
+        'home.html',
         'music.html',
         'airdrop.html',
         'friends.html',
