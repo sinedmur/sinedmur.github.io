@@ -564,4 +564,77 @@ body, html {
 
 .playgame {
   cursor: pointer;
+}
+
+.wallet__container {
+  display: flex;
+  justify-content: center;
+  font-weight: 400;
+  font-size: 24px;
+  text-align: center;
+  color: #fff;
+  width: 100%;
+  padding-top: 15%;
+  padding-bottom: 15%;
+}
+
+.connect__container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  width: 90%;
+  justify-content: center;
+  margin: auto;
+  height: 60px;
+  cursor: pointer;
+}
+
+.connect {
+  padding-left: 2%;
+  font-weight: 400;
+  font-size: 20px;
+  color: #fff;
+}
+
+.address__container {
+  display: flex;
+  padding-top: 5%;
+  width: 90%;
+  margin: auto;
+  justify-content: space-between;
+}
+
+.trash__container {
+  display: flex;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.address_container {
+  display: flex;
+  border: 1px solid #fff;
+  border-radius: 20px;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 400;
+  font-size: 20px;
+  text-align: center;
+  color: #fff;
+  width: 295px;
+  padding: 0 5% 0 5%;
+  cursor: pointer;
+}
+
+.copymini, .tonicon {
+  padding-top: 1%;
+}
+
+.tonicon2 {
+  padding-top: 2%;
 }/*# sourceMappingURL=main.css.map */
