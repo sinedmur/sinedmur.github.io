@@ -39,7 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
         sourceNode.connect(gainNode);
-
         sourceNode.onended = () => {
             isPlaying = false;
         };
@@ -93,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Telegram Web App is not available');
         }
     }
-    
+
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
         const userAvatar = localStorage.getItem('userAvatar');
@@ -106,32 +105,136 @@ document.addEventListener('DOMContentLoaded', () => {
     initializeTelegramAuth();
     displayUserInfo();
 
-    // TON Connect (с добавлением проверки на уже зарегистрированный элемент)
+    // TON Connect
     function initializeTonConnect() {
-        const tonConnectElement = document.getElementById('ton-connect');
-        
-        if (tonConnectElement) {
-            // Проверяем, зарегистрирован ли уже кастомный элемент 'tc-root'
-            if (!customElements.get('tc-root')) {
-                // Если элемент не зарегистрирован, инициализируем TonConnect UI
-                try {
-                    window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                        manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
-                        buttonRootId: 'ton-connect',
-                        language: 'ru',
-                        uiPreferences: {
-                            borderRadius: 's',
-                        }
-                    });
-                    console.log('TON Connect UI initialized successfully');
-                } catch (error) {
-                    console.error('Error initializing TON Connect UI:', error);
+        const connectButton = document.querySelector('.connect__container');
+
+        if (!connectButton) {
+            console.error('TON Connect button not found');
+            return;
+        }
+
+        if (!window.tonConnectUI) {
+            window.tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+                manifestUrl: 'https://sinedmur.github.io/tonconnect-manifest.json',
+                language: 'ru',
+                uiPreferences: {
+                    borderRadius: 's',
                 }
+            });
+
+            // Проверка наличия сохраненного адреса в localStorage
+            const savedAddress = localStorage.getItem('tonWalletAddress');
+            if (savedAddress) {
+                // Адрес кошелька уже сохранён, обновляем UI
+                updateWalletUI(savedAddress);
             } else {
-                console.log('TON Connect UI is already initialized');
+                // Если адреса нет, инициируем подключение
+                window.tonConnectUI.onStatusChange((wallet) => {
+                    if (wallet) {
+                        // Сохраняем адрес кошелька в localStorage
+                        localStorage.setItem('tonWalletAddress', wallet.account.address);
+                        updateWalletUI(wallet.account.address);
+                    } else {
+                        resetWalletUI();
+                    }
+                });
+            }
+        }
+
+        connectButton.addEventListener('click', async () => {
+            try {
+                // Проверка, если кошелек уже подключен
+                const wallet = await window.tonConnectUI.connectWallet();
+                if (wallet) {
+                    // Сохраняем адрес кошелька в localStorage
+                    localStorage.setItem('tonWalletAddress', wallet.account.address);
+                    updateWalletUI(wallet.account.address);
+                }
+            } catch (error) {
+                console.error('Ошибка при подключении кошелька:', error);
+            }
+        });
+    }
+
+    function updateWalletUI(address) {
+        const connectContainer = document.querySelector('.connect__container');
+        const addressContainer = document.querySelector('.address__container');
+
+        if (connectContainer) connectContainer.style.display = 'none';
+        if (addressContainer) {
+            addressContainer.style.display = 'flex';
+            // Применяем функцию для преобразования TON-адреса
+            addressContainer.querySelector('.address').textContent = formatTonAddress(address);
+        }
+    }
+
+    function resetWalletUI() {
+        const connectContainer = document.querySelector('.connect__container');
+        const addressContainer = document.querySelector('.address__container');
+
+        if (connectContainer) connectContainer.style.display = 'flex';
+        if (addressContainer) addressContainer.style.display = 'none';
+    }
+
+    // Функция для преобразования HEX в Base64
+    function hexToBase64(hex) {
+        const bytes = Uint8Array.from(Buffer.from(hex, 'hex'));
+        return base64url(bytes);
+    }
+
+    // Функция для кодирования в Base64 URL-safe формат
+    function base64url(bytes) {
+        const base64 = btoa(String.fromCharCode.apply(null, bytes));
+        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    // Функция для преобразования HEX адреса в читаемый TON-адрес
+    function formatTonAddress(address) {
+        try {
+            // Если адрес уже в нужном формате, возвращаем его как есть
+            if (address.startsWith('UQC')) {
+                return address;
+            }
+
+            // Убираем префикс "0:", если он есть
+            if (address.startsWith('0:')) {
+                address = address.slice(2);
+            }
+
+            // Проверяем, если адрес в HEX формате
+            if (address.length === 64) {
+                // Преобразуем HEX в Base64
+                const base64Address = hexToBase64(address);
+                return base64Address;
+            }
+
+            // Если это не HEX адрес, возвращаем его как есть
+            return address;
+        } catch (error) {
+            console.error('Ошибка форматирования TON-адреса:', error);
+            return address; // Возвращаем исходный адрес в случае ошибки
+        }
+    }
+
+    // Подключаем TonConnect после загрузки каждой страницы
+    function loadPage(page) {
+        if (pageCache[page]) {
+            updateContent(pageCache[page]);
+            updateActiveButton(page);
+            if (page === 'wallet.html') {
+                initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
             }
         } else {
-            console.error('TON Connect element not found');
+            console.error(`Page ${page} not found in cache`);
+        }
+        displayUserInfo();
+        // Обновление состояния кошелька на каждой странице
+        const savedAddress = localStorage.getItem('tonWalletAddress');
+        if (savedAddress) {
+            updateWalletUI(savedAddress);
+        } else {
+            resetWalletUI();
         }
     }
 
