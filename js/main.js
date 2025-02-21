@@ -202,7 +202,7 @@ function showCopyFeedback() {
 
         // Возвращаем исходную иконку через 2 секунды
         setTimeout(() => {
-            copyButton.innerHTML = '<img src="./img/Copymini.svg" alt="Copy" />';
+            copyButton.innerHTML = '<img src="./img/copymini.svg" alt="Copy" />';
         }, 2000);
     }
 }
