@@ -126,17 +126,17 @@ document.addEventListener('DOMContentLoaded', () => {
             // Проверка наличия сохраненного адреса в localStorage
             const savedAddress = localStorage.getItem('tonWalletAddress');
             if (savedAddress) {
-                // Адрес кошелька уже сохранён, обновляем UI
-                updateWalletUI(savedAddress);
+                updateWalletUI(savedAddress); // Обновляем UI с сохраненным адресом
             } else {
                 // Если адреса нет, инициируем подключение
                 window.tonConnectUI.onStatusChange((wallet) => {
                     if (wallet) {
-                        // Сохраняем адрес кошелька в localStorage
+                        console.log('Received wallet address:', wallet.account.address);
                         localStorage.setItem('tonWalletAddress', wallet.account.address);
                         updateWalletUI(wallet.account.address);
                     } else {
                         resetWalletUI();
+                        localStorage.removeItem('tonWalletAddress');
                     }
                 });
             }
@@ -144,10 +144,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         connectButton.addEventListener('click', async () => {
             try {
-                // Проверка, если кошелек уже подключен
                 const wallet = await window.tonConnectUI.connectWallet();
                 if (wallet) {
-                    // Сохраняем адрес кошелька в localStorage
+                    console.log('Received wallet address:', wallet.account.address);
                     localStorage.setItem('tonWalletAddress', wallet.account.address);
                     updateWalletUI(wallet.account.address);
                 }
@@ -157,87 +156,145 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function updateWalletUI(address) {
-        const connectContainer = document.querySelector('.connect__container');
-        const addressContainer = document.querySelector('.address__container');
+    // Функция для получения non-bounceable адреса
+async function getNonBounceableAddress(address) {
+    try {
+        const response = await fetch(`https://dton.io/api/address/${address}`);
+        const data = await response.json();
 
-        if (connectContainer) connectContainer.style.display = 'none';
+        if (data && data.success && data.mainnet && data.mainnet.base64urlsafe && data.mainnet.base64urlsafe.non_bounceable) {
+            return data.mainnet.base64urlsafe.non_bounceable;
+        } else {
+            console.error('Non-bounceable address not found in response:', data);
+            return address; // Возвращаем исходный адрес, если non-bounceable адрес не найден
+        }
+    } catch (error) {
+        console.error('Error fetching non-bounceable address:', error);
+        return address; // Возвращаем исходный адрес в случае ошибки
+    }
+}
+
+// Функция для сокращения адреса
+function shortenAddress(address) {
+    const start = address.slice(0, 6); // Первые 6 символов
+    const end = address.slice(-4); // Последние 4 символа
+    return `${start}...${end}`;
+}
+
+// Функция для копирования текста в буфер обмена
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            console.log('Адрес скопирован:', text);
+            showCopyFeedback(); // Показываем обратную связь
+        })
+        .catch((error) => {
+            console.error('Ошибка при копировании:', error);
+        });
+}
+
+// Функция для отображения обратной связи
+function showCopyFeedback() {
+    const copyButton = document.querySelector('.copymini');
+    if (copyButton) {
+        // Меняем иконку на "галочку"
+        copyButton.innerHTML = '<img src="./img/Checkmark.svg" alt="Copied" />';
+
+        // Возвращаем исходную иконку через 2 секунды
+        setTimeout(() => {
+            copyButton.innerHTML = '<img src="./img/Copymini.svg" alt="Copy" />';
+        }, 2000);
+    }
+}
+
+// Функция для обновления UI с адресом кошелька
+async function updateWalletUI(address) {
+    const connectContainer = document.querySelector('.connect__container');
+    const addressContainer = document.querySelector('.address__container');
+
+    if (connectContainer) connectContainer.style.display = 'none'; // Скрываем кнопку подключения
+    if (addressContainer) {
+        addressContainer.style.display = 'flex'; // Показываем контейнер с адресом
+        const nonBounceableAddress = await getNonBounceableAddress(address); // Получаем non-bounceable адрес
+        const shortAddress = shortenAddress(nonBounceableAddress); // Сокращаем адрес
+        addressContainer.querySelector('.address').textContent = shortAddress; // Выводим сокращенный адрес
+        addressContainer.querySelector('.address').title = nonBounceableAddress; // Добавляем полный адрес в подсказку
+    }
+}
+
+// Обработчик события для кнопки copymini
+document.addEventListener('click', (event) => {
+    const copyButton = event.target.closest('.copymini');
+    if (copyButton) {
+        const addressContainer = document.querySelector('.address__container');
         if (addressContainer) {
-            addressContainer.style.display = 'flex';
-            // Применяем функцию для преобразования TON-адреса
-            addressContainer.querySelector('.address').textContent = formatTonAddress(address);
+            const fullAddress = addressContainer.querySelector('.address').title; // Получаем полный адрес из атрибута title
+            if (fullAddress) {
+                copyToClipboard(fullAddress); // Копируем адрес
+            } else {
+                console.error('Полный адрес не найден');
+            }
         }
     }
-
+});
+    // Функция для сброса UI кошелька
     function resetWalletUI() {
         const connectContainer = document.querySelector('.connect__container');
         const addressContainer = document.querySelector('.address__container');
 
-        if (connectContainer) connectContainer.style.display = 'flex';
-        if (addressContainer) addressContainer.style.display = 'none';
+        if (connectContainer) connectContainer.style.display = 'flex'; // Показываем кнопку подключения
+        if (addressContainer) addressContainer.style.display = 'none'; // Скрываем контейнер с адресом
     }
 
-    // Функция для преобразования HEX в Base64
-    function hexToBase64(hex) {
-        const bytes = Uint8Array.from(Buffer.from(hex, 'hex'));
-        return base64url(bytes);
-    }
-
-    // Функция для кодирования в Base64 URL-safe формат
-    function base64url(bytes) {
-        const base64 = btoa(String.fromCharCode.apply(null, bytes));
-        return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
-
-    // Функция для преобразования HEX адреса в читаемый TON-адрес
-    function formatTonAddress(address) {
-        try {
-            // Если адрес уже в нужном формате, возвращаем его как есть
-            if (address.startsWith('UQC')) {
-                return address;
-            }
-
-            // Убираем префикс "0:", если он есть
-            if (address.startsWith('0:')) {
-                address = address.slice(2);
-            }
-
-            // Проверяем, если адрес в HEX формате
-            if (address.length === 64) {
-                // Преобразуем HEX в Base64
-                const base64Address = hexToBase64(address);
-                return base64Address;
-            }
-
-            // Если это не HEX адрес, возвращаем его как есть
-            return address;
-        } catch (error) {
-            console.error('Ошибка форматирования TON-адреса:', error);
-            return address; // Возвращаем исходный адрес в случае ошибки
-        }
-    }
-
-    // Подключаем TonConnect после загрузки каждой страницы
-    function loadPage(page) {
-        if (pageCache[page]) {
-            updateContent(pageCache[page]);
-            updateActiveButton(page);
-            if (page === 'wallet.html') {
-                initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
-            }
+    // Функция для отключения кошелька
+    function disconnectWallet() {
+        if (window.tonConnectUI) {
+            window.tonConnectUI.disconnect();
+            localStorage.removeItem('tonWalletAddress');
+            resetWalletUI();
+            console.log('Кошелек отключен');
         } else {
-            console.error(`Page ${page} not found in cache`);
+            console.error('TON Connect UI не инициализирован');
         }
-        displayUserInfo();
-        // Обновление состояния кошелька на каждой странице
+    }
+
+    // Делегирование события для кнопки с классом trash__container
+    document.addEventListener('click', (event) => {
+        const trashButton = event.target.closest('.trash__container');
+        if (trashButton) {
+            disconnectWallet();
+        }
+    });
+
+
+    // Инициализация TonConnect и обновление UI при каждом переходе
+    function updateUI() {
         const savedAddress = localStorage.getItem('tonWalletAddress');
         if (savedAddress) {
             updateWalletUI(savedAddress);
         } else {
             resetWalletUI();
         }
+    
+        if (window.tonConnectUI) {
+            window.tonConnectUI.getWallet().then((wallet) => {
+                if (wallet) {
+                    localStorage.setItem('tonWalletAddress', wallet.account.address);
+                    updateWalletUI(wallet.account.address);
+                } else {
+                    resetWalletUI();
+                    localStorage.removeItem('tonWalletAddress');
+                }
+            }).catch((error) => {
+                console.error("Ошибка при проверке состояния кошелька:", error);
+            });
+        }
     }
 
+    // Обновляем UI при каждом переходе на страницу
+    updateUI();
+
+    // Инициализация TonConnect
     initializeTonConnect();
 
     // Загрузка страниц
@@ -295,6 +352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (page === 'wallet.html') {
                 initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
             }
+            updateUI(); // Проверяем подключение кошелька после загрузки страницы
         } else {
             console.error(`Page ${page} not found in cache`);
         }
