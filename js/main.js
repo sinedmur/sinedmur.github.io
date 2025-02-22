@@ -7,11 +7,25 @@ document.addEventListener('DOMContentLoaded', () => {
     let pausedAt = 0;
     let gainNode;
 
+    const song = document.querySelector('.song');
     const audioContainer = document.querySelector('.audio__container');
-    const playerContainer = document.querySelector('.player__container'); // Основной плеер
+    const playerContainer = document.querySelector('.player__container');
+    const undermenuContainer = document.querySelector('.undermenu__container'); // Основной плеер
     let touchStartY = 0;
     let touchEndY = 0;
     
+    if (audioContainer && playerContainer) {
+        song.addEventListener('click', function () {
+            audioContainer.classList.add('hidden'); // Скрываем аудио-контейнер
+            playerContainer.classList.add('show'); // Показываем плеер
+            undermenuContainer.classList.add('hidden');
+        });
+
+        // playerContainer.addEventListener('click', function () {
+        //     audioContainer.classList.remove('hidden'); // Показываем аудио-контейнер
+        //     playerContainer.classList.remove('show'); // Скрываем плеер
+        // });
+    }
 
     // Обработчик для начала свайпа в audio__container (если мы находимся в маленьком плеере)
     audioContainer.addEventListener('touchstart', (e) => {
@@ -54,6 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audioContainer && playerContainer) {
             audioContainer.classList.add('hidden');  // Скрываем маленькое окно
             playerContainer.classList.add('show');  // Показываем плеер
+            undermenuContainer.classList.add('hidden');
         }
     }
 
@@ -62,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (audioContainer && playerContainer) {
             audioContainer.classList.remove('hidden');  // Показываем маленькое окно
             playerContainer.classList.remove('show');  // Скрываем плеер
+            undermenuContainer.classList.remove('hidden');
         }
     }
 
