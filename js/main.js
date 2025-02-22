@@ -6,29 +6,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let startTime = 0;
     let pausedAt = 0;
     let gainNode;
-    let startX = 0; // Начальная позиция свайпа
-    let endX = 0;   // Конечная позиция свайпа
-
-    // Функция для отслеживания свайпа
-    function handleSwipe(event) {
-        const touch = event.changedTouches[0];
-        endX = touch.pageX;
-
-        // Если свайп был от левого края и в центре экрана
-        if (startX < 50 && endX > startX + 100) {
-            // Здесь можно вызвать функцию для перехода назад
-            window.history.back(); // Переход на предыдущую страницу
-        }
-    }
-
-    // Отслеживаем начало свайпа
-    document.addEventListener('touchstart', (event) => {
-        const touch = event.changedTouches[0];
-        startX = touch.pageX; // Сохраняем начальную позицию
-    });
-
-    // Отслеживаем завершение свайпа
-    document.addEventListener('touchend', handleSwipe);
 
     const playButton = document.querySelector('.btn_play');
 
