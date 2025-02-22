@@ -7,6 +7,65 @@ document.addEventListener('DOMContentLoaded', () => {
     let pausedAt = 0;
     let gainNode;
 
+    const audioContainer = document.querySelector('.audio__container');
+    const playerContainer = document.querySelector('.player__container'); // Основной плеер
+    let touchStartY = 0;
+    let touchEndY = 0;
+    
+
+    // Обработчик для начала свайпа в audio__container (если мы находимся в маленьком плеере)
+    audioContainer.addEventListener('touchstart', (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    // Обработчик для завершения свайпа в audio__container (если мы находимся в маленьком плеере)
+    audioContainer.addEventListener('touchend', (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipeFromAudioContainer();
+    });
+
+    // Обработчик для начала свайпа в player__container (если мы в большом плеере)
+    playerContainer.addEventListener('touchstart', (e) => {
+        touchStartY = e.changedTouches[0].screenY;
+    });
+
+    // Обработчик для завершения свайпа в player__container (если мы в большом плеере)
+    playerContainer.addEventListener('touchend', (e) => {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipeFromPlayerContainer();
+    });
+
+    // Функция для обработки свайпа из audio__container
+    function handleSwipeFromAudioContainer() {
+        if (touchStartY - touchEndY > 50) {  // Свайп вверх
+            expandPlayer();  // Разворачиваем плеер
+        }
+    }
+
+    // Функция для обработки свайпа из player__container
+    function handleSwipeFromPlayerContainer() {
+        if (touchEndY - touchStartY > 50) {  // Свайп вниз
+            collapsePlayer();  // Сворачиваем плеер
+        }
+    }
+
+    // Функция для открытия плеера
+    function expandPlayer() {
+        if (audioContainer && playerContainer) {
+            audioContainer.classList.add('hidden');  // Скрываем маленькое окно
+            playerContainer.classList.add('show');  // Показываем плеер
+        }
+    }
+
+    // Функция для сворачивания плеера
+    function collapsePlayer() {
+        if (audioContainer && playerContainer) {
+            audioContainer.classList.remove('hidden');  // Показываем маленькое окно
+            playerContainer.classList.remove('show');  // Скрываем плеер
+        }
+    }
+
+    
     const playButton = document.querySelector('.btn_play');
 
     async function loadAudio() {
