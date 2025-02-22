@@ -121,6 +121,11 @@ body, html {
   transition: opacity 0.3s ease;
 }
 
+.undermenu__container.hidden {
+  opacity: 0;
+  transform: translateY(100%) translateX(-50%);
+}
+
 .buttons {
   display: flex;
   justify-content: space-between;
@@ -180,6 +185,7 @@ body, html {
   background: #d21e64; /* Фон, как у .mainmenu */
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+  transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .btn_menu, .btn_music, .btn_airdrop, .btn_friends, .btn_wallet {
