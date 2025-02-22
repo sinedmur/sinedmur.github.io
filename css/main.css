@@ -603,6 +603,7 @@ body, html {
   width: 90%;
   margin: auto;
   justify-content: space-between;
+  display: none;
 }
 
 .trash__container {
@@ -637,4 +638,8 @@ body, html {
 
 .tonicon2 {
   padding-top: 2%;
+}
+
+.disabled {
+  pointer-events: none; /* Отключаем клик */
 }/*# sourceMappingURL=main.css.map */
