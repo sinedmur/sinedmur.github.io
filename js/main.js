@@ -157,22 +157,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Функция для получения non-bounceable адреса
-async function getNonBounceableAddress(address) {
-    try {
-        const response = await fetch(`https://dton.io/api/address/${address}`);
-        const data = await response.json();
-
-        if (data && data.success && data.mainnet && data.mainnet.base64urlsafe && data.mainnet.base64urlsafe.non_bounceable) {
-            return data.mainnet.base64urlsafe.non_bounceable;
-        } else {
-            console.error('Non-bounceable address not found in response:', data);
-            return address; // Возвращаем исходный адрес, если non-bounceable адрес не найден
+    async function getNonBounceableAddress(address) {
+        try {
+            const response = await fetch(`https://dton.io/api/address/${address}`);
+            const data = await response.json();
+    
+            if (data && data.success && data.mainnet && data.mainnet.base64urlsafe && data.mainnet.base64urlsafe.non_bounceable) {
+                return data.mainnet.base64urlsafe.non_bounceable;
+            } else {
+                console.error('Non-bounceable address not found or not processed yet:', data);
+                return null; // Возвращаем null, если адрес не был обработан
+            }
+        } catch (error) {
+            console.error('Error fetching non-bounceable address:', error);
+            return null; // Возвращаем null в случае ошибки
         }
-    } catch (error) {
-        console.error('Error fetching non-bounceable address:', error);
-        return address; // Возвращаем исходный адрес в случае ошибки
     }
-}
 
 // Функция для сокращения адреса
 function shortenAddress(address) {
@@ -202,7 +202,7 @@ function showCopyFeedback() {
 
         // Возвращаем исходную иконку через 2 секунды
         setTimeout(() => {
-            copyButton.innerHTML = '<img src="./img/copymini.svg" alt="Copy" />';
+            copyButton.innerHTML = '<img src="./img/Copymini.svg" alt="Copy" />';
         }, 2000);
     }
 }
@@ -214,11 +214,16 @@ async function updateWalletUI(address) {
 
     if (connectContainer) connectContainer.style.display = 'none'; // Скрываем кнопку подключения
     if (addressContainer) {
-        addressContainer.style.display = 'flex'; // Показываем контейнер с адресом
         const nonBounceableAddress = await getNonBounceableAddress(address); // Получаем non-bounceable адрес
-        const shortAddress = shortenAddress(nonBounceableAddress); // Сокращаем адрес
-        addressContainer.querySelector('.address').textContent = shortAddress; // Выводим сокращенный адрес
-        addressContainer.querySelector('.address').title = nonBounceableAddress; // Добавляем полный адрес в подсказку
+
+        if (nonBounceableAddress) {
+            const shortAddress = shortenAddress(nonBounceableAddress); // Сокращаем адрес
+            addressContainer.style.display = 'flex'; // Показываем контейнер с адресом
+            addressContainer.querySelector('.address').textContent = shortAddress; // Выводим сокращенный адрес
+            addressContainer.querySelector('.address').title = nonBounceableAddress; // Добавляем полный адрес в подсказку
+        } else {
+            addressContainer.style.display = 'none'; // Если адрес не обработан, скрываем его
+        }
     }
 }
 
