@@ -6,6 +6,29 @@ document.addEventListener('DOMContentLoaded', () => {
     let startTime = 0;
     let pausedAt = 0;
     let gainNode;
+    let startX = 0; // Начальная позиция свайпа
+    let endX = 0;   // Конечная позиция свайпа
+
+    // Функция для отслеживания свайпа
+    function handleSwipe(event) {
+        const touch = event.changedTouches[0];
+        endX = touch.pageX;
+
+        // Если свайп был от левого края и в центре экрана
+        if (startX < 50 && endX > startX + 100) {
+            // Здесь можно вызвать функцию для перехода назад
+            window.history.back(); // Переход на предыдущую страницу
+        }
+    }
+
+    // Отслеживаем начало свайпа
+    document.addEventListener('touchstart', (event) => {
+        const touch = event.changedTouches[0];
+        startX = touch.pageX; // Сохраняем начальную позицию
+    });
+
+    // Отслеживаем завершение свайпа
+    document.addEventListener('touchend', handleSwipe);
 
     const playButton = document.querySelector('.btn_play');
 
@@ -353,7 +376,7 @@ document.addEventListener('click', (event) => {
     function loadPage(page) {
         if (pageCache[page]) {
             updateContent(pageCache[page]);
-            updateActiveButton(page);
+            updateActiveButton(page); // Убираем кнопку с активной страницей
             if (page === 'wallet.html') {
                 initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
             }
@@ -380,8 +403,15 @@ document.addEventListener('click', (event) => {
             if (img) {
                 img.src = img.getAttribute('data-default');
             }
+            
+            // Убираем или добавляем класс disabled
+            if (button.getAttribute('data-page') === page) {
+                button.classList.add('disabled'); // Делаем кнопку неактивной
+            } else {
+                button.classList.remove('disabled'); // Включаем кнопку, если это не текущая страница
+            }
         });
-
+    
         const activeButton = document.querySelector(`[data-page="${page}"]`);
         if (activeButton) {
             const img = activeButton.querySelector('img');
@@ -418,3 +448,4 @@ document.addEventListener('click', (event) => {
     // Начинаем наблюдение за изменениями в DOM
     observer.observe(document.body, { childList: true, subtree: true });
 });
+
