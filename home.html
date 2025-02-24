@@ -24,6 +24,8 @@
     <link rel="stylesheet" href="./css/main.css" />
     <script src="https://unpkg.com/@tonconnect/ui@latest/dist/tonconnect-ui.min.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.min.js"></script>
+
 </head>
 <body>
     <audio class="audio" src="./audio/chains.mp3" preload="auto"></audio>
@@ -48,8 +50,11 @@
         </div>
         <div class="player__container">
             <div class="title_player">
-                <div class="playlist">ПЛЕЙЛИСТ</div>
-                <div class="playlist_name">LISTEN TO EARN</div>
+                <div class="close"><img src="./img/Close.svg" alt="btn"></div>
+                <div class="title__player">
+                    <div class="playlist">ПЛЕЙЛИСТ</div>
+                    <div class="playlist_name">LISTEN TO EARN</div>
+                </div>
             </div>
             <div class="cover"><img class="cover__src" src="./img/cover1.svg" alt="cover"></div>
             <div class="song__container">
@@ -57,16 +62,32 @@
                     <div class="songname">Цепи <img src="./img/Explicit.svg" alt="exp"></div>
                     <div class="songauthor">Скриптонит feat. 104</div>
                 </div>
-                <div class="like"><img class="like__src" src="" alt=""></div>
+                <div class="like"><img class="like__src" src="./img/Like.svg" alt="btn"></div>
             </div>
             <div class="pr__container">
-                <div class="pr"><img src="" alt=""></div>
+                <div class="pr">Здесь могла быть Ваша реклама<img src="" alt=""></div>
             </div>
             <div class="progress__container">
                 <div class="progress"></div>
             </div>
             <div class="buttons__container">
-
+                <div class="stroke1">
+                    <div class="random"><img class="random__src" src="./img/Random.svg" alt="btn"></div>
+                    <div class="prev_btn"><img src="./img/Prev.svg" alt="btn"></div>
+                    <div class="play_btn"><img class="play__src" src="./img/Play.svg" alt="btn"></div>
+                    <div class="next_btn"><img src="./img/Next.svg" alt="btn"></div>
+                    <div class="reverse_btn"><img class="reverse__src" src="./img/Reverse.svg" alt="btn"></div>
+                </div>
+                <div class="stroke2">
+                    <div class="add_btn"><img class="add__src" src="./img/+.svg" alt="btn"></div>
+                    <div class="text_btn"><img src="./img/T.svg" alt="btn"></div>
+                </div>
+            </div>
+            <div class="balance__container">
+                <div class="balances">
+                    <div class="tokenmini"><img src="./img/tokenMini.svg" alt="img"></div>
+                    <div class="balance2">1000000</div>
+                </div>
             </div>
         </div>
             <div class="audio__container">
