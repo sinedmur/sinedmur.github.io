@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pausedAt = 0;
     let gainNode;
 
+    const close = document.querySelector('.close');
     const song = document.querySelector('.song');
     const audioContainer = document.querySelector('.audio__container');
     const playerContainer = document.querySelector('.player__container');
@@ -21,10 +22,11 @@ document.addEventListener('DOMContentLoaded', () => {
             undermenuContainer.classList.add('hidden');
         });
 
-        // playerContainer.addEventListener('click', function () {
-        //     audioContainer.classList.remove('hidden'); // Показываем аудио-контейнер
-        //     playerContainer.classList.remove('show'); // Скрываем плеер
-        // });
+        close.addEventListener('click', function () {
+            audioContainer.classList.remove('hidden'); // Показываем аудио-контейнер
+            playerContainer.classList.remove('show'); // Скрываем плеер
+            undermenuContainer.classList.remove('hidden');
+        });
     }
 
     // Обработчик для начала свайпа в audio__container (если мы находимся в маленьком плеере)
@@ -499,5 +501,27 @@ document.addEventListener('click', (event) => {
 
     // Начинаем наблюдение за изменениями в DOM
     observer.observe(document.body, { childList: true, subtree: true });
-});
 
+    const coverImage = document.querySelector(".cover__src"); // Картинка обложки
+    const colorThief = new ColorThief(); // Объект ColorThief
+
+    function applyColor() {
+        try {
+            if (coverImage.naturalWidth > 0) {
+                const color = colorThief.getColor(coverImage);
+                console.log("Средний цвет:", color);
+                playerContainer.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+                audioContainer.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+            }
+        } catch (error) {
+            console.error("Ошибка получения цвета: ", error);
+        }
+    }
+
+    if (coverImage.complete) {
+        applyColor();
+    } else {
+        coverImage.addEventListener("load", applyColor);
+    }
+
+});
