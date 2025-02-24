@@ -681,7 +681,6 @@ body, html {
 
 .title_player {
   display: flex;
-  padding-top: 20%;
   padding-left: 3%;
 }
 
@@ -703,7 +702,7 @@ body, html {
 }
 
 .playlist_name {
-  font-weight: 400;
+  font-weight: 800;
   font-size: 16px;
   color: #fff;
 }
@@ -725,14 +724,14 @@ body, html {
 }
 
 .songname {
-  font-weight: 500;
+  font-weight: 800;
   font-size: 24px;
   color: #fff;
 }
 
 .songauthor {
   font-weight: 400;
-  font-size: 14px;
+  font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
 }
 
@@ -768,4 +767,62 @@ body, html {
   margin-top: 5%;
   align-items: center;
   justify-content: center;
+}
+
+.duration__container {
+  padding-top: 2%;
+  font-weight: 400;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  display: flex;
+  justify-content: space-between;
+  width: 95%;
+  margin: auto;
+}
+
+.buttons__container {
+  padding-top: 3%;
+  width: 100%;
+}
+
+.stroke1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12%;
+}
+
+.stroke2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 3%;
+  padding-left: 4.8%;
+  padding-right: 5.5%;
+}
+
+.balance__container {
+  border-left: 1px solid #fff;
+  border-right: 1px solid #fff;
+  border-top: 1px solid #fff;
+  border-radius: 10px 10px 0 0;
+  width: 70%;
+  height: 4%;
+  display: flex;
+  left: 50%; /* Сдвигаем на 50% от левого края */
+  transform: translateX(-50%); /* Центрируем по горизонтали */
+  position: fixed;
+  bottom: 0;
+  justify-content: center;
+}
+
+.balances {
+  display: flex;
+  align-items: center;
+  bottom: 0;
+  position: fixed;
+  gap: 10%;
+  font-weight: 400;
+  font-size: 14px;
+  color: #fff;
 }/*# sourceMappingURL=main.css.map */
