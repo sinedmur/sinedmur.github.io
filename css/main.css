@@ -679,4 +679,95 @@ body, html {
 .settings-cover-img {
   width: 100%;
   height: auto; /* Изменяется в зависимости от пропорций изображения */
+}
+
+.title_player {
+  display: flex;
+  padding-top: 15%;
+  padding-left: 3%;
+}
+
+.title__player {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  width: 86%;
+}
+
+.playlist, .playlist_name {
+  justify-content: center;
+}
+
+.playlist {
+  font-weight: 400;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.playlist_name {
+  font-weight: 400;
+  font-size: 16px;
+  color: #fff;
+}
+
+.cover {
+  padding-top: 5%;
+  display: flex;
+  justify-content: center;
+}
+
+.song__container {
+  padding-top: 3%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-left: 3%;
+  padding-right: 3%;
+  width: 100%;
+}
+
+.songname {
+  font-weight: 500;
+  font-size: 24px;
+  color: #fff;
+}
+
+.songauthor {
+  font-weight: 400;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.songname img {
+  width: 12px;
+  height: 12px;
+}
+
+.progress__container {
+  background: #e0d9d9;
+  border-radius: 10px;
+  width: 95%;
+  height: 7px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin: auto;
+}
+.progress__container .progress {
+  border-radius: 10px;
+  background: #ffffff;
+  height: 7px;
+}
+
+.pr__container {
+  display: flex;
+  border-radius: 10px;
+  width: 95%;
+  background: #fff;
+  margin: auto;
+  height: 100px;
+  margin-bottom: 5%;
+  margin-top: 5%;
+  align-items: center;
+  justify-content: center;
 }/*# sourceMappingURL=main.css.map */
