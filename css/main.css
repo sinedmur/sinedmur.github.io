@@ -681,6 +681,7 @@ body, html {
 
 .title_player {
   display: flex;
+  padding-top: 20%;
   padding-left: 3%;
 }
 
