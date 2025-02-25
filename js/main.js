@@ -1,5 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-    
+      // Переключение в полноэкранный режим при загрузке
+    if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
+        Telegram.WebApp.requestFullscreen();
+        console.log("Мини-приложение перешло в полноэкранный режим.");
+    } else {
+        console.error("Telegram WebApp API или метод requestFullscreen() недоступен.");
+    }
     let audioContext;
     let audioBuffer;
     let sourceNode;
