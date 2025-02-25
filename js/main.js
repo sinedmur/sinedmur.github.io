@@ -1,3 +1,7 @@
+if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.expand(); // Расширяет WebView на весь экран
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     let audioContext;
     let audioBuffer;
@@ -82,10 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
             undermenuContainer.classList.remove('hidden');
         }
     }
-    function fullSize () {
-    Telegram.WebApp.expand();
-    }
-    fullSize();
 
     
     const playButton = document.querySelector('.btn_play');
