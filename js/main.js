@@ -10,7 +10,6 @@ const body = document.body; // Или выберите нужный элемен
     } else if (body.msRequestFullscreen) { // Для IE/Edge
         body.msRequestFullscreen();
     }
-});
     
     let audioContext;
     let audioBuffer;
