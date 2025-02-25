@@ -1,7 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.expand(); // Расширяет WebView на весь экран
+    if (window.TelegramWebApp) {
+    TelegramWebApp.ready();
+
+    // Переводим Web App в fullscreen
+    TelegramWebApp.expand();
+
+    // Или принудительно полноэкранный режим
+    function enterFullscreen() {
+        const element = document.documentElement;
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) { // Firefox
+            element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) { // Chrome, Safari
+            element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) { // IE/Edge
+            element.msRequestFullscreen();
+        }
     }
+
+    // Включаем полноэкранный режим при загрузке
+    enterFullscreen();
+}
+
     let audioContext;
     let audioBuffer;
     let sourceNode;
