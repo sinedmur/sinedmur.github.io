@@ -1,8 +1,7 @@
-if (window.Telegram && Telegram.WebApp) {
-    Telegram.WebApp.expand(); // Расширяет WebView на весь экран
-}
-
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.expand(); // Расширяет WebView на весь экран
+    }
     let audioContext;
     let audioBuffer;
     let sourceNode;
