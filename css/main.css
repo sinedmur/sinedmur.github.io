@@ -303,6 +303,11 @@ body, html {
   animation: pulse 1s ease-in-out infinite;
 }
 
+.play_btn.loading img {
+  /* Или используйте пульсацию: */
+  animation: pulse 1s ease-in-out infinite;
+}
+
 .airdrop__container {
   margin-top: 15%;
   display: flex;
@@ -832,4 +837,25 @@ body, html {
   font-weight: 400;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
+}
+
+.missions__container {
+  padding-top: 15%;
+  font-weight: 400;
+  font-size: 24px;
+  text-align: center;
+  color: #fff;
+  width: 95%;
+  margin: auto;
+}
+
+.play_btn {
+  width: 45px; /* Фиксированная ширина для кнопок */
+  height: 45px; /* Фиксированная высота для кнопок */
+  cursor: pointer;
+  background-size: contain; /* Для корректного отображения иконок */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1%;
 }/*# sourceMappingURL=main.css.map */
