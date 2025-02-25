@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
     const playButton = document.querySelector('.btn_play');
-
+    const playButton2 = document.querySelector('.play_btn')
     async function loadAudio() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -93,21 +93,24 @@ document.addEventListener('DOMContentLoaded', () => {
             gainNode.connect(audioContext.destination);
         }
 
-        if (playButton) {
+        if (playButton, playButton2) {
             playButton.classList.add('loading');
+            playButton2.classList.add('loading');
         }
 
         try {
             const response = await fetch('./audio/chains.mp3');
             const arrayBuffer = await response.arrayBuffer();
             audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            if (playButton) {
+            if (playButton, playButton2) {
                 playButton.classList.remove('loading');
+                playButton2.classList.remove('loading');
             }
         } catch (error) {
             console.error('Error loading audio:', error);
-            if (playButton) {
+            if (playButton, playButton2) {
                 playButton.classList.remove('loading');
+                playButton2.classList.remove('loading');
             }
         }
     }
@@ -140,15 +143,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    if (playButton) {
+    if (playButton, playButton2) {
         playButton.addEventListener('click', async () => {
             if (!audioBuffer) await loadAudio();
             if (isPlaying) {
                 pauseAudio();
                 playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="img__src" src="./img/Play.svg" alt="btn" />';
             } else {
                 playAudio();
                 playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="img__src" src="./img/Pause.svg" alt="btn" />';
+            }
+        });
+        playButton2.addEventListener('click', async () => {
+            if (!audioBuffer) await loadAudio();
+            if (isPlaying) {
+                pauseAudio();
+                playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="img__src" src="./img/Play.svg" alt="btn" />';
+            } else {
+                playAudio();
+                playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="img__src" src="./img/Pause.svg" alt="btn" />';
             }
         });
     }
