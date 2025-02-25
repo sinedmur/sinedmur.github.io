@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-
-const body = document.body; // Или выберите нужный элемент
     
     let audioContext;
     let audioBuffer;
