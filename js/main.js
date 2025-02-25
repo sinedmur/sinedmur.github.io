@@ -85,23 +85,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     
     const playButton = document.querySelector('.btn_play');
-    const playButton2 = document.querySelector('.play_btn')
+    const playButton2 = document.querySelector('.play_btn');
+    const nextButton = document.querySelector('.btn_next');
+    const progressBar = document.querySelector('.progress');
+    const timeDisplay = document.querySelector('.time'); // Для отображения текущего времени
+    const endTimeDisplay = document.querySelector('.end__time'); // Для отображения полного времени
+    let endTime = 0;
+    
     async function loadAudio() {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
             gainNode = audioContext.createGain();
             gainNode.connect(audioContext.destination);
         }
-
+    
         if (playButton, playButton2) {
             playButton.classList.add('loading');
             playButton2.classList.add('loading');
         }
-
+    
         try {
             const response = await fetch('./audio/chains.mp3');
             const arrayBuffer = await response.arrayBuffer();
             audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            endTime = audioBuffer.duration;  // Устанавливаем полное время аудио
+            
+            // Обновляем отображение полного времени
+            const totalMinutes = Math.floor(endTime / 60);
+            const totalSeconds = Math.floor(endTime % 60);
+            endTimeDisplay.textContent = `${totalMinutes}:${totalSeconds < 10 ? '0' + totalSeconds : totalSeconds}`;
+    
             if (playButton, playButton2) {
                 playButton.classList.remove('loading');
                 playButton2.classList.remove('loading');
@@ -114,25 +127,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
+    
     function createSourceNode() {
         sourceNode = audioContext.createBufferSource();
         sourceNode.buffer = audioBuffer;
         sourceNode.connect(gainNode);
         sourceNode.onended = () => {
             isPlaying = false;
+            updateProgress();
         };
     }
-
+    
     function playAudio() {
         if (!audioBuffer || isPlaying) return;
-
+    
         createSourceNode();
         sourceNode.start(0, pausedAt);
         startTime = audioContext.currentTime;
         isPlaying = true;
+        requestAnimationFrame(updateProgress);
     }
-
+    
     function pauseAudio() {
         if (sourceNode && isPlaying) {
             pausedAt += audioContext.currentTime - startTime;
@@ -142,34 +157,60 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = false;
         }
     }
-
-    if (playButton, playButton2) {
+    
+    function updateProgress() {
+        if (!isPlaying || !audioBuffer) return;
+        
+        const currentTime = (audioContext.currentTime - startTime) + pausedAt;
+        const duration = audioBuffer.duration;
+        const progress = (currentTime / duration) * 100;
+        
+        progressBar.style.width = `${progress}%`;
+    
+        // Обновляем отображение времени
+        const minutes = Math.floor(currentTime / 60);
+        const seconds = Math.floor(currentTime % 60);
+        timeDisplay.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+    
+        if (isPlaying) {
+            requestAnimationFrame(updateProgress);
+        }
+    }
+    
+    if (playButton, playButton2, nextButton) {
         playButton.addEventListener('click', async () => {
             if (!audioBuffer) await loadAudio();
             if (isPlaying) {
                 pauseAudio();
                 playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
-                playButton2.innerHTML = '<img class="img__src" src="./img/Play.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="play__src" src="./img/Play.svg" alt="btn" />';
+                nextButton.innerHTML = '<img class="img__close" src="./img/Close.svg" alt="btn" />';
             } else {
                 playAudio();
                 playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
-                playButton2.innerHTML = '<img class="img__src" src="./img/Pause.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="play__src" src="./img/Pause.svg" alt="btn" />';
+                nextButton.innerHTML = '<img class="img__close" src="./img/Nextmini.svg" alt="btn" />';
             }
         });
+    
         playButton2.addEventListener('click', async () => {
             if (!audioBuffer) await loadAudio();
             if (isPlaying) {
                 pauseAudio();
                 playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
-                playButton2.innerHTML = '<img class="img__src" src="./img/Play.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="play__src" src="./img/Play.svg" alt="btn" />';
+                nextButton.innerHTML = '<img class="img__close" src="./img/Close.svg" alt="btn" />';
             } else {
                 playAudio();
                 playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
-                playButton2.innerHTML = '<img class="img__src" src="./img/Pause.svg" alt="btn" />';
+                playButton2.innerHTML = '<img class="play__src" src="./img/Pause.svg" alt="btn" />';
+                nextButton.innerHTML = '<img class="img__close" src="./img/Nextmini.svg" alt="btn" />';
             }
         });
     }
+    
     loadAudio();
+    
 
     // Telegram Auth
     function initializeTelegramAuth() {
