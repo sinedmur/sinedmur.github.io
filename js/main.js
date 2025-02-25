@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+      if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
+    Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
+    console.log("Вертикальные свайпы заблокированы!");
+} else {
+    console.error("Метод disableVerticalSwipes недоступен.");
+}
       // Переключение в полноэкранный режим при загрузке
     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
         Telegram.WebApp.requestFullscreen();
