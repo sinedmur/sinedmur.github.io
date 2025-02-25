@@ -1,9 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.TelegramWebApp) {
-    TelegramWebApp.ready();
-    // Переводим Web App в fullscreen
-    TelegramWebApp.expand();
-}
 
     let audioContext;
     let audioBuffer;
