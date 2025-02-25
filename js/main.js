@@ -1,15 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
 const body = document.body; // Или выберите нужный элемент
-    if (body.requestFullscreen) {
-        body.requestFullscreen();
-    } else if (body.mozRequestFullScreen) { // Для Firefox
-        body.mozRequestFullScreen();
-    } else if (body.webkitRequestFullscreen) { // Для Chrome, Safari и Opera
-        body.webkitRequestFullscreen();
-    } else if (body.msRequestFullscreen) { // Для IE/Edge
-        body.msRequestFullscreen();
-    }
     
     let audioContext;
     let audioBuffer;
