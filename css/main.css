@@ -91,15 +91,13 @@ body, html {
   background: #915382;
   position: fixed; /* Фиксируем контейнер на экране */
   bottom: 56px; /* Размещаем внизу экрана */
-  left: 50%; /* Сдвигаем на 50% от левого края */
-  transform: translateX(-50%); /* Центрируем по горизонтали */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .audio__container.hidden {
   opacity: 0;
-  transform: translateY(-100%) translateX(-50%); /* Перемещаем вверх по центру */
+  transform: translateY(-100%);
 }
 
 .player__container {
@@ -115,7 +113,7 @@ body, html {
 
 .player__container.show {
   opacity: 1;
-  z-index: 5;
+  z-index: 999;
   transition: opacity 0.3s ease;
 }
 
@@ -142,13 +140,19 @@ body, html {
   flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
 }
 
-.songautor {
+.autors {
+  display: flex;
+  gap: 3%;
   font-weight: 400;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
+  justify-content: center;
+  text-align: center;
 }
 
 .songtitle {
+  display: flex;
+  gap: 3%;
   font-weight: 400;
   font-size: 16px;
   color: #fff;
@@ -222,8 +226,10 @@ body, html {
   justify-content: space-between;
 }
 
-.cover1 {
+.cover1 img {
   margin-top: 4px;
+  width: 42px;
+  height: 42px;
 }
 
 .mymusic__container {
@@ -730,12 +736,6 @@ body, html {
   color: #fff;
 }
 
-.songauthor {
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
 .songname img {
   width: 12px;
   height: 12px;
@@ -763,7 +763,7 @@ body, html {
   width: 95%;
   background: #fff;
   margin: auto;
-  height: 100px;
+  height: 180px;
   margin-bottom: 5%;
   margin-top: 5%;
   align-items: center;
@@ -797,7 +797,7 @@ body, html {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: 3%;
+  padding-top: 5%;
   padding-left: 4.8%;
   padding-right: 5.5%;
 }
@@ -808,7 +808,7 @@ body, html {
   border-top: 1px solid #fff;
   border-radius: 10px 10px 0 0;
   width: 70%;
-  height: 4%;
+  height: 3%;
   display: flex;
   left: 50%; /* Сдвигаем на 50% от левого края */
   transform: translateX(-50%); /* Центрируем по горизонтали */
@@ -820,10 +820,16 @@ body, html {
 .balances {
   display: flex;
   align-items: center;
-  bottom: 0;
-  position: fixed;
   gap: 10%;
   font-weight: 400;
   font-size: 14px;
   color: #fff;
+}
+
+.authors {
+  display: flex;
+  gap: 3%;
+  font-weight: 400;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
 }/*# sourceMappingURL=main.css.map */
