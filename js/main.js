@@ -82,9 +82,10 @@ document.addEventListener('DOMContentLoaded', () => {
             undermenuContainer.classList.remove('hidden');
         }
     }
-    function () {
+    function fullSize () {
     Telegram.WebApp.expand();
     }
+    fullSize();
 
     
     const playButton = document.querySelector('.btn_play');
