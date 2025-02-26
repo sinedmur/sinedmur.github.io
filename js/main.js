@@ -1,5 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+      if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.lockOrientation) {
+          Telegram.WebApp.lockOrientation(); // Блокируем ориентацию
+          console.log("Ориентация заблокированы!");
+      } else {
+          console.error("Метод lockOrientation недоступен.");
+      }
+      
       if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
     Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
     console.log("Вертикальные свайпы заблокированы!");
