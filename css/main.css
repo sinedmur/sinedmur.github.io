@@ -807,30 +807,6 @@ body, html {
   padding-right: 5.5%;
 }
 
-.balance__container {
-  border-left: 1px solid #fff;
-  border-right: 1px solid #fff;
-  border-top: 1px solid #fff;
-  border-radius: 10px 10px 0 0;
-  width: 70%;
-  height: 3%;
-  display: flex;
-  left: 50%; /* Сдвигаем на 50% от левого края */
-  transform: translateX(-50%); /* Центрируем по горизонтали */
-  position: fixed;
-  bottom: 0;
-  justify-content: center;
-}
-
-.balances {
-  display: flex;
-  align-items: center;
-  gap: 10%;
-  font-weight: 400;
-  font-size: 14px;
-  color: #fff;
-}
-
 .authors {
   display: flex;
   gap: 3%;
