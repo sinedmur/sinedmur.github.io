@@ -551,6 +551,9 @@ document.addEventListener('click', (event) => {
       if (pageCache[page]) {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
+          if (page === 'home.html') {
+            Telegram.WebApp.BackButton.hide();
+        }
             if (page === 'missions.html') {
                 Telegram.WebApp.BackButton.show();
                 Telegram.WebApp.BackButton.onClick(function () {
@@ -558,7 +561,20 @@ document.addEventListener('click', (event) => {
                     Telegram.WebApp.BackButton.hide();
                     });
             }
-
+            if (page === 'buy.html') {
+            Telegram.WebApp.BackButton.show();
+                Telegram.WebApp.BackButton.onClick(function () {
+                    loadPage('home.html')
+                    Telegram.WebApp.BackButton.hide();
+                    });
+            }
+            if (page === 'settings.html') {
+                Telegram.WebApp.BackButton.show();
+                Telegram.WebApp.BackButton.onClick(function () {
+                    loadPage('home.html')
+                    Telegram.WebApp.BackButton.hide();
+                    });
+            }
           if (page === 'wallet.html') {
               initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
           }
