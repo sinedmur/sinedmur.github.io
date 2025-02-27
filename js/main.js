@@ -64,12 +64,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchEndY = 0;
   
   Telegram.WebApp.BackButton.onClick(function () {
-    const currentPage = window.location.pathname.split('/').pop();
-
-    if (currentPage === 'missions.html' || currentPage === 'buy.html' || currentPage === 'settings.html') {
-        loadPage('home.html');  // Загружаем главную страницу
-        return;
-    }
         // Твоя существующая логика, которая работает на других страницах
     if (audioContainer && playerContainer && undermenuContainer) {
         audioContainer.classList.remove('hidden');
@@ -558,7 +552,11 @@ document.addEventListener('click', (event) => {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
             if (page === 'missions.html') {
-            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
+                Telegram.WebApp.BackButton.show();
+                Telegram.WebApp.BackButton.onClick(function () {
+                    loadPage('home.html')
+                    Telegram.WebApp.BackButton.hide();
+                    });
             }
             if (page === 'buy.html') {
             Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
