@@ -558,12 +558,7 @@ document.addEventListener('click', (event) => {
                     Telegram.WebApp.BackButton.hide();
                     });
             }
-            if (page === 'buy.html') {
-            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
-            }
-            if (page === 'settings.html') {
-            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
-            }
+
           if (page === 'wallet.html') {
               initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
           }
