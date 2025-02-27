@@ -63,6 +63,18 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchStartY = 0;
   let touchEndY = 0;
   
+  Telegram.WebApp.BackButton.onClick(function () {
+    // Скрываем плеер и показываем аудио-контейнер и undermenu
+    if (audioContainer && playerContainer && undermenuContainer) {
+        audioContainer.classList.remove('hidden');
+        playerContainer.classList.remove('show');
+        undermenuContainer.classList.remove('hidden');
+    }
+
+    // Скрываем кнопку "Назад"
+    Telegram.WebApp.BackButton.hide();
+});
+
   if (audioContainer && playerContainer) {
       song.addEventListener('click', function () {
           audioContainer.classList.add('hidden'); // Скрываем аудио-контейнер
@@ -540,6 +552,9 @@ document.addEventListener('click', (event) => {
       if (pageCache[page]) {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
+          if (page === 'home.html') {
+            Telegram.WebApp.BackButton.hide();
+          }
           if (page === 'missions.html') {
             Telegram.WebApp.BackButton.show();
           }
