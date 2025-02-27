@@ -73,6 +73,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Скрываем кнопку "Назад"
     Telegram.WebApp.BackButton.hide();
+
+    const currentPage = window.location.pathname.split('/').pop();
+    const pagesWithBackButton = ['missions.html', 'buy.html', 'settings.html'];
+
+        if (pagesWithBackButton.includes(currentPage)) {
+            // Загружаем home.html
+            loadPage('home.html');
+            // Скрываем кнопку "Назад"
+            Telegram.WebApp.BackButton.hide();
+        }
 });
 
   if (audioContainer && playerContainer) {
@@ -552,18 +562,7 @@ document.addEventListener('click', (event) => {
       if (pageCache[page]) {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
-          if (page === 'home.html') {
-            Telegram.WebApp.BackButton.hide();
-          }
-          if (page === 'missions.html') {
-            Telegram.WebApp.BackButton.show();
-          }
-          if (page === 'buy.html') {
-            Telegram.WebApp.BackButton.show();
-          }
-          if (page === 'settings.html') {
-            Telegram.WebApp.BackButton.show();
-          }
+          
           if (page === 'wallet.html') {
               initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
           }
