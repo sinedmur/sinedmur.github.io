@@ -64,19 +64,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchEndY = 0;
   
   Telegram.WebApp.BackButton.onClick(function () {
+    const currentPage = window.location.pathname.split('/').pop();
 
     if (currentPage === 'missions.html' || currentPage === 'buy.html' || currentPage === 'settings.html') {
         loadPage('home.html');  // Загружаем главную страницу
-    } else {
+        return;
+    }
         // Твоя существующая логика, которая работает на других страницах
-        if (audioContainer && playerContainer && undermenuContainer) {
-            audioContainer.classList.remove('hidden');
-            playerContainer.classList.remove('show');
-            undermenuContainer.classList.remove('hidden');
-        }
+    if (audioContainer && playerContainer && undermenuContainer) {
+        audioContainer.classList.remove('hidden');
+        playerContainer.classList.remove('show');
+        undermenuContainer.classList.remove('hidden');
+    }
         // Скрываем кнопку "Назад"
         Telegram.WebApp.BackButton.hide();
-    }
 });
 
   if (audioContainer && playerContainer) {
@@ -556,17 +557,14 @@ document.addEventListener('click', (event) => {
       if (pageCache[page]) {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
-          if (page === 'home.html') {
-            Telegram.WebApp.BackButton.hide();
-            }
             if (page === 'missions.html') {
-            Telegram.WebApp.BackButton.show(); 
+            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
             }
             if (page === 'buy.html') {
-            Telegram.WebApp.BackButton.show(); 
+            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
             }
             if (page === 'settings.html') {
-            Telegram.WebApp.BackButton.show(); 
+            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
             }
           if (page === 'wallet.html') {
               initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
