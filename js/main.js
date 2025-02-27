@@ -551,9 +551,18 @@ document.addEventListener('click', (event) => {
       if (pageCache[page]) {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
-          if (page === 'home.html') {
-            Telegram.WebApp.BackButton.hide();
-        }
+            if (page === 'home.html') {
+                Telegram.WebApp.BackButton.hide();
+            }
+            if (page === 'airdrop.html') {
+                Telegram.WebApp.BackButton.hide();
+            }
+            if (page === 'friends.html') {
+                Telegram.WebApp.BackButton.hide();
+            }
+            if (page === 'music.html') {
+                Telegram.WebApp.BackButton.hide();
+            }
             if (page === 'missions.html') {
                 Telegram.WebApp.BackButton.show();
                 Telegram.WebApp.BackButton.onClick(function () {
@@ -576,7 +585,8 @@ document.addEventListener('click', (event) => {
                     });
             }
           if (page === 'wallet.html') {
-              initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
+              initializeTonConnect();
+              Telegram.WebApp.BackButton.hide(); // Инициализация TonConnect для страницы wallet.html
           }
           updateUI(); // Проверяем подключение кошелька после загрузки страницы
       } else {
