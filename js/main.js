@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastUpdateTime = 0;  // Время последнего обновления value
   let wasContainerOpen = false;  // Флаг для отслеживания состояния контейнера
   
-  const valueDisplay = document.querySelector('.value', 'balance2'); // Элемент для отображения значения value (с учетом вашего HTML)
+  const valueDisplay = document.querySelector('.value'); // Элемент для отображения значения value (с учетом вашего HTML)
 
   const close = document.querySelector('.close');
   const song = document.querySelector('.song');
