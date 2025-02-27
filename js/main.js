@@ -1,14 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    const currentPage = window.location.pathname.split('/').pop();
-
-    const pagesWithBackButton = ['missions.html', 'buy.html', 'settings.html'];
-
-    if (pagesWithBackButton.includes(currentPage)) {
-        Telegram.WebApp.BackButton.show();
-        Telegram.WebApp.BackButton.onClick(function() {
-            window.location.href = 'home.html';  // Перенаправляем на домашнюю страницу
-        });
-    }
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
@@ -74,15 +64,19 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchEndY = 0;
   
   Telegram.WebApp.BackButton.onClick(function () {
-    // Скрываем плеер и показываем аудио-контейнер и undermenu
-    if (audioContainer && playerContainer && undermenuContainer) {
-        audioContainer.classList.remove('hidden');
-        playerContainer.classList.remove('show');
-        undermenuContainer.classList.remove('hidden');
-    }
 
-    // Скрываем кнопку "Назад"
-    Telegram.WebApp.BackButton.hide();
+    if (currentPage === 'missions.html' || currentPage === 'buy.html' || currentPage === 'settings.html') {
+        loadPage('home.html');  // Загружаем главную страницу
+    } else {
+        // Твоя существующая логика, которая работает на других страницах
+        if (audioContainer && playerContainer && undermenuContainer) {
+            audioContainer.classList.remove('hidden');
+            playerContainer.classList.remove('show');
+            undermenuContainer.classList.remove('hidden');
+        }
+        // Скрываем кнопку "Назад"
+        Telegram.WebApp.BackButton.hide();
+    }
 });
 
   if (audioContainer && playerContainer) {
@@ -562,7 +556,15 @@ document.addEventListener('click', (event) => {
       if (pageCache[page]) {
           updateContent(pageCache[page]);
           updateActiveButton(page); // Убираем кнопку с активной страницей
-          
+            if (page === 'missions.html') {
+            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
+            }
+            if (page === 'buy.html') {
+            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
+            }
+            if (page === 'settings.html') {
+            Telegram.WebApp.BackButton.show(); // Инициализация TonConnect для страницы wallet.html
+            }
           if (page === 'wallet.html') {
               initializeTonConnect(); // Инициализация TonConnect для страницы wallet.html
           }
