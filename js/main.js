@@ -63,15 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
   let touchStartY = 0;
   let touchEndY = 0;
   
-  Telegram.WebApp.BackButton.onClick(function () {
-        // Твоя существующая логика, которая работает на других страницах
+  function handleBackButtonPageNavigation() {
     if (audioContainer && playerContainer && undermenuContainer) {
         audioContainer.classList.remove('hidden');
         playerContainer.classList.remove('show');
         undermenuContainer.classList.remove('hidden');
     }
-        // Скрываем кнопку "Назад"
-        Telegram.WebApp.BackButton.hide();
+    // Скрываем кнопку "Назад"
+    Telegram.WebApp.BackButton.hide();
+}
+
+function loadHomePage() {
+    loadPage('home.html');
+    Telegram.WebApp.BackButton.hide();
+}
+
+Telegram.WebApp.BackButton.onClick(function () {
+    handleBackButtonPageNavigation();
 });
 
   if (audioContainer && playerContainer) {
@@ -566,23 +574,20 @@ document.addEventListener('click', (event) => {
             if (page === 'missions.html') {
                 Telegram.WebApp.BackButton.show();
                 Telegram.WebApp.BackButton.onClick(function () {
-                    loadPage('home.html')
-                    Telegram.WebApp.BackButton.hide();
-                    });
+                    loadHomePage();
+                });
             }
             if (page === 'buy.html') {
-            Telegram.WebApp.BackButton.show();
+                Telegram.WebApp.BackButton.show();
                 Telegram.WebApp.BackButton.onClick(function () {
-                    loadPage('home.html')
-                    Telegram.WebApp.BackButton.hide();
-                    });
+                    loadHomePage();
+                });
             }
             if (page === 'settings.html') {
                 Telegram.WebApp.BackButton.show();
                 Telegram.WebApp.BackButton.onClick(function () {
-                    loadPage('home.html')
-                    Telegram.WebApp.BackButton.hide();
-                    });
+                    loadHomePage();
+                });
             }
           if (page === 'wallet.html') {
               initializeTonConnect();
