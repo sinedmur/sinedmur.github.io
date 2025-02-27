@@ -54,7 +54,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let startTime = 0;
   let pausedAt = 0;
   let gainNode;
-  let value = 0;  // Переменная для отслеживания value
+  let valueNormal = 0;  // Переменная для отслеживания обычного value
+  let valueSpecial = 0; // Переменная для отслеживания value при открытом контейнере
+  let lastUpdateTime = 0;  // Время последнего обновления value
+  let wasContainerOpen = false;  // Флаг для отслеживания состояния контейнера
   
   const valueDisplay = document.querySelector('.value', 'balance2'); // Элемент для отображения значения value (с учетом вашего HTML)
 
@@ -228,7 +231,8 @@ function pauseAudio() {
         sourceNode.disconnect();
         sourceNode = null;
         isPlaying = false;
-        valueDisplay.textContent = value; // Обновляем отображение value
+        lastUpdateTime = 0; // Сбрасываем метку времени последнего обновления
+        valueDisplay.textContent = valueNormal + valueSpecial; // Обновляем отображение значения
     }
 }
 
@@ -246,11 +250,23 @@ function updateProgress() {
     const seconds = Math.floor(currentTime % 60);
     timeDisplay.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
 
-    // Увеличиваем значение value каждую секунду
-    if (isPlaying) {
-        value = Math.floor(currentTime);  // Обновляем значение value
-        valueDisplay.textContent = value;  // Отображаем значение value
+    // Проверяем, если прошло 1 секунда или больше с последнего обновления
+    if (currentTime - lastUpdateTime >= 1) {
+        lastUpdateTime = currentTime;  // Обновляем метку времени
 
+        if (playerContainer.classList.contains('show')) {
+            // Если контейнер открыт, начисляем 2 балла за секунду
+            valueSpecial += 2;
+        } else {
+            // Если контейнер не открыт, начисляем 1 балл за секунду
+            valueNormal += 1;
+        }
+
+        // Обновляем отображение значения
+        valueDisplay.textContent = valueNormal + valueSpecial;
+    }
+
+    if (isPlaying) {
         requestAnimationFrame(updateProgress);
     }
 }
