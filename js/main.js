@@ -26,26 +26,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Один или несколько элементов не найдены!');
     }
 
-//     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.lockOrientation) {
-//         Telegram.WebApp.lockOrientation(); // Блокируем ориентацию
-//         console.log("Ориентация заблокированы!");
-//     } else {
-//         console.error("Метод lockOrientation недоступен.");
-//     }
+    if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.lockOrientation) {
+        Telegram.WebApp.lockOrientation(); // Блокируем ориентацию
+        console.log("Ориентация заблокированы!");
+    } else {
+        console.error("Метод lockOrientation недоступен.");
+    }
     
-//     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
-//   Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
-//   console.log("Вертикальные свайпы заблокированы!");
-// } else {
-//   console.error("Метод disableVerticalSwipes недоступен.");
-// }
-//     // Переключение в полноэкранный режим при загрузке
-//   if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
-//       Telegram.WebApp.requestFullscreen();
-//       console.log("Мини-приложение перешло в полноэкранный режим.");
-//   } else {
-//       console.error("Telegram WebApp API или метод requestFullscreen() недоступен.");
-//   }
+    if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
+  Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
+  console.log("Вертикальные свайпы заблокированы!");
+} else {
+  console.error("Метод disableVerticalSwipes недоступен.");
+}
+    // Переключение в полноэкранный режим при загрузке
+  if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
+      Telegram.WebApp.requestFullscreen();
+      console.log("Мини-приложение перешло в полноэкранный режим.");
+  } else {
+      console.error("Telegram WebApp API или метод requestFullscreen() недоступен.");
+  }
 
   let audioContext;
   let audioBuffer;
