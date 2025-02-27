@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const currentPage = window.location.pathname.split('/').pop();
+
+    const pagesWithBackButton = ['missions.html', 'buy.html', 'settings.html'];
+
+    if (pagesWithBackButton.includes(currentPage)) {
+        Telegram.WebApp.BackButton.show();
+        Telegram.WebApp.BackButton.onClick(function() {
+            window.location.href = 'home.html';  // Перенаправляем на домашнюю страницу
+        });
+    }
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
@@ -73,16 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Скрываем кнопку "Назад"
     Telegram.WebApp.BackButton.hide();
-
-    const currentPage = window.location.pathname.split('/').pop();
-    const pagesWithBackButton = ['missions.html', 'buy.html', 'settings.html'];
-
-        if (pagesWithBackButton.includes(currentPage)) {
-            // Загружаем home.html
-            loadPage('home.html');
-            // Скрываем кнопку "Назад"
-            Telegram.WebApp.BackButton.hide();
-        }
 });
 
   if (audioContainer && playerContainer) {
