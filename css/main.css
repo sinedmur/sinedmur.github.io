@@ -1,1004 +1,976 @@
-@charset "UTF-8";
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: "Roboto", sans-serif;
-  -webkit-tap-highlight-color: transparent;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+    -webkit-tap-highlight-color: transparent;
 }
+
 
 body, html {
-  overflow-x: hidden;
-  width: 100%;
+    overflow-x: hidden;
+    width: 100%;
 }
-
 .wrapper {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #ffffff;
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
 }
 
 .mainmenu {
-  background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
-  width: 100%;
-  min-height: 100vh;
-  padding-top: 90px;
-  padding-bottom: 110px;
-  transition: background-color 0.3s;
+    background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
+    //max-width: 412px;
+    width: 100%;
+    min-height: 100vh;
+    padding-top: 90px;
+    padding-bottom: 110px;
+    transition: background-color 0.3s;
 }
 
 .title {
-  font-style: normal;
-  font-weight: 700;
-  font-size: 36px;
-  color: #fff;
-  margin-left: 31px;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 36px;
+    color: #fff;
+    margin-left: 31px;
 }
 
 .balance {
-  font-style: normal;
-  font-weight: 700;
-  font-size: 16px;
-  color: #fff;
-  margin-left: 49px;
-  margin-top: 56px;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    color: #fff;
+    margin-left: 12%;
+    margin-top: 56px;
 }
 
-.obj {
-  display: flex;
-  width: 100%;
-  justify-content: space-between;
-  padding-right: 5%;
+.obj{
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    padding-right: 5%;
 }
 
 .balanc {
-  display: flex;
-  width: 100%;
-  margin-left: 49px;
+    display: flex;
+    width: 100%;
+    margin-left: 12%;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 32px;
+    color: #fff;
+    align-items: center;
+    margin-top: 2%;
 }
 
 .token {
-  margin-top: 17px;
-}
-
-.value {
-  font-style: normal;
-  font-weight: 700;
-  font-size: 32px;
-  color: #fff;
-  margin-top: 13px;
-  margin-left: 5px;
+    margin-top: 1.8%;
+    margin-right: 1%;
 }
 
 .menu__container {
-  display: flex;
-  justify-content: center;
-  padding: 322px 0 0 0;
-  gap: 5%;
+    display: flex;
+    justify-content: center;
+    // align-items: center;
+    // margin-top: 20%;
+    padding: 322px 0 0 0;
+    gap: 5%;
 }
 
 .btn_buy, .btn_settings, .btn_missions {
-  cursor: pointer;
+    cursor: pointer;
 }
 
 .audio__container {
-  border-radius: 11px;
-  width: 100%;
-  height: 50px;
-  background: #915382;
-  position: fixed; /* Фиксируем контейнер на экране */
-  bottom: 56px; /* Размещаем внизу экрана */
-  z-index: 10; /* Убедимся, что контейнер поверх других элементов */
-  transition: transform 0.3s ease, opacity 0.3s ease;
+    border-radius: 11px;
+    width: 100%;
+    height: 50px;
+    background: #915382;
+    position: fixed; /* Фиксируем контейнер на экране */
+    bottom: 56px; /* Размещаем внизу экрана */
+    z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
 .audio__container.hidden {
-  opacity: 0;
-  transform: translateY(-100%);
+    opacity: 0;
+    transform: translateY(-100%)
 }
 
 .player__container {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background: #915382;
-  z-index: -1; /* Убедимся, что контейнер под audio__container */
-  opacity: 0;
-  transition: opacity 0.3s ease;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: #915382;
+    z-index: -1; /* Убедимся, что контейнер под audio__container */
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
 
 .player__container.show {
-  opacity: 1;
-  z-index: 999;
-  transition: opacity 0.3s ease;
+    opacity: 1;
+    z-index: 999;
+    transition: opacity 0.3s ease;
 }
 
 .undermenu__container.hidden {
-  opacity: 0;
-  transform: translateY(100%) translateX(-50%);
+    opacity: 0;
+    transform: translateY(100%) translateX(-50%);
 }
 
 .buttons {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  height: 55px;
-  padding: 0 10px; /* Это поможет избежать сдвигов при изменении размеров */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 55px;
+    padding: 0 10px; /* Это поможет избежать сдвигов при изменении размеров */
 }
 
 .song {
-  display: flex;
-  flex-direction: column;
-  align-items: center; /* Центрируем содержимое по горизонтали */
-  justify-content: center; /* Центрируем содержимое по вертикали */
-  text-align: center; /* Центрируем текст внутри */
-  flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Центрируем содержимое по горизонтали */
+    justify-content: center; /* Центрируем содержимое по вертикали */
+    text-align: center; /* Центрируем текст внутри */
+    flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
 }
 
-.autors {
-  display: flex;
-  gap: 3%;
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  justify-content: center;
-  text-align: center;
+.autors{
+    display: flex;
+    gap: 3%;
+    font-weight: 400;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    justify-content: center;
+    text-align: center;
 }
 
 .songtitle {
-  display: flex;
-  gap: 3%;
-  font-weight: 400;
-  font-size: 16px;
-  color: #fff;
+    display: flex;
+    gap: 3%;
+    font-weight: 400;
+    font-size: 16px;
+    color: #fff;
 }
 
-.btn_play, .btn_next {
-  width: 40px; /* Фиксированная ширина для кнопок */
-  height: 40px; /* Фиксированная высота для кнопок */
-  cursor: pointer;
-  background-size: contain; /* Для корректного отображения иконок */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.btn_play, .btn_next{
+    width: 40px; /* Фиксированная ширина для кнопок */
+    height: 40px; /* Фиксированная высота для кнопок */
+    cursor: pointer;
+    background-size: contain; /* Для корректного отображения иконок */
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .btn_next {
-  margin-right: 10px;
+    margin-right: 10px;
 }
 
 .undermenu__container {
-  position: fixed; /* Фиксируем контейнер на экране */
-  bottom: 0; /* Размещаем внизу экрана */
-  left: 50%; /* Сдвигаем на 50% от левого края */
-  transform: translateX(-50%); /* Центрируем по горизонтали */
-  display: flex;
-  justify-content: center; /* Центрируем элементы внутри контейнера */
-  align-items: center;
-  gap: 36px;
-  white-space: nowrap;
-  padding: 6px 30px 0 25px;
-  width: 100%; /* Ширина контейнера */
-  background: #d21e64; /* Фон, как у .mainmenu */
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
-  z-index: 10; /* Убедимся, что контейнер поверх других элементов */
-  transition: transform 0.3s ease, opacity 0.3s ease;
+    position: fixed; /* Фиксируем контейнер на экране */
+    bottom: 0; /* Размещаем внизу экрана */
+    left: 50%; /* Сдвигаем на 50% от левого края */
+    transform: translateX(-50%); /* Центрируем по горизонтали */
+    display: flex;
+    justify-content: center; /* Центрируем элементы внутри контейнера */
+    align-items: center;
+    gap: 36px;
+    // overflow-x: auto;
+    white-space: nowrap;
+    padding: 6px 30px 0 25px;
+    width: 100%; /* Ширина контейнера */
+    //max-width: 412px; /* Максимальная ширина, как у .mainmenu */
+    background: #d21e64; /* Фон, как у .mainmenu */
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
+    z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+    transition: transform 0.3s ease, opacity 0.3s ease;
 }
-
 .btn_menu, .btn_music, .btn_airdrop, .btn_friends, .btn_wallet {
-  cursor: pointer;
+    cursor: pointer;
+}
+.playlist__container{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    margin-top: 15%;
+    gap: 28px;
+    padding: 0 29px;
+}
+.playlist1, .playlist2, .playlist3, .playlist4{
+    cursor: pointer;
+}
+.mymusic{
+    padding-left: 5%;
+    padding-top: 40px;
+    font-weight: 400;
+    font-size: 20px;
+    color: #fff;
+}
+.track1{
+    border: 1px solid #fff;
+    border-radius: 11px;
+    width: 100%;
+    height: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding-left: 5%;
+    justify-content: space-between;
+}
+.cover1 img{
+    margin-top: 4px;
+    width: 42px;
+    height: 42px;
 }
 
-.playlist__container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  margin-top: 15%;
-  gap: 28px;
-  padding: 0 29px;
+.mymusic__container{
+    padding-top: 11px;
 }
-
-.playlist1, .playlist2, .playlist3, .playlist4 {
-  cursor: pointer;
+.song2{
+    padding-left: 5%;
 }
-
-.mymusic {
-  padding-left: 5%;
-  padding-top: 40px;
-  font-weight: 400;
-  font-size: 20px;
-  color: #fff;
+.duration{
+    margin-left: auto;
+    font-weight: 400;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    padding-right: 5%;
 }
-
-.track1 {
-  border: 1px solid #fff;
-  border-radius: 11px;
-  width: 100%;
-  height: 50px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding-left: 5%;
-  justify-content: space-between;
+.info{
+    margin-top: 2px;
+    padding-right: 5%;
 }
+// Переменная для размера аватарки
+$avatar-size: 50px;
 
-.cover1 img {
-  margin-top: 4px;
-  width: 42px;
-  height: 42px;
-}
-
-.mymusic__container {
-  padding-top: 11px;
-}
-
-.song2 {
-  padding-left: 5%;
-}
-
-.duration {
-  margin-left: auto;
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  padding-right: 5%;
-}
-
-.info {
-  margin-top: 2px;
-  padding-right: 5%;
-}
-
+// Стили для контейнера аватарки
 #user-info {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+// Стили для аватарки
 #avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  -o-object-fit: cover;
-     object-fit: cover;
-  display: none;
-}
-#avatar[src] {
-  display: block;
+  width: $avatar-size; // Ширина аватарки
+  height: $avatar-size; // Высота аватарки
+  border-radius: 50%; // Делаем аватарку круглой
+  object-fit: cover; // Чтобы изображение не искажалось
+  display: none; // По умолчанию скрываем аватарку
+
+  // Показываем аватарку, если она загружена
+  &[src] {
+    display: block;
+  }
 }
 
+// Дополнительные стили для имени пользователя
 #user-info p {
   font-size: 16px;
   color: #333;
-  margin: 0;
+  margin: 0; // Убираем отступы
+}
+#ton-connect {
+    display: flex;
+    width: 100%;
+    margin-top: 50px;
+    justify-content: center;
+    z-index: 9999; /* Убедитесь, что элемент виден поверх других */
 }
 
-#ton-connect {
-  display: flex;
-  width: 100%;
-  margin-top: 50px;
-  justify-content: center;
-  z-index: 9999; /* Убедитесь, что элемент виден поверх других */
-}
+// /* Анимация вращения */
+// @keyframes spin {
+//     0% {
+//         transform: rotate(0deg);
+//     }
+//     100% {
+//         transform: rotate(360deg);
+//     }
+// }
 
 /* Анимация пульсации */
 @keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
 }
+
 /* Класс для анимации */
 .btn_play.loading img {
-  /* Или используйте пульсацию: */
-  animation: pulse 1s ease-in-out infinite;
+    // animation: spin 1s linear infinite; /* Вращение */
+    /* Или используйте пульсацию: */
+    animation: pulse 1s ease-in-out infinite;
 }
 
 .play_btn.loading img {
-  /* Или используйте пульсацию: */
-  animation: pulse 1s ease-in-out infinite;
+    // animation: spin 1s linear infinite; /* Вращение */
+    /* Или используйте пульсацию: */
+    animation: pulse 1s ease-in-out infinite;
 }
 
-.airdrop__container {
-  margin-top: 15%;
-  display: flex;
-  width: 100%;
-  font-weight: 400;
-  font-size: 18px;
-  color: #fff;
-  border: 1px solid #fff;
-  border-radius: 11px;
-  text-align: center;
-  align-items: center;
+.airdrop__container{
+    margin-top: 15%;
+    display: flex;
+    width: 100%;
+    font-weight: 400;
+    font-size: 18px;
+    color: #fff;
+    border: 1px solid #fff;
+    border-radius: 11px;
+    text-align: center;
+    align-items: center;
 }
-
-.description {
-  justify-content: center;
-  padding: 5px 5px 5px 5px;
+.description{
+    justify-content: center;
+    padding: 5px 5px 5px 5px;
 }
-
-.inv__container {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.inv__container{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
-
-.inv__se {
-  display: flex;
-  width: 85%;
-  justify-content: space-between;
-  flex-direction: column;
-  padding-left: 4%;
-  padding-top: 4%;
-  padding-bottom: 4%;
+.inv__se{
+    display: flex;
+    width: 85%;
+    justify-content: space-between;
+    flex-direction: column;
+    padding-left: 4%;
+    padding-top: 4%;
+    padding-bottom: 4%;
 }
-
-.invite__container, .invitepr__container {
-  margin-top: 15%;
-  display: flex;
-  width: 90%;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  justify-content: space-between;
+.invite__container, .invitepr__container{
+    margin-top: 15%;
+    display: flex;
+    width: 90%;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    justify-content: space-between;
 }
-
-.invitepr__container {
-  margin-top: 3%;
+.invitepr__container{
+    margin-top: 3%;
 }
-
-.invite {
-  font-weight: 400;
-  font-size: 24px;
-  color: #fff;
-  width: 90%;
+.invite{
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
+    width: 90%;
 }
-
-.inviteprvalue, .invitedes, .invitevalue {
-  font-weight: 400;
-  font-size: 14px;
-  color: #fff;
+.inviteprvalue, .invitedes, .invitevalue{
+    font-weight: 400;
+    font-size: 14px;
+    color: #fff;
 }
-
-.inviteprvalue, .invitevalue {
-  color: #f52476;
-  padding-left: 1%;
-  padding-right: 1%;
+.inviteprvalue, .invitevalue{
+    color: #f52476;
+    padding-left: 1%;
+    padding-right: 1%;
 }
-
-.inv__de {
-  padding-top: 1%;
-  display: flex;
-  align-items: center;
+.inv__de{
+    padding-top: 1%;
+    display: flex;
+    align-items: center;
 }
-
-.inviteimg, .inviteprimg {
-  margin-left: auto;
-  margin-right: 5%;
-  align-items: center;
-  display: flex;
+.inviteimg, .inviteprimg{
+    margin-left: auto;
+    margin-right: 5%;
+    align-items: center;
+    display: flex;
 }
-
 .invbtns {
-  display: flex;
-  gap: 2%;
-  padding-top: 37%;
-}
-.invbtns .invite_btn {
-  position: relative;
-  display: inline-block;
-  width: 325px;
-  height: 60px;
-  cursor: pointer;
-}
-.invbtns .copy_btn {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 60px;
-  cursor: pointer;
-}
-.invbtns .invite-img, .invbtns .copy-img {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.3s ease;
-}
-.invbtns .invite-img-active, .invbtns .copy-img-active {
-  display: none;
-}
-.invbtns .invite_btn:hover .invite-img {
-  opacity: 0;
-}
-.invbtns .invite_btn:hover .invite-img-active {
-  display: block;
-}
-.invbtns .copy_btn:hover .copy-img {
-  opacity: 0;
-}
-.invbtns .copy_btn:hover .copy-img-active {
-  display: block;
-}
+    display: flex;
+    gap: 2%;
+    padding-top: 37%;
+    
+    .invite_btn {
+        position: relative;
+        display: inline-block;
+        width: 325px;  // Задайте размеры для кнопок
+        height: 60px; // Задайте размеры для кнопок
+        cursor: pointer;
+    }
+    .copy_btn {
+        position: relative;
+        display: inline-block;
+        width: 60px;  // Задайте размеры для кнопок
+        height: 60px; // Задайте размеры для кнопок
+        cursor: pointer;
+    }
+    .invite-img, .copy-img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.3s ease;
+        
+    }
 
-.friends {
-  display: flex;
-  align-items: center;
-  font-weight: 400;
-  font-size: 16px;
-  color: #fff;
-  padding-top: 4%;
-}
+    .invite-img-active, .copy-img-active {
+        display: none; // Скрываем активное изображение по умолчанию
+    }
 
-.friend {
-  display: flex;
-  flex-direction: column;
-  font-weight: 400;
-  font-size: 24px;
-  color: #fff;
-  padding-left: 5%;
-  padding-top: 1%;
-}
+    .invite_btn:hover .invite-img {
+        opacity: 0; // Прячем обычное изображение
+    }
 
-.friendname {
-  padding-left: 2%;
-}
+    .invite_btn:hover .invite-img-active {
+        display: block; // Показываем активное изображение
+    }
 
+    .copy_btn:hover .copy-img {
+        opacity: 0; // Прячем обычное изображение
+    }
+
+    .copy_btn:hover .copy-img-active {
+        display: block; // Показываем активное изображение
+    }
+}
+.friends{
+    display: flex;
+    align-items: center;
+    font-weight: 400;
+    font-size: 16px;
+    color: #fff;
+    padding-top: 4%;
+}
+.friend{
+    display: flex;
+    flex-direction: column;
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
+    padding-left: 5%;
+    padding-top: 1%;
+}
+.friendname{
+    padding-left: 2%;
+}
 .refresh {
-  display: inline-block;
-  position: relative;
-  margin-left: auto;
-  padding-right: 5%;
-  cursor: pointer;
+    display: inline-block;
+    position: relative;
+    margin-left: auto;
+    padding-right: 5%;
+    cursor: pointer;
 }
 
-.refresh img {
-  transition: transform 0.5s ease;
-  transform-origin: center center; /* Убедитесь, что вращение происходит вокруг центра кнопки */
-  will-change: transform; /* Для улучшения производительности */
+.refresh img{
+    transition: transform 0.5s ease;
+    transform-origin: center center; /* Убедитесь, что вращение происходит вокруг центра кнопки */
+    will-change: transform; /* Для улучшения производительности */
 }
 
 .refresh.rotate img {
-  transform: rotate(360deg);
+    transform: rotate(360deg);  // Вращение на 360 градусов
 }
-
-.friends__container {
-  width: 100%;
-  padding-top: 5%;
+.friends__container{
+    width: 100%;
+    padding-top: 5%;
 }
-
-.refresh__container {
-  display: flex;
+.refresh__container{
+    display: flex;
 }
-
 .wrappertitle {
-  min-height: 100vh;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: #ffffff;
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #ffffff;
 }
 
 .hometitle {
-  background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
-  width: 100%;
-  min-height: 100vh;
+    background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
+    width: 100%;
+    min-height: 100vh;
+    // padding-top: 90px;
+    // padding-bottom: 110px;
 }
-
-.topmenu__container {
-  display: flex;
-  padding-top: 2%;
-  padding-left: 2%;
-  padding-right: 2%;
+.topmenu__container{
+    display: flex;
+    padding-top: 2%;
+    padding-left: 2%;
+    padding-right: 2%;
 }
-
-.subscribe__container {
-  display: flex;
-  border: 2px solid #fff;
-  border-radius: 20px;
-  justify-content: space-between;
-  text-align: center;
-  align-items: center;
-  font-weight: 400;
-  font-size: 24px;
-  color: #fff;
-  padding: 0 1% 0 1%;
-  gap: 1%;
-  width: 300px;
-  height: 75px;
+.subscribe__container{
+    display: flex;
+    border: 2px solid #fff;
+    border-radius: 20px;
+    justify-content: space-between;
+    text-align: center;
+    align-items: center;
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
+    padding: 0 1% 0 1%;
+    gap: 1%;
+    width: 300px;
+    height: 75px;
 }
-
-.telegramicon {
-  padding-top: 2%;
-  cursor: pointer;
+.telegramicon{
+    padding-top: 2%;
+    cursor: pointer;
 }
-
-.youtubeicon {
-  padding-top: 2%;
-  cursor: pointer;
+.youtubeicon{
+    padding-top: 2%;
+    cursor: pointer;
 }
-
-.language__container {
-  margin-left: auto;
-  display: flex;
-  border: 2px solid #fff;
-  border-radius: 20px;
-  justify-content: space-between;
-  text-align: center;
-  align-items: center;
-  font-weight: 400;
-  font-size: 24px;
-  color: #fff;
-  padding: 0 2% 0 1%;
-  gap: 10%;
-  height: 75px;
-  margin-right: 1%;
+.language__container{
+    margin-left: auto;
+    display: flex;
+    border: 2px solid #fff;
+    border-radius: 20px;
+    justify-content: space-between;
+    text-align: center;
+    align-items: center;
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
+    padding: 0 2% 0 1%;
+    gap: 10%;
+    height: 75px;
+    margin-right: 1%;
 }
-
-.flag {
-  padding-top: 6%;
-  cursor: pointer;
+.flag{
+    padding-top: 6%;
+    cursor: pointer;
 }
-
-.whitepaper__container {
-  display: flex;
-  border: 2px solid #fff;
-  border-radius: 20px;
-  justify-content: space-between;
-  text-align: center;
-  align-items: center;
-  font-weight: 400;
-  font-size: 24px;
-  color: #fff;
-  padding: 0 1% 0 1%;
-  gap: 10%;
-  height: 75px;
-  cursor: pointer;
+.whitepaper__container{
+    display: flex;
+    border: 2px solid #fff;
+    border-radius: 20px;
+    justify-content: space-between;
+    text-align: center;
+    align-items: center;
+    font-weight: 400;
+    font-size: 24px;
+    color: #fff;
+    padding: 0 1% 0 1%;
+    gap: 10%;
+    height: 75px;
+    cursor: pointer;
 }
-
-.title2 {
-  width: 100%;
-  padding-top: 10%;
-  text-align: center;
-  font-weight: 700;
-  font-size: 64px;
-  color: #fff;
+.title2{
+    width: 100%;
+    padding-top: 10%;
+    text-align: center;
+    font-weight: 700;
+    font-size: 64px;
+    color: #fff;
 }
-
-.description2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 70%;
-  padding-top: 2%;
-  font-weight: 400;
-  font-size: 24px;
-  text-align: center;
-  color: #fff;
-  line-height: 150%;
+.description2{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70%;
+    padding-top: 2%;
+    font-weight: 400;
+    font-size: 24px;
+    text-align: center;
+    color: #fff;
+    line-height: 150%;
 }
-
-.obj2 {
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  flex-direction: column;
+.obj2{
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    flex-direction: column;
 }
-
-.playgame__container {
-  padding-top: 10%;
-  justify-content: center;
-  display: flex;
+.playgame__container{
+    padding-top: 10%;
+    justify-content: center;
+    display: flex;
 }
-
-.playgame {
-  cursor: pointer;
+.playgame{
+    cursor: pointer;
 }
-
-.wallet__container {
-  display: flex;
-  justify-content: center;
-  font-weight: 400;
-  font-size: 24px;
-  text-align: center;
-  color: #fff;
-  width: 100%;
-  padding-top: 15%;
-  padding-bottom: 15%;
+.wallet__container{
+    display: flex;
+    justify-content: center;
+    font-weight: 400;
+    font-size: 24px;
+    text-align: center;
+    color: #fff;
+    width: 100%;
+    padding-top: 15%;
+    padding-bottom: 15%;
 }
-
-.connect__container {
-  display: flex;
-  align-items: center;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  width: 90%;
-  justify-content: center;
-  margin: auto;
-  height: 60px;
-  cursor: pointer;
+.connect__container{
+    display: flex;
+    align-items: center;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    width: 90%;
+    justify-content: center;
+    margin: auto;
+    height: 60px;
+    cursor: pointer;
 }
-
-.connect {
-  padding-left: 2%;
-  font-weight: 400;
-  font-size: 20px;
-  color: #fff;
+.connect{
+    padding-left: 2%;
+    font-weight: 400;
+    font-size: 20px;
+    color: #fff;
 }
-
-.address__container {
-  display: flex;
-  padding-top: 5%;
-  width: 90%;
-  margin: auto;
-  justify-content: space-between;
-  display: none;
+.address__container{
+    display: flex;
+    padding-top: 5%;
+    width: 90%;
+    margin: auto;
+    justify-content: space-between;
+    display: none;
 }
-
-.trash__container {
-  display: flex;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  width: 50px;
-  height: 50px;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+.trash__container{
+    display: flex;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    width: 50px;
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
-
-.address_container {
-  display: flex;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 400;
-  font-size: 20px;
-  text-align: center;
-  color: #fff;
-  width: 295px;
-  padding: 0 5% 0 5%;
-  cursor: pointer;
+.address_container{
+    display: flex;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    align-items: center;
+    justify-content: space-between;
+    font-weight: 400;
+    font-size: 20px;
+    text-align: center;
+    color: #fff;
+    width: 295px;
+    padding: 0 5% 0 5%;
+    cursor: pointer;
 }
-
-.copymini, .tonicon {
-  padding-top: 1%;
+.copymini, .tonicon{
+    padding-top: 1%;
 }
-
-.tonicon2 {
-  padding-top: 2%;
+.tonicon2{
+    padding-top: 2%;
 }
-
 .disabled {
-  pointer-events: none; /* Отключаем клик */
+    pointer-events: none; /* Отключаем клик */
 }
-
 .settings-cover-img {
-  width: 100%;
-  height: auto; /* Изменяется в зависимости от пропорций изображения */
+    width: 100%;
+    height: auto; /* Изменяется в зависимости от пропорций изображения */
+}
+.title_player{
+    display: flex;
+    padding-top: 20%;
+    padding-left: 3%;
+}
+.title__player{
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    width: 86%;
+}
+.playlist, .playlist_name{
+    justify-content: center;
+}
+.playlist{
+    font-weight: 400;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.5);
+}
+.playlist_name{
+    font-weight: 800;
+    font-size: 16px;
+    color: #fff;
+}
+.cover{
+    padding-top: 5%;
+    display: flex;
+    justify-content: center;
+}
+.song__container{
+    padding-top: 3%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-left: 3%;
+    padding-right: 3%;
+    width: 100%;
+}
+.songname{
+    font-weight: 800;
+    font-size: 24px;
+    color: #fff;
 }
 
-.title_player {
-  display: flex;
-  padding-top: 20%;
-  padding-left: 3%;
+.songname img{
+    width: 12px;
+    height: 12px;
+}
+.progress__container{
+    background: #e0d9d9;
+    border-radius: 10px;
+    width: 95%;
+    height: 7px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: auto;
+    .progress{
+        border-radius: 10px;
+        background: #ffffff;
+        height: 7px;
+    }
 }
 
-.title__player {
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  width: 86%;
+
+.pr__container{
+    display: flex;
+    border-radius: 10px;
+    width: 95%;
+    background: #fff;
+    margin: auto;
+    height: 180px;
+    margin-bottom: 5%;
+    margin-top: 5%;
+    align-items: center;
+    justify-content: center;
+}
+.duration__container{
+    padding-top: 2%;
+    font-weight: 400;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    display: flex;
+    justify-content: space-between;
+    width: 95%;
+    margin: auto;
+}
+.buttons__container{
+    padding-top: 3%;
+    width: 100%;
+}
+.stroke1{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12%;
+}
+.stroke2{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 5%;
+    padding-left: 4.8%;
+    padding-right: 5.5%;
 }
 
-.playlist, .playlist_name {
-  justify-content: center;
+.authors{
+    display: flex;
+    gap: 3%;
+    font-weight: 400;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+}
+.missions__container{
+    padding-top: 15%;
+    font-weight: 400;
+    font-size: 24px;
+    text-align: center;
+    color: #fff;
+    width: 95%;
+    margin: auto;
+}
+.play_btn{
+    width: 45px; /* Фиксированная ширина для кнопок */
+    height: 45px; /* Фиксированная высота для кнопок */
+    cursor: pointer;
+    background-size: contain; /* Для корректного отображения иконок */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1%;
+}
+.btns__container{
+    display: flex;
+    justify-content: center;
+    gap: 2%;
+    padding-top: 5%;
+}
+.active_btn_default{
+    display: flex;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    width: 186px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 400;
+    font-size: 20px;
+    color: #fff;
+    position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.3s ease;
+}
+.active_btn_active{
+    opacity: 0;
+    display: flex;
+    border: 1px solid #fff;
+    background: #fff;
+    border-radius: 20px;
+    width: 186px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 400;
+    font-size: 20px;
+    color: #000;
+    position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transition: opacity 0.3s ease;
+}
+.complete_btn_default{
+    display: flex;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    width: 186px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-align: center;
+    font-weight: 400;
+    font-size: 20px;
+    color: #fff;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+}
+.complete_btn_active{
+    opacity: 0;
+    background: #fff;
+    display: flex;
+    border: 1px solid #fff;
+    border-radius: 20px;
+    width: 186px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-weight: 400;
+    font-size: 20px;
+    color: #000;
+    text-align: center;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
 }
 
-.playlist {
-  font-weight: 400;
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.5);
+.active_btn:hover .active_btn_default{
+    opacity: 0; // Прячем обычное изображение
 }
 
-.playlist_name {
-  font-weight: 800;
-  font-size: 16px;
-  color: #fff;
+.active_btn:hover .active_btn_active{
+    opacity: 100; // Показываем активное изображение
+}
+.complete_btn:hover .complete_btn_default{
+    opacity: 0; // Прячем обычное изображение
 }
 
-.cover {
-  padding-top: 5%;
-  display: flex;
-  justify-content: center;
+.complete_btn:hover .complete_btn_active{
+    opacity: 100; // Показываем активное изображение
 }
 
-.song__container {
-  padding-top: 3%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-left: 3%;
-  padding-right: 3%;
-  width: 100%;
+.active_btn{
+    position: relative;
+    display: inline-block;
+    width: 186px;
+    height: 60px;
 }
-
-.songname {
-  font-weight: 800;
-  font-size: 24px;
-  color: #fff;
+.complete_btn{
+    position: relative;
+    display: inline-block;
+    width: 186px;
+    height: 60px;
 }
-
-.songname img {
-  width: 12px;
-  height: 12px;
+.mission{
+    display: flex;
+    border: 1px solid #fff;
+    border-radius: 15px;
+    align-items: center;
+    justify-content: space-between;
+    height: 50px;
+    margin-bottom: 2%;
+    padding-left: 3%;
+    font-weight: 400;
+    font-size: 16px;
+    color: #fff;
+    padding-right: 3%;
 }
-
-.progress__container {
-  background: #e0d9d9;
-  border-radius: 10px;
-  width: 95%;
-  height: 7px;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  margin: auto;
+.active__container, .complete__container{
+    display: flex;
+    flex-direction: column;
+    width: 95%;
+    margin: auto;
+    padding-top: 5%;
 }
-.progress__container .progress {
-  border-radius: 10px;
-  background: #ffffff;
-  height: 7px;
+.mission_desc{
+    width: 50%;
+    margin-right: auto;
 }
-
-.pr__container {
-  display: flex;
-  border-radius: 10px;
-  width: 95%;
-  background: #fff;
-  margin: auto;
-  height: 180px;
-  margin-bottom: 5%;
-  margin-top: 5%;
-  align-items: center;
-  justify-content: center;
+.mission_img{
+    padding-top: 1%;
+    padding-right: 3%;
 }
-
-.duration__container {
-  padding-top: 2%;
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-  display: flex;
-  justify-content: space-between;
-  width: 95%;
-  margin: auto;
+.missions_token{
+    padding-top: 1%;
+    padding-right: 1%;
 }
-
-.buttons__container {
-  padding-top: 3%;
-  width: 100%;
-}
-
-.stroke1 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12%;
-}
-
-.stroke2 {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 5%;
-  padding-left: 4.8%;
-  padding-right: 5.5%;
-}
-
-.authors {
-  display: flex;
-  gap: 3%;
-  font-weight: 400;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.missions__container {
-  padding-top: 15%;
-  font-weight: 400;
-  font-size: 24px;
-  text-align: center;
-  color: #fff;
-  width: 95%;
-  margin: auto;
-}
-
-.play_btn {
-  width: 45px; /* Фиксированная ширина для кнопок */
-  height: 45px; /* Фиксированная высота для кнопок */
-  cursor: pointer;
-  background-size: contain; /* Для корректного отображения иконок */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1%;
-}
-
-.btns__container {
-  display: flex;
-  justify-content: center;
-  gap: 2%;
-  padding-top: 5%;
-}
-
-.active_btn_default {
-  display: flex;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  width: 186px;
-  height: 60px;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  text-align: center;
-  font-weight: 400;
-  font-size: 20px;
-  color: #fff;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.3s ease;
-}
-
-.active_btn_active {
-  opacity: 0;
-  display: flex;
-  border: 1px solid #fff;
-  background: #fff;
-  border-radius: 20px;
-  width: 186px;
-  height: 60px;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  text-align: center;
-  font-weight: 400;
-  font-size: 20px;
-  color: #000;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.3s ease;
-}
-
-.complete_btn_default {
-  display: flex;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  width: 186px;
-  height: 60px;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  text-align: center;
-  font-weight: 400;
-  font-size: 20px;
-  color: #fff;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.3s ease;
-}
-
-.complete_btn_active {
-  opacity: 0;
-  background: #fff;
-  display: flex;
-  border: 1px solid #fff;
-  border-radius: 20px;
-  width: 186px;
-  height: 60px;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-weight: 400;
-  font-size: 20px;
-  color: #000;
-  text-align: center;
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transition: opacity 0.3s ease;
-}
-
-.active_btn:hover .active_btn_default {
-  opacity: 0;
-}
-
-.active_btn:hover .active_btn_active {
-  opacity: 100;
-}
-
-.complete_btn:hover .complete_btn_default {
-  opacity: 0;
-}
-
-.complete_btn:hover .complete_btn_active {
-  opacity: 100;
-}
-
-.active_btn {
-  position: relative;
-  display: inline-block;
-  width: 186px;
-  height: 60px;
-}
-
-.complete_btn {
-  position: relative;
-  display: inline-block;
-  width: 186px;
-  height: 60px;
-}
-
-.mission {
-  display: flex;
-  border: 1px solid #fff;
-  border-radius: 15px;
-  align-items: center;
-  justify-content: space-between;
-  height: 50px;
-  margin-bottom: 2%;
-  padding-left: 3%;
-  font-weight: 400;
-  font-size: 16px;
-  color: #fff;
-  padding-right: 3%;
-}
-
-.active__container, .complete__container {
-  display: flex;
-  flex-direction: column;
-  width: 95%;
-  margin: auto;
-  padding-top: 5%;
-}
-
-.mission_desc {
-  width: 50%;
-  margin-right: auto;
-}
-
-.mission_img {
-  padding-top: 1%;
-  padding-right: 3%;
-}
-
-.missions_token {
-  padding-top: 1%;
-  padding-right: 1%;
-}
-
 .hidden {
-  display: none;
-}/*# sourceMappingURL=main.css.map */
+    display: none;
+}
+.balances{
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    font-weight: 400;
+    font-size: 14px;
+    color: #fff;
+    align-items: center;
+    position: fixed; /* Фиксируем контейнер на экране */
+    bottom: 0; /* Размещаем внизу экрана */
+}
+.tokenmini img{
+    width: 15px;
+    height: 15px;
+}
+.tokenmini{
+    margin-top: 0.5%;
+    margin-right: 0.5%;
+}
