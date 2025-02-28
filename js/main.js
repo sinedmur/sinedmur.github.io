@@ -592,6 +592,7 @@ document.addEventListener('click', (event) => {
           updateActiveButton(page); // Убираем кнопку с активной страницей
             if (page === 'home.html') {
                 Telegram.WebApp.BackButton.hide();
+                displayUserInfo();
             }
             if (page === 'airdrop.html') {
                 Telegram.WebApp.BackButton.hide();
