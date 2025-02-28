@@ -39,12 +39,24 @@ document.addEventListener('DOMContentLoaded', () => {
 } else {
   console.error("Метод disableVerticalSwipes недоступен.");
 }
-    // Переключение в полноэкранный режим при загрузке
-  if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
-      Telegram.WebApp.requestFullscreen();
-      console.log("Мини-приложение перешло в полноэкранный режим.");
+   // Проверяем, что Telegram WebApp API доступен
+if (window.Telegram && window.Telegram.WebApp) {
+    // Получаем информацию о платформе
+    const platform = Telegram.WebApp.platform;
+  
+    // Если платформа мобильная (android, ios), включаем полноэкранный режим
+    if (platform === 'android' || platform === 'ios') {
+      if (Telegram.WebApp.requestFullscreen) {
+        Telegram.WebApp.requestFullscreen();
+        console.log("Мини-приложение перешло в полноэкранный режим.");
+      } else {
+        console.error("Метод requestFullscreen() недоступен.");
+      }
+    } else {
+      console.log("Платформа не мобильная (десктоп или веб). Полноэкранный режим не активирован.");
+    }
   } else {
-      console.error("Telegram WebApp API или метод requestFullscreen() недоступен.");
+    console.error("Telegram WebApp API недоступен.");
   }
 
   let audioContext;
