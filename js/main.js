@@ -26,26 +26,26 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Один или несколько элементов не найдены!');
     }
 
-    if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.lockOrientation) {
-        Telegram.WebApp.lockOrientation(); // Блокируем ориентацию
-        console.log("Ориентация заблокированы!");
-    } else {
-        console.error("Метод lockOrientation недоступен.");
-    }
+//     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.lockOrientation) {
+//         Telegram.WebApp.lockOrientation(); // Блокируем ориентацию
+//         console.log("Ориентация заблокированы!");
+//     } else {
+//         console.error("Метод lockOrientation недоступен.");
+//     }
     
-    if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
-  Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
-  console.log("Вертикальные свайпы заблокированы!");
-} else {
-  console.error("Метод disableVerticalSwipes недоступен.");
-}
-    // Переключение в полноэкранный режим при загрузке
-  if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
-      Telegram.WebApp.requestFullscreen();
-      console.log("Мини-приложение перешло в полноэкранный режим.");
-  } else {
-      console.error("Telegram WebApp API или метод requestFullscreen() недоступен.");
-  }
+//     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
+//   Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
+//   console.log("Вертикальные свайпы заблокированы!");
+// } else {
+//   console.error("Метод disableVerticalSwipes недоступен.");
+// }
+//     // Переключение в полноэкранный режим при загрузке
+//   if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.requestFullscreen) {
+//       Telegram.WebApp.requestFullscreen();
+//       console.log("Мини-приложение перешло в полноэкранный режим.");
+//   } else {
+//       console.error("Telegram WebApp API или метод requestFullscreen() недоступен.");
+//   }
 
   let audioContext;
   let audioBuffer;
@@ -68,6 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const undermenuContainer = document.querySelector('.undermenu__container'); // Основной плеер
   let touchStartY = 0;
   let touchEndY = 0;
+
+  function updateValuesInDOM() {
+    valueDisplay.textContent = valueNormal + valueSpecial;
+    valueDisplayMini.textContent = valueNormal + valueSpecial;
+}
   
   function handleBackButtonPageNavigation() {
     if (audioContainer && playerContainer && undermenuContainer) {
@@ -168,6 +173,9 @@ Telegram.WebApp.BackButton.onClick(function () {
   const endTimeDisplay = document.querySelector('.end__time'); // Для отображения полного времени
   let endTime = 0;
   
+  // Обновляем отображение сохраненных значений
+  updateValuesInDOM();
+  
   async function loadAudio() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -262,10 +270,7 @@ function updateProgress() {
             // Если контейнер не открыт, начисляем 1 балл за секунду
             valueNormal += 1;
         }
-
-        // Обновляем отображение значения
-        valueDisplay.textContent = valueNormal + valueSpecial;
-        valueDisplayMini.textContent = valueNormal + valueSpecial;
+        updateValuesInDOM();
     }
 
     if (isPlaying) {
@@ -707,10 +712,20 @@ document.addEventListener('click', (event) => {
       } else {
           console.error('Один или несколько элементов не найдены!');
       }
+      // Отслеживание изменений значений valueNormal и valueSpecial
+    const valueDisplay = document.querySelector('.balanc .value');
+    const valueDisplayMini = document.querySelector('.balances .value');
+
+    if (valueDisplay && valueDisplayMini) {
+        // Обновляем значения в DOM при их изменении
+        valueDisplay.textContent = valueNormal + valueSpecial;
+        valueDisplayMini.textContent = valueNormal + valueSpecial;
+    }
   });
 
   // Начинаем наблюдение за изменениями в DOM
   observer.observe(document.body, { childList: true, subtree: true });
+  updateValuesInDOM();
 
   const coverImage = document.querySelector(".cover__src"); // Картинка обложки
   const colorThief = new ColorThief(); // Объект ColorThief
