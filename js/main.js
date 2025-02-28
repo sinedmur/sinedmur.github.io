@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastUpdateTime = 0;  // Время последнего обновления value
   let wasContainerOpen = false;  // Флаг для отслеживания состояния контейнера
   
-  const valueDisplay = document.querySelector('.value'); // Элемент для отображения значения value (с учетом вашего HTML)
-
+  const valueDisplay = document.querySelector('.balanc .value'); // Элемент для отображения значения value (с учетом вашего HTML)
+  const valueDisplayMini = document.querySelector('.balances .value');
   const close = document.querySelector('.close');
   const song = document.querySelector('.song');
   const audioContainer = document.querySelector('.audio__container');
@@ -233,6 +233,7 @@ function pauseAudio() {
         isPlaying = false;
         lastUpdateTime = 0; // Сбрасываем метку времени последнего обновления
         valueDisplay.textContent = valueNormal + valueSpecial; // Обновляем отображение значения
+        valueDisplayMini.textContent = valueNormal + valueSpecial;
     }
 }
 
@@ -256,7 +257,7 @@ function updateProgress() {
 
         if (playerContainer.classList.contains('show')) {
             // Если контейнер открыт, начисляем 2 балла за секунду
-            valueSpecial += 2;
+            valueSpecial += 3;
         } else {
             // Если контейнер не открыт, начисляем 1 балл за секунду
             valueNormal += 1;
@@ -264,6 +265,7 @@ function updateProgress() {
 
         // Обновляем отображение значения
         valueDisplay.textContent = valueNormal + valueSpecial;
+        valueDisplayMini.textContent = valueNormal + valueSpecial;
     }
 
     if (isPlaying) {
