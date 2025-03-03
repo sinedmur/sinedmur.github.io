@@ -257,6 +257,7 @@ async function playNextTrack() {
     pausedAt = 0;
     await loadAudio(currentTrackIndex);
     playAudio();
+    updatePlayPauseButtons();
 }
 
 async function playPrevTrack() {
@@ -264,6 +265,7 @@ async function playPrevTrack() {
     pausedAt = 0;
     await loadAudio(currentTrackIndex);
     playAudio();
+    updatePlayPauseButtons();
 }
 
 async function loadAudio(trackIndex = 0) {
@@ -335,6 +337,7 @@ function playAudio() {
     sourceNode.start(0, pausedAt);
     startTime = audioContext.currentTime;
     isPlaying = true;
+    updatePlayPauseButtons();
     requestAnimationFrame(updateProgress);
 }
 
@@ -346,6 +349,7 @@ function pauseAudio() {
         sourceNode.disconnect();
         sourceNode = null;
         isPlaying = false;
+        updatePlayPauseButtons();
         lastUpdateTime = 0;  // Сбрасываем метку времени последнего обновления
         updateValuesInDOM();
     }
@@ -384,36 +388,38 @@ function updateProgress() {
     }
 }
 
-if (playButton, playButton2, nextButton) {
+if (playButton && playButton2 && nextButton) {
     playButton.addEventListener('click', async () => {
         if (!audioBuffer) await loadAudio();
         if (isPlaying) {
             pauseAudio();
-            playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
-            playButton2.innerHTML = '<img class="play__src" src="./img/Play.svg" alt="btn" />';
-            nextButton.innerHTML = '<img class="img__close" src="./img/Like.svg" alt="btn" />';
         } else {
             playAudio();
-            playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
-            playButton2.innerHTML = '<img class="play__src" src="./img/Pause.svg" alt="btn" />';
-            nextButton.innerHTML = '<img class="img__close" src="./img/Nextmini.svg" alt="btn" />';
         }
+        updatePlayPauseButtons();  // <-- вызываем тут
     });
 
     playButton2.addEventListener('click', async () => {
         if (!audioBuffer) await loadAudio();
         if (isPlaying) {
             pauseAudio();
-            playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
-            playButton2.innerHTML = '<img class="play__src" src="./img/Play.svg" alt="btn" />';
-            nextButton.innerHTML = '<img class="img__close" src="./img/Like.svg" alt="btn" />';
         } else {
             playAudio();
-            playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
-            playButton2.innerHTML = '<img class="play__src" src="./img/Pause.svg" alt="btn" />';
-            nextButton.innerHTML = '<img class="img__close" src="./img/Nextmini.svg" alt="btn" />';
         }
+        updatePlayPauseButtons();  // <-- и тут тоже
     });
+}
+
+function updatePlayPauseButtons() {
+    if (isPlaying) {
+        playButton.innerHTML = '<img class="img__src" src="./img/Pausemini.svg" alt="btn" />';
+        playButton2.innerHTML = '<img class="play__src" src="./img/Pause.svg" alt="btn" />';
+        nextButton.innerHTML = '<img class="img__close" src="./img/Nextmini.svg" alt="btn" />';
+    } else {
+        playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
+        playButton2.innerHTML = '<img class="play__src" src="./img/Play.svg" alt="btn" />';
+        nextButton.innerHTML = '<img class="img__close" src="./img/Like.svg" alt="btn" />';
+    }
 }
 
 loadAudio();
