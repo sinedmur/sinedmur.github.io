@@ -523,9 +523,19 @@ body, html {
   cursor: pointer;
 }
 
+.telegramicon img {
+  width: 40px;
+  height: 40px;
+}
+
 .youtubeicon {
   padding-top: 2%;
   cursor: pointer;
+}
+
+.youtubeicon img {
+  width: 45px;
+  height: 45px;
 }
 
 .language__container {
@@ -690,7 +700,6 @@ body, html {
 
 .title_player {
   display: flex;
-  padding-top: 20%;
   padding-left: 3%;
 }
 
@@ -721,6 +730,14 @@ body, html {
   padding-top: 5%;
   display: flex;
   justify-content: center;
+}
+
+.cover__src {
+  display: flex;
+  justify-content: center;
+  width: 320px;
+  height: 320px;
+  border-radius: 20px;
 }
 
 .song__container {
