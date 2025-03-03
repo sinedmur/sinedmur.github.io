@@ -852,6 +852,28 @@ body, html {
   margin-bottom: 1%;
 }
 
+.random_btn {
+  width: 25px; /* Фиксированная ширина для кнопок */
+  height: 25px; /* Фиксированная высота для кнопок */
+  cursor: pointer;
+  background-size: contain; /* Для корректного отображения иконок */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1%;
+}
+
+.reverse_btn {
+  width: 25px; /* Фиксированная ширина для кнопок */
+  height: 25px; /* Фиксированная высота для кнопок */
+  cursor: pointer;
+  background-size: contain; /* Для корректного отображения иконок */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1%;
+}
+
 .btns__container {
   display: flex;
   justify-content: center;
