@@ -184,43 +184,132 @@ Telegram.WebApp.BackButton.onClick(function () {
   const timeDisplay = document.querySelector('.time'); // Для отображения текущего времени
   const endTimeDisplay = document.querySelector('.end__time'); // Для отображения полного времени
   let endTime = 0;
+  let isManualStop = false;
   
   // Обновляем отображение сохраненных значений
   updateValuesInDOM();
-  
-  async function loadAudio() {
+
+  const playlist = [
+    {
+        src: './audio/track1.mp3',
+        cover: './img/cover1.jpeg',
+        title: 'Нас не догонят',
+        author: 'S1NTEZ',
+        feat: '',
+        songautors: ''
+    },
+    {
+        src: './audio/track2.mp3',
+        cover: './img/cover2.jpg',
+        title: 'Вера в любовь',
+        author: 'S1NTEZ',
+        feat: '',
+        songautors: ''
+    },
+    {
+        src: './audio/track3.mp3',
+        cover: './img/cover3.jpg',
+        title: 'Услышь',
+        author: 'S1NTEZ',
+        feat: 'feat.',
+        songautors: 'Asper'
+    },
+    {
+        src: './audio/track4.mp3',
+        cover: './img/cover4.jpg',
+        title: 'Покурим на двоих',
+        author: 'S1NTEZ',
+        feat: 'feat.',
+        songautors: 'Asper'
+    }
+];
+
+let currentTrackIndex = 0;
+const coverElement = document.querySelector('.cover__src');   // Картинка обложки
+const trackTitleElement = document.querySelector('.songname'); // Заголовок трека
+const trackAuthorElement = document.querySelector('.songautor'); // Автор трека
+const trackFeatElement = document.querySelector('.feat');
+const trackAuthorsElement = document.querySelector('.songautors'); // Автор трека
+const trackAuthorElement2 = document.querySelector('.songautor2'); // Автор трека
+const trackFeatElement2 = document.querySelector('.feat2');
+const trackAuthorsElement2 = document.querySelector('.songautors2'); // Автор трека
+const trackTitleElement2 = document.querySelector('.songtitle'); // Заголовок трека 2
+const nextBtn = document.querySelector('.next_btn');
+const nextBtn2 = document.querySelector('.btn_next');
+const prevBtn = document.querySelector('.prev_btn');
+
+nextBtn.addEventListener('click', async () => {
+    if (isPlaying) pauseAudio();
+    await playNextTrack();
+});
+nextBtn2.addEventListener('click', async () => {
+    if (isPlaying) pauseAudio();
+    await playNextTrack();
+});
+
+prevBtn.addEventListener('click', async () => {
+    if (isPlaying) pauseAudio();
+    await playPrevTrack();
+});
+
+async function playNextTrack() {
+    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    pausedAt = 0;
+    await loadAudio(currentTrackIndex);
+    playAudio();
+}
+
+async function playPrevTrack() {
+    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    pausedAt = 0;
+    await loadAudio(currentTrackIndex);
+    playAudio();
+}
+
+async function loadAudio(trackIndex = 0) {
+    const track = playlist[trackIndex];
+
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         gainNode = audioContext.createGain();
         gainNode.connect(audioContext.destination);
     }
 
-    if (playButton, playButton2) {
+    if (playButton && playButton2) {
         playButton.classList.add('loading');
         playButton2.classList.add('loading');
     }
 
     try {
-        const response = await fetch('./audio/chains.mp3');
+        const response = await fetch(track.src);
         const arrayBuffer = await response.arrayBuffer();
         audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-        endTime = audioBuffer.duration;  // Устанавливаем полное время аудио
+        endTime = audioBuffer.duration;
 
-        // Обновляем отображение полного времени
         const totalMinutes = Math.floor(endTime / 60);
         const totalSeconds = Math.floor(endTime % 60);
         endTimeDisplay.textContent = `${totalMinutes}:${totalSeconds < 10 ? '0' + totalSeconds : totalSeconds}`;
 
-        if (playButton, playButton2) {
-            playButton.classList.remove('loading');
-            playButton2.classList.remove('loading');
-        }
+        // Обновляем обложку и название трека
+        coverElement.src = track.cover;
+        trackTitleElement.textContent = track.title;
+        trackAuthorElement.textContent = track.author;
+        trackAuthorsElement.textContent = track.songautors;
+        trackFeatElement.textContent = track.feat;
+        trackTitleElement2.textContent = track.title;
+        trackAuthorElement2.textContent = track.author;
+        trackAuthorsElement2.textContent = track.songautors;
+        trackFeatElement2.textContent = track.feat;
+
+        // Ждем загрузки обложки и потом применяем цвет
+        coverElement.onload = applyColor;
+
+        playButton.classList.remove('loading');
+        playButton2.classList.remove('loading');
     } catch (error) {
         console.error('Error loading audio:', error);
-        if (playButton, playButton2) {
-            playButton.classList.remove('loading');
-            playButton2.classList.remove('loading');
-        }
+        playButton.classList.remove('loading');
+        playButton2.classList.remove('loading');
     }
 }
 
@@ -228,9 +317,14 @@ function createSourceNode() {
     sourceNode = audioContext.createBufferSource();
     sourceNode.buffer = audioBuffer;
     sourceNode.connect(gainNode);
-    sourceNode.onended = () => {
+    sourceNode.onended = async () => {
+        if (isManualStop) {
+            isManualStop = false;  // Сбрасываем флаг, чтобы следующий запуск работал корректно
+            return;  // Просто выходим, не переключаем трек
+        }
         isPlaying = false;
         updateProgress();
+        await playNextTrack();  // Переход к следующему треку
     };
 }
 
@@ -246,14 +340,14 @@ function playAudio() {
 
 function pauseAudio() {
     if (sourceNode && isPlaying) {
+        isManualStop = true;  // Помечаем, что это ручная остановка
         pausedAt += audioContext.currentTime - startTime;
         sourceNode.stop();
         sourceNode.disconnect();
         sourceNode = null;
         isPlaying = false;
-        lastUpdateTime = 0; // Сбрасываем метку времени последнего обновления
-        valueDisplay.textContent = valueNormal + valueSpecial; // Обновляем отображение значения
-        valueDisplayMini.textContent = valueNormal + valueSpecial;
+        lastUpdateTime = 0;  // Сбрасываем метку времени последнего обновления
+        updateValuesInDOM();
     }
 }
 
@@ -744,17 +838,17 @@ document.addEventListener('click', (event) => {
   const colorThief = new ColorThief(); // Объект ColorThief
 
   function applyColor() {
-      try {
-          if (coverImage.naturalWidth > 0) {
-              const color = colorThief.getColor(coverImage);
-              console.log("Средний цвет:", color);
-              playerContainer.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-              audioContainer.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
-          }
-      } catch (error) {
-          console.error("Ошибка получения цвета: ", error);
-      }
-  }
+    try {
+        if (coverElement.naturalWidth > 0) {  // Проверяем, что картинка уже загрузилась
+            const color = colorThief.getColor(coverElement);
+            console.log("Средний цвет обложки:", color);
+            playerContainer.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+            audioContainer.style.backgroundColor = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+        }
+    } catch (error) {
+        console.error("Ошибка получения цвета обложки:", error);
+    }
+}
 
   if (coverImage.complete) {
       applyColor();
