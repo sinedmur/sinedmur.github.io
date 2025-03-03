@@ -185,9 +185,94 @@ Telegram.WebApp.BackButton.onClick(function () {
   const endTimeDisplay = document.querySelector('.end__time'); // Для отображения полного времени
   let endTime = 0;
   let isManualStop = false;
+  let reverseState = 0; // Состояние кнопки reverse_btn: 0 - исходное, 1 - один трек, 2 - плейлист
+  let isRandom = false; // Флаг для random режима
   
   // Обновляем отображение сохраненных значений
   updateValuesInDOM();
+  const reverseBtn = document.querySelector('.reverse_btn'); // Кнопка reverse
+  const randomBtn = document.querySelector('.random_btn');   // Кнопка random
+  const reverseSrc = document.querySelector('.reverse__src'); // Изображение внутри reverse_btn
+  const randomSrc = document.querySelector('.random__src'); // Изображение внутри random_btn
+  
+  reverseBtn.addEventListener('click', () => {
+    reverseState = (reverseState + 1) % 3; // Переключаем состояния: 0 -> 1 -> 2 -> 0
+
+    switch (reverseState) {
+        case 0:
+            // В исходное состояние
+            reverseSrc.src = './img/Reverse.svg'; // Исходное изображение
+            break;
+        case 1:
+            // Воспроизводим один и тот же трек
+            reverseSrc.src = './img/ReverseOne.svg'; // Изображение для одного трека
+            loadAudio(currentTrackIndex); // Загружаем текущий трек
+            playAudio(); // Воспроизводим его
+            break;
+        case 2:
+            // Воспроизводим плейлист
+            reverseSrc.src = './img/ReverseFull.svg'; // Изображение для плейлиста
+            playPlaylist(); // Функция для воспроизведения всего плейлиста
+            break;
+    }
+});
+  
+  randomBtn.addEventListener('click', () => {
+      isRandom = !isRandom; // Переключаем флаг random
+  
+      if (isRandom) {
+          randomSrc.src = './img/RandomOn.svg'; // Активное изображение
+          shufflePlaylist(); // Перемешиваем плейлист
+      } else {
+          randomSrc.src = './img/Random.svg'; // Неактивное изображение
+          resetPlaylistOrder(); // Возвращаем порядок плейлиста в исходное состояние
+          remainingTracks = []; // Очищаем список оставшихся треков
+      }
+      updatePlayPauseButtons(); // Обновляем кнопки в зависимости от состояния
+  });
+
+  let remainingTracks = [];
+
+// Функция для перемешивания плейлиста
+function shufflePlaylist() {
+    // Инициализируем массив с индексами всех треков
+    remainingTracks = playlist.map((_, index) => index);
+
+    // Перемешиваем этот массив
+    for (let i = remainingTracks.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [remainingTracks[i], remainingTracks[j]] = [remainingTracks[j], remainingTracks[i]]; // Меняем местами
+    }
+}
+
+function resetPlaylistOrder() {
+    // Восстанавливаем порядок треков в плейлисте
+    playlist.sort((a, b) => {
+        return a.src.localeCompare(b.src); // Сортируем по пути к файлам, чтобы вернуть исходный порядок
+    });
+}
+
+// Функция для воспроизведения всего плейлиста
+async function playPlaylist() {
+    if (isRandom) {
+        shufflePlaylist(); // Перемешиваем плейлист, если активен режим random
+    }
+
+    // Функция для воспроизведения одного трека
+    const playNextTrack = async (index) => {
+        await loadAudio(index);  // Загружаем текущий трек
+        playAudio();  // Воспроизводим его
+
+        // Ждем окончания текущего трека, чтобы перейти к следующему
+        sourceNode.onended = async () => {
+            currentTrackIndex = (index + 1) % playlist.length; // Переход к следующему треку в плейлисте
+            playNextTrack(currentTrackIndex);  // Воспроизводим следующий
+        };
+    };
+
+    // Начинаем воспроизведение с текущего трека
+    playNextTrack(currentTrackIndex);
+}
 
   const playlist = [
     {
@@ -253,11 +338,20 @@ prevBtn.addEventListener('click', async () => {
 });
 
 async function playNextTrack() {
-    currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    if (isRandom) {
+        if (remainingTracks.length === 0) {
+            shufflePlaylist(); // Если все треки проиграны, перемешиваем снова
+        }
+        const randomIndex = remainingTracks.pop(); // Берем последний (случайный) трек из оставшихся
+        currentTrackIndex = randomIndex;
+    } else {
+        currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+    }
+
     pausedAt = 0;
-    await loadAudio(currentTrackIndex);
-    playAudio();
-    updatePlayPauseButtons();
+    await loadAudio(currentTrackIndex); // Загружаем выбранный трек
+    playAudio(); // Воспроизводим его
+    updatePlayPauseButtons(); // Обновляем кнопки
 }
 
 async function playPrevTrack() {
@@ -319,14 +413,21 @@ function createSourceNode() {
     sourceNode = audioContext.createBufferSource();
     sourceNode.buffer = audioBuffer;
     sourceNode.connect(gainNode);
+    
+    // Обработчик окончания трека
     sourceNode.onended = async () => {
         if (isManualStop) {
             isManualStop = false;  // Сбрасываем флаг, чтобы следующий запуск работал корректно
             return;  // Просто выходим, не переключаем трек
         }
-        isPlaying = false;
-        updateProgress();
-        await playNextTrack();  // Переход к следующему треку
+        
+        if (reverseState === 1) {  // Если режим "Один трек"
+            playAudio();  // Перезапускаем текущий трек
+        } else {
+            isPlaying = false;
+            updateProgress();
+            await playNextTrack();  // Переход к следующему треку, если не в режиме "Один трек"
+        }
     };
 }
 
@@ -419,6 +520,21 @@ function updatePlayPauseButtons() {
         playButton.innerHTML = '<img class="img__src" src="./img/Playmini.svg" alt="btn" />';
         playButton2.innerHTML = '<img class="play__src" src="./img/Play.svg" alt="btn" />';
         nextButton.innerHTML = '<img class="img__close" src="./img/Like.svg" alt="btn" />';
+    }
+
+    // Обновляем изображения для reverse_btn и random_btn
+    if (reverseState === 1) {
+        reverseSrc.src = './img/ReverseOne.svg'; // Изображение для одного трека
+    } else if (reverseState === 2) {
+        reverseSrc.src = './img/ReverseFull.svg'; // Изображение для плейлиста
+    } else {
+        reverseSrc.src = './img/Reverse.svg'; // Исходное изображение
+    }
+
+    if (isRandom) {
+        randomSrc.src = './img/RandomOn.svg'; // Активное изображение для random
+    } else {
+        randomSrc.src = './img/Random.svg'; // Неактивное изображение для random
     }
 }
 
