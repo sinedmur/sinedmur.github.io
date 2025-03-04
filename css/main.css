@@ -1061,4 +1061,8 @@ body, html {
 .tokenmini {
   margin-top: 0.5%;
   margin-right: 0.5%;
-}/*# sourceMappingURL=main.css.map */
+}
+.player__container.show, .audio__container {
+  transition: background-color 0.5s ease; /* 0.5 секунды плавной анимации */
+}
+/*# sourceMappingURL=main.css.map */
