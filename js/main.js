@@ -196,7 +196,7 @@ Telegram.WebApp.BackButton.onClick(function () {
   const randomSrc = document.querySelector('.random__src'); // Изображение внутри random_btn
   
   reverseBtn.addEventListener('click', () => {
-    reverseState = (reverseState + 1) % 3; // Переключаем состояния: 0 -> 1 -> 2 -> 0
+    reverseState = (reverseState + 1) % 2; // Переключаем состояния: 0 -> 1 -> 2 -> 0
 
     switch (reverseState) {
         case 0:
@@ -206,13 +206,6 @@ Telegram.WebApp.BackButton.onClick(function () {
         case 1:
             // Воспроизводим один и тот же трек
             reverseSrc.src = './img/ReverseOne.svg'; // Изображение для одного трека
-            loadAudio(currentTrackIndex); // Загружаем текущий трек
-            playAudio(); // Воспроизводим его
-            break;
-        case 2:
-            // Воспроизводим плейлист
-            reverseSrc.src = './img/ReverseFull.svg'; // Изображение для плейлиста
-            playPlaylist(); // Функция для воспроизведения всего плейлиста
             break;
     }
 });
@@ -309,6 +302,7 @@ async function playPlaylist() {
     }
 ];
 
+let prevButtonPressedOnce = false; // Флаг для отслеживания первого нажатия
 let currentTrackIndex = 0;
 const coverElement = document.querySelector('.cover__src');   // Картинка обложки
 const trackTitleElement = document.querySelector('.songname'); // Заголовок трека
@@ -355,12 +349,27 @@ async function playNextTrack() {
 }
 
 async function playPrevTrack() {
-    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    if (prevButtonPressedOnce) {
+        // Второе нажатие — переключаем трек
+        currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+        prevButtonPressedOnce = false; // Сбрасываем флаг
+    } else {
+        // Первое нажатие — просто начинаем текущий трек сначала
+        prevButtonPressedOnce = true;
+
+        // Ждем короткий промежуток времени для двойного нажатия (например, 1 сек)
+        setTimeout(() => {
+            prevButtonPressedOnce = false; // Если за 1 сек не нажали ещё раз, сбрасываем
+        }, 1000);
+    }
+
     pausedAt = 0;
     await loadAudio(currentTrackIndex);
     playAudio();
     updatePlayPauseButtons();
 }
+const audioBuffers = {}; // кэш всех загруженных буферов
+const CACHE_LIMIT = 5;   // Сколько треков максимум держим в кэше
 
 async function loadAudio(trackIndex = 0) {
     const track = playlist[trackIndex];
@@ -377,16 +386,24 @@ async function loadAudio(trackIndex = 0) {
     }
 
     try {
-        const response = await fetch(track.src);
-        const arrayBuffer = await response.arrayBuffer();
-        audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        if (audioBuffers[trackIndex]) {
+            // Берём из кэша
+            audioBuffer = audioBuffers[trackIndex];
+        } else {
+            // Загружаем с нуля
+            const response = await fetch(track.src);
+            const arrayBuffer = await response.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            audioBuffers[trackIndex] = audioBuffer; // сохраняем в кэш
+        }
+
         endTime = audioBuffer.duration;
 
         const totalMinutes = Math.floor(endTime / 60);
         const totalSeconds = Math.floor(endTime % 60);
         endTimeDisplay.textContent = `${totalMinutes}:${totalSeconds < 10 ? '0' + totalSeconds : totalSeconds}`;
 
-        // Обновляем обложку и название трека
+        // Обновляем UI
         coverElement.src = track.cover;
         trackTitleElement.textContent = track.title;
         trackAuthorElement.textContent = track.author;
@@ -397,11 +414,20 @@ async function loadAudio(trackIndex = 0) {
         trackAuthorsElement2.textContent = track.songautors;
         trackFeatElement2.textContent = track.feat;
 
-        // Ждем загрузки обложки и потом применяем цвет
         coverElement.onload = applyColor;
 
         playButton.classList.remove('loading');
         playButton2.classList.remove('loading');
+
+        // Предзагружаем соседние треки
+        preloadTrack(trackIndex - 2);
+        preloadTrack(trackIndex - 1);
+        preloadTrack(trackIndex + 1);
+        preloadTrack(trackIndex + 2);
+
+        // Очищаем кэш, чтобы не разрастался
+        cleanupCache(trackIndex);
+
     } catch (error) {
         console.error('Error loading audio:', error);
         playButton.classList.remove('loading');
@@ -409,7 +435,45 @@ async function loadAudio(trackIndex = 0) {
     }
 }
 
+// Предзагрузка трека по индексу
+async function preloadTrack(index) {
+    if (index < 0 || index >= playlist.length) return;
+
+    if (audioBuffers[index]) return; // Уже в кэше
+
+    try {
+        const track = playlist[index];
+        const response = await fetch(track.src);
+        const arrayBuffer = await response.arrayBuffer();
+        const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
+
+        audioBuffers[index] = decodedBuffer;
+        console.log(`Предзагружен трек #${index + 1}: ${track.title}`);
+    } catch (error) {
+        console.warn(`Не удалось предзагрузить трек #${index + 1}`, error);
+    }
+}
+
+// Очистка кэша — оставляем только 5 треков вокруг текущего
+function cleanupCache(currentIndex) {
+    const allowedIndexes = new Set([
+        currentIndex - 2,
+        currentIndex - 1,
+        currentIndex,
+        currentIndex + 1,
+        currentIndex + 2
+    ]);
+
+    for (const index in audioBuffers) {
+        if (!allowedIndexes.has(Number(index))) {
+            delete audioBuffers[index];
+            console.log(`Удалён из кэша трек #${Number(index) + 1}`);
+        }
+    }
+}
+
 function createSourceNode() {
+    
     sourceNode = audioContext.createBufferSource();
     sourceNode.buffer = audioBuffer;
     sourceNode.connect(gainNode);
@@ -422,7 +486,11 @@ function createSourceNode() {
         }
         
         if (reverseState === 1) {  // Если режим "Один трек"
-            playAudio();  // Перезапускаем текущий трек
+            // Воспроизводим текущий трек заново
+            isPlaying = false;
+            updateProgress();
+            await loadAudio(currentTrackIndex);  // Перезагружаем текущий трек
+            playAudio();  // Воспроизводим заново
         } else {
             isPlaying = false;
             updateProgress();
@@ -525,8 +593,6 @@ function updatePlayPauseButtons() {
     // Обновляем изображения для reverse_btn и random_btn
     if (reverseState === 1) {
         reverseSrc.src = './img/ReverseOne.svg'; // Изображение для одного трека
-    } else if (reverseState === 2) {
-        reverseSrc.src = './img/ReverseFull.svg'; // Изображение для плейлиста
     } else {
         reverseSrc.src = './img/Reverse.svg'; // Исходное изображение
     }
