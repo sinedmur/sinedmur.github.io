@@ -91,6 +91,16 @@ body, html {
   bottom: 56px; /* Размещаем внизу экрана */
   z-index: 10; /* Убедимся, что контейнер поверх других элементов */
   transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.5s ease;
+  overflow: hidden; /* Обеспечивает, что скругления контейнера не будут "размыты" прогрессом */
+}
+
+.progressmini {
+  height: 50px;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.2666666667);
+  position: absolute;
+  width: 0%; /* Начальная ширина */
+  transition: width 0.3s ease-in-out; /* Плавное изменение ширины */
 }
 
 .audio__container.hidden {
@@ -136,6 +146,7 @@ body, html {
   justify-content: center; /* Центрируем содержимое по вертикали */
   text-align: center; /* Центрируем текст внутри */
   flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
+  z-index: 1;
 }
 
 .autors {
@@ -771,11 +782,14 @@ body, html {
   align-items: center;
   cursor: pointer;
   margin: auto;
+  overflow: hidden; /* Обеспечивает, что скругления контейнера не будут "размыты" прогрессом */
 }
 .progress__container .progress {
   border-radius: 10px;
   background: #ffffff;
   height: 7px;
+  width: 0%; /* Начальная ширина */
+  transition: width 0.3s ease-in-out; /* Плавное изменение ширины */
 }
 
 .pr__container {
@@ -1062,6 +1076,7 @@ body, html {
   margin-top: 0.5%;
   margin-right: 0.5%;
 }
+
 .buttons__container .random_btn,
 .buttons__container .prev_btn,
 .buttons__container .play_btn,
