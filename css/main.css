@@ -1061,4 +1061,46 @@ body, html {
 .tokenmini {
   margin-top: 0.5%;
   margin-right: 0.5%;
+}
+.buttons__container .random_btn,
+.buttons__container .prev_btn,
+.buttons__container .play_btn,
+.buttons__container .next_btn,
+.buttons__container .reverse_btn,
+.buttons__container .add_btn,
+.buttons__container .text_btn,
+.undermenu__container .btn_menu,
+.undermenu__container .btn_music,
+.undermenu__container .btn_airdrop,
+.undermenu__container .btn_friends,
+.undermenu__container .btn_wallet,
+.audio__container .btn_play,
+.audio__container .btn_next,
+.menu__container .btn_missions,
+.menu__container .btn_buy,
+.menu__container .btn_settings,
+.player__container .close {
+  position: relative; /* для правильного позиционирования псевдоэлемента */
+  transition: transform 0.1s ease;
+}
+
+.buttons__container .random_btn:active,
+.buttons__container .prev_btn:active,
+.buttons__container .play_btn:active,
+.buttons__container .next_btn:active,
+.buttons__container .reverse_btn:active,
+.buttons__container .add_btn:active,
+.buttons__container .text_btn:active,
+.undermenu__container .btn_menu:active,
+.undermenu__container .btn_music:active,
+.undermenu__container .btn_airdrop:active,
+.undermenu__container .btn_friends:active,
+.undermenu__container .btn_wallet:active,
+.audio__container .btn_play:active,
+.audio__container .btn_next:active,
+.menu__container .btn_missions:active,
+.menu__container .btn_buy:active,
+.menu__container .btn_settings:active,
+.player__container .close:active {
+  transform: scale(0.9); /* сжатие кнопки */
 }/*# sourceMappingURL=main.css.map */
