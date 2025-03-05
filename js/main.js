@@ -70,7 +70,7 @@ if (window.Telegram && window.Telegram.WebApp) {
   let valueSpecial = 0; // Переменная для отслеживания value при открытом контейнере
   let lastUpdateTime = 0;  // Время последнего обновления value
   let wasContainerOpen = false;  // Флаг для отслеживания состояния контейнера
-  
+  let valueUpdateInterval = null; // Глобальная переменная для хранения таймера
   const valueDisplay = document.querySelector('.balanc .value'); // Элемент для отображения значения value (с учетом вашего HTML)
   const valueDisplayMini = document.querySelector('.balances .value');
   const close = document.querySelector('.close');
@@ -80,6 +80,34 @@ if (window.Telegram && window.Telegram.WebApp) {
   const undermenuContainer = document.querySelector('.undermenu__container'); // Основной плеер
   let touchStartY = 0;
   let touchEndY = 0;
+  let touchStartX = 0;
+  let touchEndX = 0;
+
+  function updateValue() {
+
+    if (playerContainer.classList.contains('show')) {
+        // Большой плеер открыт - начисляем в специальное значение
+        valueSpecial += 3;  // Коэффициент начисления при открытом плеере
+    } else {
+        // Маленький плеер - обычное начисление
+        valueNormal += 1;
+    }
+
+    updateValuesInDOM();
+}
+
+function startValueUpdate() {
+    if (valueUpdateInterval) clearInterval(valueUpdateInterval); // Убираем старый интервал
+    lastUpdateTime = audioContext.currentTime; // Фиксируем момент старта
+    valueUpdateInterval = setInterval(updateValue, 1000); // Обновляем каждую секунду
+}
+
+function stopValueUpdate() {
+    if (valueUpdateInterval) {
+        clearInterval(valueUpdateInterval);
+        valueUpdateInterval = null;
+    }
+}
 
   function updateValuesInDOM() {
     valueDisplay.textContent = valueNormal + valueSpecial;
@@ -124,12 +152,16 @@ Telegram.WebApp.BackButton.onClick(function () {
   // Обработчик для начала свайпа в audio__container (если мы находимся в маленьком плеере)
   audioContainer.addEventListener('touchstart', (e) => {
       touchStartY = e.changedTouches[0].screenY;
+      touchStartX = e.changedTouches[0].screenX;
   });
 
   // Обработчик для завершения свайпа в audio__container (если мы находимся в маленьком плеере)
   audioContainer.addEventListener('touchend', (e) => {
       touchEndY = e.changedTouches[0].screenY;
+      touchEndX = e.changedTouches[0].screenX;
       handleSwipeFromAudioContainer();
+      handleSwipeNextAudioContainer();
+      handleSwipePrevAudioContainer();
   });
 
   // Обработчик для начала свайпа в player__container (если мы в большом плеере)
@@ -149,6 +181,20 @@ Telegram.WebApp.BackButton.onClick(function () {
           expandPlayer();  // Разворачиваем плеер
       }
   }
+
+  function handleSwipeNextAudioContainer() {
+    if (touchStartX - touchEndX > 50) {  // Свайп вверх
+        if (isPlaying) pauseAudio();
+        playNextTrack();
+    }
+}
+
+function handleSwipePrevAudioContainer() {
+    if (touchEndX - touchStartX > 50) {  // Свайп вверх
+        if (isPlaying) pauseAudio();
+        playPrevSwipeTrack();
+    }
+}
 
   // Функция для обработки свайпа из player__container
   function handleSwipeFromPlayerContainer() {
@@ -243,28 +289,6 @@ function resetPlaylistOrder() {
     playlist.sort((a, b) => {
         return a.src.localeCompare(b.src); // Сортируем по пути к файлам, чтобы вернуть исходный порядок
     });
-}
-
-// Функция для воспроизведения всего плейлиста
-async function playPlaylist() {
-    if (isRandom) {
-        shufflePlaylist(); // Перемешиваем плейлист, если активен режим random
-    }
-
-    // Функция для воспроизведения одного трека
-    const playNextTrack = async (index) => {
-        await loadAudio(index);  // Загружаем текущий трек
-        playAudio();  // Воспроизводим его
-
-        // Ждем окончания текущего трека, чтобы перейти к следующему
-        sourceNode.onended = async () => {
-            currentTrackIndex = (index + 1) % playlist.length; // Переход к следующему треку в плейлисте
-            playNextTrack(currentTrackIndex);  // Воспроизводим следующий
-        };
-    };
-
-    // Начинаем воспроизведение с текущего трека
-    playNextTrack(currentTrackIndex);
 }
 
   const playlist = [
@@ -368,6 +392,16 @@ async function playPrevTrack() {
     playAudio();
     updatePlayPauseButtons();
 }
+
+async function playPrevSwipeTrack() {
+    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    prevButtonPressedOnce = false; // Сбрасываем флаг
+    pausedAt = 0;
+    await loadAudio(currentTrackIndex);
+    playAudio();
+    updatePlayPauseButtons();
+}
+
 const audioBuffers = {}; // кэш всех загруженных буферов
 const CACHE_LIMIT = 5;   // Сколько треков максимум держим в кэше
 
@@ -508,6 +542,7 @@ function playAudio() {
     isPlaying = true;
     updatePlayPauseButtons();
     requestAnimationFrame(updateProgress);
+    startValueUpdate(); // Останавливаем начисление value при паузе
 }
 
 function pauseAudio() {
@@ -521,6 +556,7 @@ function pauseAudio() {
         updatePlayPauseButtons();
         lastUpdateTime = 0;  // Сбрасываем метку времени последнего обновления
         updateValuesInDOM();
+        stopValueUpdate(); // Останавливаем начисление value при паузе
     }
 }
 
@@ -1043,5 +1079,4 @@ document.addEventListener('click', (event) => {
   } else {
       coverImage.addEventListener("load", applyColor);
   }
-
 });
