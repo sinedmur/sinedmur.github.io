@@ -227,6 +227,7 @@ function handleSwipePrevAudioContainer() {
   const playButton2 = document.querySelector('.play_btn');
   const nextButton = document.querySelector('.btn_next');
   const progressBar = document.querySelector('.progress');
+  const progressBarMini = document.querySelector('.progressmini');
   const timeDisplay = document.querySelector('.time'); // Для отображения текущего времени
   const endTimeDisplay = document.querySelector('.end__time'); // Для отображения полного времени
   let endTime = 0;
@@ -568,6 +569,7 @@ function updateProgress() {
     const progress = (currentTime / duration) * 100;
 
     progressBar.style.width = `${progress}%`;
+    progressBarMini.style.width = `${progress}%`;
 
     // Обновляем отображение времени
     const minutes = Math.floor(currentTime / 60);
