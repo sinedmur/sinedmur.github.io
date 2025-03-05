@@ -99,8 +99,6 @@ body, html {
   border-radius: 11px;
   background: rgba(255, 255, 255, 0.2666666667);
   position: absolute;
-  width: 0%; /* Начальная ширина */
-  transition: width 0.3s ease-in-out; /* Плавное изменение ширины */
 }
 
 .audio__container.hidden {
@@ -788,8 +786,6 @@ body, html {
   border-radius: 10px;
   background: #ffffff;
   height: 7px;
-  width: 0%; /* Начальная ширина */
-  transition: width 0.3s ease-in-out; /* Плавное изменение ширины */
 }
 
 .pr__container {
