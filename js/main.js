@@ -643,6 +643,60 @@ function updatePlayPauseButtons() {
 }
 
 loadAudio();
+
+const addBtn = document.querySelector('.add_btn');
+
+addBtn.addEventListener('click', () => {
+    addTrackToMusicPage(currentTrackIndex);
+});
+
+function addTrackToMusicPage(trackIndex) {
+    const track = playlist[trackIndex];
+
+    const newTrack = document.createElement('div');
+    newTrack.classList.add('track1');
+
+    newTrack.innerHTML = `
+        <div class="cover1"><img src="${track.cover}" alt="cover"></div>
+        <div class="song2">
+            <div class="songtitle">${track.title}</div>
+            <div class="authors">
+                <div class="songautor">${track.author}</div>
+                <div class="feat">${track.feat}</div>
+                <div class="songautors">${track.songautors}</div>
+            </div>
+        </div>
+        <div class="duration">${formatTime(audioBuffer.duration)}</div>
+        <div class="info"><img src="./img/info.svg" alt="info"></div>
+    `;
+
+    // Добавляем обработчик события на клик по треку
+    newTrack.addEventListener('click', () => {
+        playTrackFromMusicPage(trackIndex);
+    });
+
+    const myMusicContainer = document.querySelector('.mymusic__container');
+    myMusicContainer.appendChild(newTrack);
+}
+
+async function playTrackFromMusicPage(trackIndex) {
+    if (isPlaying) {
+        pauseAudio(); // Останавливаем текущий трек, если он играет
+    }
+
+    currentTrackIndex = trackIndex; // Обновляем текущий индекс трека
+    await loadAudio(currentTrackIndex); // Загружаем выбранный трек
+    playAudio(); // Воспроизводим трек
+
+    // Обновляем интерфейс (если нужно)
+    updatePlayPauseButtons();
+}
+
+function formatTime(duration) {
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    return `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+}
   
 
   // Telegram Auth
@@ -1007,58 +1061,55 @@ document.addEventListener('click', (event) => {
 
   // Использование MutationObserver для отслеживания появления элемента с классом .refresh
   const observer = new MutationObserver(() => {
-      const refreshButton = document.querySelector('.refresh');
+    // Обработчик для кнопки refresh
+    const refreshButton = document.querySelector('.refresh');
+    if (refreshButton) {
+        refreshButton.addEventListener('click', function () {
+            this.classList.add('rotate');
+            setTimeout(() => {
+                this.classList.remove('rotate');
+            }, 500);
+        });
+    }
 
-      if (refreshButton) {
-          refreshButton.addEventListener('click', function () {
-              // Добавляем класс для вращения картинки внутри кнопки
-              this.classList.add('rotate');
-  
-              // Убираем класс через время, чтобы анимация могла повториться
-              setTimeout(() => {
-                  this.classList.remove('rotate');
-              }, 500);  // Это время должно совпадать с длительностью анимации
-          });
-      }
-      const activeBtn = document.querySelector('.active_btn');
-      const completeBtn = document.querySelector('.complete_btn');
-      const activeContainer = document.querySelector('.active__container');
-      const completeContainer = document.querySelector('.complete__container');
-  
-      // Проверяем, что элементы существуют
-      if (activeBtn && completeBtn && activeContainer && completeContainer) {
-          console.log('Элементы найдены:', { activeBtn, completeBtn, activeContainer, completeContainer });
-  
-          // Обработчик для кнопки active_btn
-          activeBtn.addEventListener('click', () => {
-              console.log('Нажата кнопка active_btn');
-              activeContainer.classList.remove('hidden'); // Показываем active__container
-              completeContainer.classList.add('hidden'); // Скрываем complete__container
-          });
-  
-          // Обработчик для кнопки complete_btn
-          completeBtn.addEventListener('click', () => {
-              console.log('Нажата кнопка complete_btn');
-              completeContainer.classList.remove('hidden'); // Показываем complete__container
-              activeContainer.classList.add('hidden'); // Скрываем active__container
-          });
-      } else {
-          console.error('Один или несколько элементов не найдены!');
-      }
-      // Отслеживание изменений значений valueNormal и valueSpecial
+    // Обработчики для кнопок active_btn и complete_btn
+    const activeBtn = document.querySelector('.active_btn');
+    const completeBtn = document.querySelector('.complete_btn');
+    const activeContainer = document.querySelector('.active__container');
+    const completeContainer = document.querySelector('.complete__container');
+
+    if (activeBtn && completeBtn && activeContainer && completeContainer) {
+        console.log('Элементы найдены:', { activeBtn, completeBtn, activeContainer, completeContainer });
+
+        activeBtn.addEventListener('click', () => {
+            console.log('Нажата кнопка active_btn');
+            activeContainer.classList.remove('hidden');
+            completeContainer.classList.add('hidden');
+        });
+
+        completeBtn.addEventListener('click', () => {
+            console.log('Нажата кнопка complete_btn');
+            completeContainer.classList.remove('hidden');
+            activeContainer.classList.add('hidden');
+        });
+    } else {
+        console.error('Один или несколько элементов не найдены!');
+    }
+
+    // Обновление значений valueNormal и valueSpecial
     const valueDisplay = document.querySelector('.balanc .value');
     const valueDisplayMini = document.querySelector('.balances .value');
 
     if (valueDisplay && valueDisplayMini) {
-        // Обновляем значения в DOM при их изменении
         valueDisplay.textContent = valueNormal + valueSpecial;
         valueDisplayMini.textContent = valueNormal + valueSpecial;
     }
-  });
+});
 
-  // Начинаем наблюдение за изменениями в DOM
-  observer.observe(document.body, { childList: true, subtree: true });
-  updateValuesInDOM();
+// Начинаем наблюдение за изменениями в DOM
+observer.observe(document.body, { childList: true, subtree: true });
+updateValuesInDOM();
+
 
   const coverImage = document.querySelector(".cover__src"); // Картинка обложки
   const colorThief = new ColorThief(); // Объект ColorThief
