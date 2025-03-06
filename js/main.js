@@ -680,14 +680,14 @@ function addTrackToMusicPage(trackIndex) {
 }
 
 async function playTrackFromMusicPage(trackIndex) {
+    if (!audioBuffer) await loadAudio();
     if (isPlaying) {
         pauseAudio(); // Останавливаем текущий трек, если он играет
     }
-
+    pausedAt = 0;
     currentTrackIndex = trackIndex; // Обновляем текущий индекс трека
     await loadAudio(currentTrackIndex); // Загружаем выбранный трек
     playAudio(); // Воспроизводим трек
-
     // Обновляем интерфейс (если нужно)
     updatePlayPauseButtons();
 }
