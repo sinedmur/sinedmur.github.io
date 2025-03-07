@@ -7,35 +7,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Проверяем, что элементы существуют
     if (activeBtn && completeBtn && activeContainer && completeContainer) {
-        console.log('Элементы найдены:', { activeBtn, completeBtn, activeContainer, completeContainer });
 
         // Обработчик для кнопки active_btn
         activeBtn.addEventListener('click', () => {
-            console.log('Нажата кнопка active_btn');
             activeContainer.classList.remove('hidden'); // Показываем active__container
             completeContainer.classList.add('hidden'); // Скрываем complete__container
         });
 
         // Обработчик для кнопки complete_btn
         completeBtn.addEventListener('click', () => {
-            console.log('Нажата кнопка complete_btn');
             completeContainer.classList.remove('hidden'); // Показываем complete__container
             activeContainer.classList.add('hidden'); // Скрываем active__container
         });
-    } else {
-        console.error('Один или несколько элементов не найдены!');
     }
 
     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.lockOrientation) {
         Telegram.WebApp.lockOrientation(); // Блокируем ориентацию
-        console.log("Ориентация заблокированы!");
     } else {
         console.error("Метод lockOrientation недоступен.");
     }
     
     if (window.Telegram && window.Telegram.WebApp && Telegram.WebApp.disableVerticalSwipes) {
   Telegram.WebApp.disableVerticalSwipes(); // Блокируем вертикальные свайпы
-  console.log("Вертикальные свайпы заблокированы!");
 } else {
   console.error("Метод disableVerticalSwipes недоступен.");
 }
@@ -48,13 +41,10 @@ if (window.Telegram && window.Telegram.WebApp) {
     if (platform === 'android' || platform === 'ios') {
       if (Telegram.WebApp.requestFullscreen) {
         Telegram.WebApp.requestFullscreen();
-        console.log("Мини-приложение перешло в полноэкранный режим.");
       } else {
         console.error("Метод requestFullscreen() недоступен.");
       }
-    } else {
-      console.log("Платформа не мобильная (десктоп или веб). Полноэкранный режим не активирован.");
-    }
+    } 
   } else {
     console.error("Telegram WebApp API недоступен.");
   }
@@ -276,7 +266,7 @@ function handleSwipePrevAudioContainer() {
 // Функция для перемешивания плейлиста
 function shufflePlaylist() {
     // Инициализируем массив с индексами всех треков
-    remainingTracks = playlist.map((_, index) => index);
+    remainingTracks = currentPlaylist.map((_, index) => index);
 
     // Перемешиваем этот массив
     for (let i = remainingTracks.length - 1; i > 0; i--) {
@@ -287,7 +277,7 @@ function shufflePlaylist() {
 
 function resetPlaylistOrder() {
     // Восстанавливаем порядок треков в плейлисте
-    playlist.sort((a, b) => {
+    currentPlaylist.sort((a, b) => {
         return a.src.localeCompare(b.src); // Сортируем по пути к файлам, чтобы вернуть исходный порядок
     });
 }
@@ -329,6 +319,7 @@ function resetPlaylistOrder() {
 let myMusicTracks = []; // Массив для хранения индексов добавленных треков
 let prevButtonPressedOnce = false; // Флаг для отслеживания первого нажатия
 let currentPlaylist = playlist; // По умолчанию используем основной плейлист
+console.log("Initial currentPlaylist:", currentPlaylist); // Отладка
 let currentTrackIndex = 0;
 const coverElement = document.querySelector('.cover__src');   // Картинка обложки
 const trackTitleElement = document.querySelector('.songname'); // Заголовок трека
@@ -358,6 +349,10 @@ prevBtn.addEventListener('click', async () => {
 });
 
 async function playNextTrack() {
+    console.log("Current playlist:", currentPlaylist === playlist ? "Main playlist" : "MyMusicTracks");
+    console.log("Current track index:", currentTrackIndex);
+    console.log("Track to play:", currentPlaylist[currentTrackIndex].title);
+    console.log("Playing next track from:", currentPlaylist === playlist ? "Main playlist" : "MyMusicTracks"); // Отладка
     if (isRandom) {
         if (remainingTracks.length === 0) {
             shufflePlaylist(); // Если все треки проиграны, перемешиваем снова
@@ -368,7 +363,8 @@ async function playNextTrack() {
         // Переключаем на следующий трек в текущем плейлисте
         currentTrackIndex = (currentTrackIndex + 1) % currentPlaylist.length;
     }
-
+    console.log("Next track index:", currentTrackIndex, "Track:", currentPlaylist[currentTrackIndex].title); // Отладка
+    console.log("Playing next track from currentPlaylist. Index:", currentTrackIndex); // Отладка
     pausedAt = 0;
     await loadAudio(currentTrackIndex); // Загружаем выбранный трек
     playAudio(); // Воспроизводим его
@@ -376,6 +372,9 @@ async function playNextTrack() {
 }
 
 async function playPrevTrack() {
+    console.log("Current playlist:", currentPlaylist === playlist ? "Main playlist" : "MyMusicTracks");
+    console.log("Current track index:", currentTrackIndex);
+    console.log("Track to play:", currentPlaylist[currentTrackIndex].title);
     if (prevButtonPressedOnce) {
         // Второе нажатие — переключаем трек
         currentTrackIndex = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
@@ -390,6 +389,7 @@ async function playPrevTrack() {
         }, 2000);
     }
 
+    console.log("Playing previous track from currentPlaylist. Index:", currentTrackIndex); // Отладка
     pausedAt = 0;
     await loadAudio(currentTrackIndex);
     playAudio();
@@ -397,7 +397,7 @@ async function playPrevTrack() {
 }
 
 async function playPrevSwipeTrack() {
-    currentTrackIndex = (currentTrackIndex - 1 + playlist.length) % playlist.length;
+    currentTrackIndex = (currentTrackIndex - 1 + currentPlaylist.length) % currentPlaylist.length;
     prevButtonPressedOnce = false; // Сбрасываем флаг
     pausedAt = 0;
     await loadAudio(currentTrackIndex);
@@ -405,11 +405,19 @@ async function playPrevSwipeTrack() {
     updatePlayPauseButtons();
 }
 
-const audioBuffers = {}; // кэш всех загруженных буферов
+let audioBuffers = {}; // кэш всех загруженных буферов
 const CACHE_LIMIT = 5;   // Сколько треков максимум держим в кэше
 
 async function loadAudio(trackIndex = 0) {
     const track = currentPlaylist[trackIndex]; // Используем текущий плейлист
+
+    if (!track) {
+        console.error("Track not found in current playlist!"); // Проверка наличия трека
+        return;
+    }
+
+    console.log("Loading track from currentPlaylist. Index:", trackIndex, "Track:", track.title); // Отладка
+    console.log("Track source:", track.src); // Отладка: проверяем источник аудио
 
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -425,9 +433,11 @@ async function loadAudio(trackIndex = 0) {
     try {
         if (audioBuffers[trackIndex]) {
             // Берём из кэша
+            console.log("Using cached audio buffer for track:", track.title); // Отладка
             audioBuffer = audioBuffers[trackIndex];
         } else {
             // Загружаем с нуля
+            console.log("Fetching audio for track:", track.title); // Отладка
             const response = await fetch(track.src);
             const arrayBuffer = await response.arrayBuffer();
             audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
@@ -461,14 +471,15 @@ async function loadAudio(trackIndex = 0) {
         playButton2.classList.remove('loading');
     }
 }
+
 // Предзагрузка трека по индексу
 async function preloadTrack(index) {
-    if (index < 0 || index >= playlist.length) return;
+    if (index < 0 || index >= currentPlaylist.length) return;
 
     if (audioBuffers[index]) return; // Уже в кэше
 
     try {
-        const track = playlist[index];
+        const track = currentPlaylist[index];
         const response = await fetch(track.src);
         const arrayBuffer = await response.arrayBuffer();
         const decodedBuffer = await audioContext.decodeAudioData(arrayBuffer);
@@ -493,13 +504,13 @@ function cleanupCache(currentIndex) {
     for (const index in audioBuffers) {
         if (!allowedIndexes.has(Number(index))) {
             delete audioBuffers[index];
-            console.log(`Удалён из кэша трек #${Number(index) + 1}`);
         }
     }
 }
 
 function createSourceNode() {
-    
+    console.log("Creating source node for track:", currentPlaylist[currentTrackIndex].title); // Отладка
+    console.log("Audio buffer source:", audioBuffer); // Отладка: проверяем буфер
     sourceNode = audioContext.createBufferSource();
     sourceNode.buffer = audioBuffer;
     sourceNode.connect(gainNode);
@@ -527,7 +538,7 @@ function createSourceNode() {
 
 function playAudio() {
     if (!audioBuffer || isPlaying) return;
-
+    console.log("Playing track:", currentPlaylist[currentTrackIndex].title); // Отладка
     createSourceNode();
     sourceNode.start(0, pausedAt);
     startTime = audioContext.currentTime;
@@ -648,30 +659,34 @@ addBtn.addEventListener('click', () => {
 });
 
 function addTrackToMusicPage(trackIndex) {
-    const track = playlist[trackIndex]; // Получаем трек из основного плейлиста
+    const track = currentPlaylist[trackIndex]; // Получаем трек из основного плейлиста
 
     if (!track) {
         console.error("Track not found in playlist!"); // Проверка наличия трека
         return;
     }
 
-    // Добавляем трек в myMusicTracks без проверки на дубликаты
-    myMusicTracks.push(track); // Добавляем индекс трека в массив
+    // Создаем глубокую копию объекта трека
+    const trackCopy = JSON.parse(JSON.stringify(track)); // Глубокая копия
 
-    console.log("Added track to myMusicTracks:", track); // Отладка
+    // Добавляем копию трека в myMusicTracks
+    myMusicTracks.push(trackCopy); // Добавляем объект трека в массив
+
+    console.log("Added track to myMusicTracks:", trackCopy); // Отладка
     console.log("myMusicTracks:", myMusicTracks); // Отладка
 
+    // Обновляем интерфейс
     const newTrack = document.createElement('div');
     newTrack.classList.add('track1');
 
     newTrack.innerHTML = 
-        `<div class="cover1"><img src="${track.cover}" alt="cover"></div>
+        `<div class="cover1"><img src="${trackCopy.cover}" alt="cover"></div>
          <div class="song2">
-             <div class="songtitle">${track.title}</div>
+             <div class="songtitle">${trackCopy.title}</div>
              <div class="authors">
-                 <div class="songautor">${track.author}</div>
-                 <div class="feat">${track.feat}</div>
-                 <div class="songautors">${track.songautors}</div>
+                 <div class="songautor">${trackCopy.author}</div>
+                 <div class="feat">${trackCopy.feat}</div>
+                 <div class="songautors">${trackCopy.songautors}</div>
              </div>
          </div>
          <div class="duration">${formatTime(audioBuffer.duration)}</div>
@@ -679,19 +694,30 @@ function addTrackToMusicPage(trackIndex) {
 
     // Добавляем обработчик события на клик по треку
     newTrack.addEventListener('click', () => {
-        console.log("Clicked track index:", trackIndex); // Отладка
-        playTrackFromMusicPage(trackIndex);
+        console.log("Clicked track:", trackCopy); // Отладка
+        playTrackFromMusicPage(trackCopy); // Передаем копию трека
     });
 
     const myMusicContainer = document.querySelector('.mymusic__container');
     myMusicContainer.appendChild(newTrack);
 }
 
-async function playTrackFromMusicPage(trackIndex) {
-    console.log("Playing track from myMusicTracks, index:", trackIndex); // Отладка
+async function playTrackFromMusicPage(track) {
+    console.log("Current playlist:", currentPlaylist === playlist ? "Main playlist" : "MyMusicTracks");
+    console.log("Current track index:", currentTrackIndex);
+    console.log("Track to play:", currentPlaylist[currentTrackIndex].title);
+    console.log("Playing track from myMusicTracks:", track); // Отладка
 
-    if (trackIndex < 0 || trackIndex >= myMusicTracks.length) {
-        console.error("Invalid track index:", trackIndex); // Проверка индекса
+    if (!track) {
+        console.error("Track is undefined!"); // Проверка объекта трека
+        return;
+    }
+    audioBuffers = {}; // Очищаем кэш
+    // Находим индекс трека в myMusicTracks
+    const trackIndex = myMusicTracks.indexOf(track);
+
+    if (trackIndex === -1) {
+        console.error("Track not found in myMusicTracks!"); // Проверка наличия трека
         return;
     }
 
@@ -711,15 +737,9 @@ async function playTrackFromMusicPage(trackIndex) {
         currentPlaylist = myMusicTracks; // Переключаемся на пользовательский плейлист
         currentTrackIndex = trackIndex; // Обновляем текущий индекс трека
 
+        console.log("Switched to myMusicTracks. Current index:", currentTrackIndex); // Отладка
+
         // Обновляем интерфейс перед загрузкой аудио
-        const track = currentPlaylist[currentTrackIndex];
-        console.log("Selected track:", track); // Отладка
-
-        if (!track) {
-            console.error("Track is undefined!"); // Проверка объекта трека
-            return;
-        }
-
         updateTrackInfo(track);
 
         // Загружаем выбранный трек
@@ -732,10 +752,6 @@ async function playTrackFromMusicPage(trackIndex) {
 }
 
 function updateTrackInfo(track) {
-    console.log("Updating track info:", track); // Отладка
-    console.log("Cover element:", coverElement); // Проверка элемента DOM
-    console.log("Title element:", trackTitleElement); // Проверка элемента DOM
-    console.log("Author element:", trackAuthorElement); // Проверка элемента DOM
 
     if (!track) {
         console.error("Track is undefined!");
@@ -756,10 +772,6 @@ function updateTrackInfo(track) {
     trackAuthorsElement.textContent = track.songautors;
     trackFeatElement2.textContent = track.feat;
     trackAuthorsElement2.textContent = track.songautors;
-
-    console.log("Updated cover:", coverElement.src); // Отладка
-    console.log("Updated title:", trackTitleElement.textContent); // Отладка
-    console.log("Updated author:", trackAuthorElement.textContent); // Отладка
 
     coverElement.onload = applyColor;
 }
@@ -1164,9 +1176,7 @@ document.addEventListener('click', (event) => {
             completeContainer.classList.remove('hidden');
             activeContainer.classList.add('hidden');
         });
-    } else {
-        console.error('Один или несколько элементов не найдены!');
-    }
+    } 
 
     // Обновление значений valueNormal и valueSpecial
     const valueDisplay = document.querySelector('.balanc .value');
