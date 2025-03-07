@@ -655,38 +655,36 @@ function addTrackToMusicPage(trackIndex) {
         return;
     }
 
-    if (!myMusicTracks.some(t => t.src === track.src)) { // Проверяем, не добавлен ли трек уже
-        myMusicTracks.push(track); // Добавляем объект трека в массив
+    // Добавляем трек в myMusicTracks без проверки на дубликаты
+    myMusicTracks.push(track); // Добавляем индекс трека в массив
 
-        console.log("Added track to myMusicTracks:", track); // Отладка
-        console.log("myMusicTracks:", myMusicTracks); // Отладка
+    console.log("Added track to myMusicTracks:", track); // Отладка
+    console.log("myMusicTracks:", myMusicTracks); // Отладка
 
-        const newTrack = document.createElement('div');
-        newTrack.classList.add('track1');
+    const newTrack = document.createElement('div');
+    newTrack.classList.add('track1');
 
-        newTrack.innerHTML = 
-            `<div class="cover1"><img src="${track.cover}" alt="cover"></div>
-             <div class="song2">
-                 <div class="songtitle">${track.title}</div>
-                 <div class="authors">
-                     <div class="songautor">${track.author}</div>
-                     <div class="feat">${track.feat}</div>
-                     <div class="songautors">${track.songautors}</div>
-                 </div>
+    newTrack.innerHTML = 
+        `<div class="cover1"><img src="${track.cover}" alt="cover"></div>
+         <div class="song2">
+             <div class="songtitle">${track.title}</div>
+             <div class="authors">
+                 <div class="songautor">${track.author}</div>
+                 <div class="feat">${track.feat}</div>
+                 <div class="songautors">${track.songautors}</div>
              </div>
-             <div class="duration">${formatTime(audioBuffer.duration)}</div>
-             <div class="info"><img src="./img/info.svg" alt="info"></div>`;
+         </div>
+         <div class="duration">${formatTime(audioBuffer.duration)}</div>
+         <div class="info"><img src="./img/info.svg" alt="info"></div>`;
 
-        newTrack.addEventListener('click', () => {
-            console.log("Clicked track index:", trackIndex); // Отладка
-            playTrackFromMusicPage(trackIndex);
-        });
+    // Добавляем обработчик события на клик по треку
+    newTrack.addEventListener('click', () => {
+        console.log("Clicked track index:", trackIndex); // Отладка
+        playTrackFromMusicPage(trackIndex);
+    });
 
-        const myMusicContainer = document.querySelector('.mymusic__container');
-        myMusicContainer.appendChild(newTrack);
-    } else {
-        alert('Этот трек уже добавлен в ваш плейлист!');
-    }
+    const myMusicContainer = document.querySelector('.mymusic__container');
+    myMusicContainer.appendChild(newTrack);
 }
 
 async function playTrackFromMusicPage(trackIndex) {
