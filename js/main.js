@@ -122,7 +122,7 @@ Telegram.WebApp.BackButton.onClick(function () {
     if (playerContainer.classList.contains('show')) {
         handleBackButtonPageNavigation(); // Закрываем плеер
     } else {
-        loadPage('home.html'); // Только если плеер закрыт, идем на home.html
+        loadHomePage(); // Только если плеер закрыт, идем на home.html
     }
 });
 
@@ -1068,9 +1068,6 @@ document.addEventListener('click', (event) => {
             }
             if (page === 'missions.html') {
                 Telegram.WebApp.BackButton.show();
-                Telegram.WebApp.BackButton.onClick(function () {
-                    loadHomePage();
-                });
             }
             if (page === 'buy.html') {
                 Telegram.WebApp.BackButton.show();
@@ -1160,7 +1157,7 @@ document.addEventListener('click', (event) => {
         }
     
         // Если ничего не открыто, выполняем переход на home.html
-        loadPage('home.html');
+        loadHomePage();
     });
 
     function collapsePlaylist1() {
