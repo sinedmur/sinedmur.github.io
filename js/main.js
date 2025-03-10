@@ -119,8 +119,11 @@ function loadHomePage() {
 }
 
 Telegram.WebApp.BackButton.onClick(function () {
-    handleBackButtonPageNavigation();
-    loadPage(page);
+    if (playerContainer.classList.contains('show')) {
+        handleBackButtonPageNavigation(); // Закрываем плеер
+    } else {
+        loadPage('home.html'); // Только если плеер закрыт, идем на home.html
+    }
 });
 
   if (audioContainer && playerContainer) {
@@ -1146,15 +1149,29 @@ document.addEventListener('click', (event) => {
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
     Telegram.WebApp.BackButton.onClick(function () {
-        collapsePlaylist1();
-        loadPage(page);
+        if (playerContainer.classList.contains('show')) {
+            handleBackButtonPageNavigation(); // Закрываем плеер
+            return; // Выходим из функции, чтобы не переходить на другую страницу
+        }
+    
+        if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+            collapsePlaylist1(); // Закрываем плейлист
+            return;
+        }
+    
+        // Если ничего не открыто, выполняем переход на home.html
+        loadPage('home.html');
     });
 
     function collapsePlaylist1() {
-        if (playlistOpen1) {
-            playlistOpen1.classList.remove('show');  // Скрываем плеер
+        if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+            playlistOpen1.classList.remove('show'); // Скрываем плейлист
         }
+        
+        // Проверяем, открыт ли плеер. Если открыт, кнопку "Назад" не скрываем
+        if (!playerContainer.classList.contains('show')) {
             Telegram.WebApp.BackButton.hide();
+        }
     }
 
     function expandPlaylist1() {
