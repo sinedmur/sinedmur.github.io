@@ -1134,6 +1134,7 @@ document.addEventListener('click', (event) => {
 
   // Использование MutationObserver для отслеживания появления элемента с классом .refresh
   const observer = new MutationObserver(() => {
+
     const playlistOpen1 = document.querySelector('.playlist1_open');
     const playlistOpen2 = document.querySelector('.playlist2_open');
     const playlistOpen3 = document.querySelector('.playlist3_open');
@@ -1142,13 +1143,16 @@ document.addEventListener('click', (event) => {
     const playlistTwo = document.querySelector('.playlist2'); // Основной плейлист
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
-
-
+    
+    Telegram.WebApp.BackButton.onClick(function () {
+        collapsePlaylist1();
+    });
+    
     function collapsePlaylist1() {
         if (playlistOpen1) {
             playlistOpen1.classList.remove('show');  // Скрываем плеер
-            Telegram.WebApp.BackButton.hide();
         }
+            Telegram.WebApp.BackButton.hide();
     }
 
     function expandPlaylist1() {
