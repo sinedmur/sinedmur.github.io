@@ -1144,14 +1144,14 @@ document.addEventListener('click', (event) => {
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
-    Telegram.WebApp.BackButton.onClick(function () {   
-        if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
-            collapsePlaylist1(); // Закрываем плейлист
-            return;
-        }   
-        // Если ничего не открыто, выполняем переход на home.html
-        loadHomePage();
-    });
+    // Telegram.WebApp.BackButton.onClick(function () {   
+    //     if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+    //         collapsePlaylist1(); // Закрываем плейлист
+    //         return;
+    //     }   
+    //     // Если ничего не открыто, выполняем переход на home.html
+    //     loadHomePage();
+    // });
 
     function collapsePlaylist1() {
         if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
