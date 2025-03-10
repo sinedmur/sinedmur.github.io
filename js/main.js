@@ -103,14 +103,19 @@ function stopValueUpdate() {
     valueDisplayMini.textContent = valueNormal + valueSpecial;
 }
   
-  function handleBackButtonPageNavigation() {
+function handleBackButtonPageNavigation() {
     if (audioContainer && playerContainer && undermenuContainer) {
         audioContainer.classList.remove('hidden');
         playerContainer.classList.remove('show');
         undermenuContainer.classList.remove('hidden');
     }
-    // Скрываем кнопку "Назад"
-    Telegram.WebApp.BackButton.hide();
+    
+    // Если плейлист открыт, показываем кнопку "Назад", иначе скрываем
+    if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+        Telegram.WebApp.BackButton.show();
+    } else {
+        Telegram.WebApp.BackButton.hide();
+    }
 }
 
 function loadHomePage() {
@@ -123,7 +128,6 @@ Telegram.WebApp.BackButton.onClick(function () {
         handleBackButtonPageNavigation(); // Закрываем плеер
         return; // Прерываем выполнение, чтобы не переходить на home.html
     }
-
     loadHomePage(); // Если плеер уже закрыт, переходим на home.html
 });
 
@@ -1140,14 +1144,14 @@ document.addEventListener('click', (event) => {
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
-    // Telegram.WebApp.BackButton.onClick(function () {   
-    //     if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
-    //         collapsePlaylist1(); // Закрываем плейлист
-    //         return;
-    //     }   
-    //     // Если ничего не открыто, выполняем переход на home.html
-    //     loadHomePage();
-    // });
+    Telegram.WebApp.BackButton.onClick(function () {   
+        if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+            collapsePlaylist1(); // Закрываем плейлист
+            return;
+        }   
+        // Если ничего не открыто, выполняем переход на home.html
+        loadHomePage();
+    });
 
     function collapsePlaylist1() {
         if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
