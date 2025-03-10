@@ -120,6 +120,7 @@ function loadHomePage() {
 
 Telegram.WebApp.BackButton.onClick(function () {
     handleBackButtonPageNavigation();
+    loadPage(page);
 });
 
   if (audioContainer && playerContainer) {
@@ -1143,14 +1144,10 @@ document.addEventListener('click', (event) => {
     const playlistTwo = document.querySelector('.playlist2'); // Основной плейлист
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
-    
-    function loadMusicPage() {
-        loadPage('music.html');
-    }
 
     Telegram.WebApp.BackButton.onClick(function () {
         collapsePlaylist1();
-        loadMusicPage();
+        loadPage(page);
     });
 
     function collapsePlaylist1() {
