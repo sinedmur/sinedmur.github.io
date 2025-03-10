@@ -121,6 +121,7 @@ function loadHomePage() {
 Telegram.WebApp.BackButton.onClick(function () {
     if (playerContainer.classList.contains('show')) {
         handleBackButtonPageNavigation(); // Закрываем плеер
+        return;
     } else {
         loadHomePage(); // Только если плеер закрыт, идем на home.html
     }
@@ -1071,15 +1072,9 @@ document.addEventListener('click', (event) => {
             }
             if (page === 'buy.html') {
                 Telegram.WebApp.BackButton.show();
-                Telegram.WebApp.BackButton.onClick(function () {
-                    loadHomePage();
-                });
             }
             if (page === 'settings.html') {
                 Telegram.WebApp.BackButton.show();
-                Telegram.WebApp.BackButton.onClick(function () {
-                    loadHomePage();
-                });
             }
           if (page === 'wallet.html') {
               initializeTonConnect();
@@ -1145,17 +1140,11 @@ document.addEventListener('click', (event) => {
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
-    Telegram.WebApp.BackButton.onClick(function () {
-        if (playerContainer.classList.contains('show')) {
-            handleBackButtonPageNavigation(); // Закрываем плеер
-            return; // Выходим из функции, чтобы не переходить на другую страницу
-        }
-    
+    Telegram.WebApp.BackButton.onClick(function () {   
         if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
             collapsePlaylist1(); // Закрываем плейлист
             return;
-        }
-    
+        }   
         // Если ничего не открыто, выполняем переход на home.html
         loadHomePage();
     });
