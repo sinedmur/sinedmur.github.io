@@ -1144,10 +1144,15 @@ document.addEventListener('click', (event) => {
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
     
+    function loadMusicPage() {
+        loadPage('music.html');
+    }
+
     Telegram.WebApp.BackButton.onClick(function () {
         collapsePlaylist1();
+        loadMusicPage();
     });
-    
+
     function collapsePlaylist1() {
         if (playlistOpen1) {
             playlistOpen1.classList.remove('show');  // Скрываем плеер
