@@ -113,6 +113,13 @@ function handleBackButtonPageNavigation() {
         Telegram.WebApp.BackButton.hide();
 }
 
+function collapsePlaylist1() {
+    if (playlistOpen1) {
+        playlistOpen1.classList.remove('show'); // Скрываем плейлист
+    }
+    Telegram.WebApp.BackButton.hide();
+}
+
 function loadHomePage() {
     loadPage('home.html');
     Telegram.WebApp.BackButton.hide();
@@ -1131,12 +1138,7 @@ document.addEventListener('click', (event) => {
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
-    function collapsePlaylist1() {
-        if (playlistOpen1) {
-            playlistOpen1.classList.remove('show'); // Скрываем плейлист
-        }
-        Telegram.WebApp.BackButton.hide();
-    }
+
     
     Telegram.WebApp.BackButton.onClick(function () {
         if (playerContainer && playerContainer.classList.contains('show')) {
