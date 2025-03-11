@@ -1116,26 +1116,34 @@ document.addEventListener('click', (event) => {
       const currentPage = window.location.pathname.split('/').pop();
       updateActiveButton(currentPage);
   });
-  const playlistOpen1 = document.querySelector('.playlist1_open');
-  const playlistOpen2 = document.querySelector('.playlist2_open');
-  const playlistOpen3 = document.querySelector('.playlist3_open');
-  const playlistOpen4 = document.querySelector('.playlist4_open');
 
   function collapsePlaylist1() {
+    const playlistOpen1 = document.querySelector('.playlist1_open');
     if (playlistOpen1) {
         playlistOpen1.classList.remove('show'); // Скрываем плейлист
     }
     Telegram.WebApp.BackButton.hide();
 }
 
+// function collapsePlaylist2() {
+//     const playlistOpen2 = document.querySelector('.playlist2_open');
+//     if (playlistOpen2) {
+//         playlistOpen2.classList.remove('show'); // Скрываем плейлист
+//     }
+//     Telegram.WebApp.BackButton.hide();
+// }
+
+// Функция для открытия плейлиста
 function expandPlaylist1() {
+    const playlistOpen1 = document.querySelector('.playlist1_open');
     if (playlistOpen1) {
-        playlistOpen1.classList.add('show');  // Показываем плеер
+        playlistOpen1.classList.add('show'); // Показываем плейлист
         Telegram.WebApp.BackButton.show();
     }
 }
 
 function expandPlaylist2() {
+    const playlistOpen2 = document.querySelector('.playlist1_open');
     if (playlistOpen2) {
         playlistOpen2.classList.add('show');  // Показываем плеер
         Telegram.WebApp.BackButton.show();
@@ -1143,6 +1151,7 @@ function expandPlaylist2() {
 }
 
 function expandPlaylist3() {
+    const playlistOpen3 = document.querySelector('.playlist1_open');
     if (playlistOpen3) {
         playlistOpen3.classList.add('show');  // Показываем плеер
         Telegram.WebApp.BackButton.show();
@@ -1150,11 +1159,13 @@ function expandPlaylist3() {
 }
 
 function expandPlaylist4() {
+    const playlistOpen4 = document.querySelector('.playlist1_open');
     if (playlistOpen4) {
         playlistOpen4.classList.add('show');  // Показываем плеер
         Telegram.WebApp.BackButton.show();
     }
 }
+
   // Использование MutationObserver для отслеживания появления элемента с классом .refresh
   const observer = new MutationObserver(() => {
 
@@ -1200,27 +1211,26 @@ function expandPlaylist4() {
     window.isBackButtonHandlerAdded = true; // Помечаем, что обработчик добавлен
 }
 
-// Обработчик для открытия плейлиста
-if (playlistOpen1 && playlistOne) {
-    playlistOne.addEventListener('click', function () {
-        expandPlaylist1();
-    });
-}
-
+    // Обработчик для открытия плейлиста
+    if (playlistOpen1 && playlistOne) {
+        playlistOne.addEventListener('click', function () {
+            expandPlaylist1();
+        });
+    }
     
-    if (playlistOpen2) {
+    if (playlistOpen2 && playlistTwo) {
         playlistTwo.addEventListener('click', function () {
             expandPlaylist2();
         });
     }
 
-    if (playlistOpen3) {
+    if (playlistOpen3 && playlistThree) {
         playlistThree.addEventListener('click', function () {
             expandPlaylist3();
         });
     }
 
-    if (playlistOpen4) {
+    if (playlistOpen4 && playlistFour) {
         playlistFour.addEventListener('click', function () {
             expandPlaylist4();
         });
