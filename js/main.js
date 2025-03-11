@@ -67,6 +67,7 @@ if (window.Telegram && window.Telegram.WebApp) {
   const audioContainer = document.querySelector('.audio__container');
   const playerContainer = document.querySelector('.player__container');
   const undermenuContainer = document.querySelector('.undermenu__container'); // Основной плеер
+  const playlistOpen1 = document.querySelector('.playlist1_open');
   let touchStartY = 0;
   let touchEndY = 0;
   let touchStartX = 0;
@@ -1156,11 +1157,6 @@ document.addEventListener('click', (event) => {
     function collapsePlaylist1() {
         if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
             playlistOpen1.classList.remove('show'); // Скрываем плейлист
-        }
-        
-        // Проверяем, открыт ли плеер. Если открыт, кнопку "Назад" не скрываем
-        if (!playerContainer.classList.contains('show')) {
-            Telegram.WebApp.BackButton.hide();
         }
     }
 
