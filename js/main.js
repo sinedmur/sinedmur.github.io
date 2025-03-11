@@ -68,6 +68,13 @@ if (window.Telegram && window.Telegram.WebApp) {
   const playerContainer = document.querySelector('.player__container');
   const undermenuContainer = document.querySelector('.undermenu__container'); // Основной плеер
   const playlistOpen1 = document.querySelector('.playlist1_open');
+  const playlistOpen2 = document.querySelector('.playlist2_open');
+  const playlistOpen3 = document.querySelector('.playlist3_open');
+  const playlistOpen4 = document.querySelector('.playlist4_open');
+  const playlistOne = document.querySelector('.playlist1'); // Основной плейлист
+  const playlistTwo = document.querySelector('.playlist2'); // Основной плейлист
+  const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
+  const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
   let touchStartY = 0;
   let touchEndY = 0;
   let touchStartX = 0;
@@ -125,6 +132,31 @@ function loadHomePage() {
     Telegram.WebApp.BackButton.hide();
 }
 
+function expandPlaylist1() {
+    if (playlistOpen1) {
+        playlistOpen1.classList.add('show');  // Показываем плеер
+        Telegram.WebApp.BackButton.show();
+    }
+}
+
+if (playlistOpen1) {
+    playlistOne.addEventListener('click', function () {
+        expandPlaylist1();
+    });
+}
+
+Telegram.WebApp.BackButton.onClick(function () {
+    if (playerContainer && playerContainer.classList.contains('show')) {
+        handleBackButtonPageNavigation();
+        return; // Прерываем выполнение, чтобы не переходить на home.html
+    }
+    if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+        Telegram.WebApp.BackButton.show();
+        collapsePlaylist1();
+        return;
+    }
+    loadHomePage(); // Если плеер уже закрыт, переходим на home.html
+});
 
   if (audioContainer && playerContainer) {
       song.addEventListener('click', function () {
@@ -1137,21 +1169,6 @@ document.addEventListener('click', (event) => {
     const playlistTwo = document.querySelector('.playlist2'); // Основной плейлист
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
-
-
-    
-    Telegram.WebApp.BackButton.onClick(function () {
-        if (playerContainer && playerContainer.classList.contains('show')) {
-            handleBackButtonPageNavigation();
-            return; // Прерываем выполнение, чтобы не переходить на home.html
-        }
-        if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
-            Telegram.WebApp.BackButton.show();
-            collapsePlaylist1();
-            return;
-        }
-        loadHomePage(); // Если плеер уже закрыт, переходим на home.html
-    });
 
     function expandPlaylist1() {
         if (playlistOpen1) {
