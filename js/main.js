@@ -1158,6 +1158,11 @@ function expandPlaylist4() {
     }
 }
 
+function loadHomePage() {
+    loadPage('home.html');
+    Telegram.WebApp.BackButton.hide();
+}
+
   // Использование MutationObserver для отслеживания появления элемента с классом .refresh
   const observer = new MutationObserver(() => {
 
@@ -1197,6 +1202,17 @@ function expandPlaylist4() {
             handleBackButtonPageNavigation();
             return;
         }
+        // Определяем текущую страницу
+    const currentPage = window.location.pathname.split('/').pop();
+
+    // Страницы, для которых нужно выполнить переход на home.html
+    const pagesWithBackToHome = ['missions.html', 'buy.html', 'settings.html'];
+
+    // Если текущая страница в списке, выполняем переход на home.html
+    if (pagesWithBackToHome.includes(currentPage)) {
+        loadHomePage();
+        return;
+    }
     });
 
     // Обработчик для открытия плейлиста
