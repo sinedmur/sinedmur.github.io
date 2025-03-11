@@ -112,11 +112,6 @@ function handleBackButtonPageNavigation() {
         Telegram.WebApp.BackButton.hide();
 }
 
-function loadHomePage() {
-    loadPage('home.html');
-    Telegram.WebApp.BackButton.hide();
-}
-
   if (audioContainer && playerContainer) {
       song.addEventListener('click', function () {
         expandPlayer();
@@ -179,7 +174,7 @@ function handleSwipePrevAudioContainer() {
 
   // Функция для открытия плеера
   function expandPlayer() {
-      if (audioContainer && playerContainer) {
+      if (audioContainer && playerContainer && undermenuContainer) {
           audioContainer.classList.add('hidden');  // Скрываем маленькое окно
           playerContainer.classList.add('show');  // Показываем плеер
           undermenuContainer.classList.add('hidden');
@@ -189,7 +184,7 @@ function handleSwipePrevAudioContainer() {
 
   // Функция для сворачивания плеера
   function collapsePlayer() {
-      if (audioContainer && playerContainer) {
+      if (audioContainer && playerContainer && undermenuContainer) {
           audioContainer.classList.remove('hidden');  // Показываем маленькое окно
           playerContainer.classList.remove('show');  // Скрываем плеер
           undermenuContainer.classList.remove('hidden');
@@ -1056,15 +1051,6 @@ document.addEventListener('click', (event) => {
             if (page === 'music.html') {
                 Telegram.WebApp.BackButton.hide();
             }
-            if (page === 'missions.html') {
-                Telegram.WebApp.BackButton.show();
-            }
-            if (page === 'buy.html') {
-                Telegram.WebApp.BackButton.show();
-            }
-            if (page === 'settings.html') {
-                Telegram.WebApp.BackButton.show();
-            }
           if (page === 'wallet.html') {
               initializeTonConnect();
               Telegram.WebApp.BackButton.hide(); // Инициализация TonConnect для страницы wallet.html
@@ -1222,18 +1208,6 @@ function expandPlaylist4() {
         if (playerContainer && playerContainer.classList.contains('show')) {
             handleBackButtonPageNavigation();
             return;
-        }
-    
-        // Определяем текущую страницу
-        const currentPage = window.location.pathname.split('/').pop().toLowerCase();
-    
-        // Страницы, для которых нужно выполнить переход на home.html
-        const pagesWithBackToHome = ['missions.html', 'buy.html', 'settings.html'];
-    
-        // Если текущая страница в списке, выполняем переход на home.html
-        if (pagesWithBackToHome.includes(currentPage)) {
-            loadHomePage();
-            return;  // Добавляем return, чтобы обработчик завершался
         }
     });
 
