@@ -168,7 +168,7 @@ function handleSwipePrevAudioContainer() {
   // Функция для обработки свайпа из player__container
   function handleSwipeFromPlayerContainer() {
       if (touchEndY - touchStartY > 50) {  // Свайп вниз
-          collapsePlayer();  // Сворачиваем плеер
+        handleBackButtonPageNavigation();  // Сворачиваем плеер
       }
   }
 
@@ -179,16 +179,6 @@ function handleSwipePrevAudioContainer() {
           playerContainer.classList.add('show');  // Показываем плеер
           undermenuContainer.classList.add('hidden');
           Telegram.WebApp.BackButton.show();
-      }
-  }
-
-  // Функция для сворачивания плеера
-  function collapsePlayer() {
-      if (audioContainer && playerContainer && undermenuContainer) {
-          audioContainer.classList.remove('hidden');  // Показываем маленькое окно
-          playerContainer.classList.remove('show');  // Скрываем плеер
-          undermenuContainer.classList.remove('hidden');
-          Telegram.WebApp.BackButton.hide();
       }
   }
   
