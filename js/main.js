@@ -110,11 +110,12 @@ function handleBackButtonPageNavigation() {
         undermenuContainer.classList.remove('hidden');
     }
     
-    // Если плейлист открыт, показываем кнопку "Назад", иначе скрываем
+    // Сначала скрываем кнопку по умолчанию
+    Telegram.WebApp.BackButton.hide();
+
+    // Если плейлист открыт, показываем кнопку "Назад"
     if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
         Telegram.WebApp.BackButton.show();
-    } else {
-        Telegram.WebApp.BackButton.hide();
     }
 }
 
@@ -317,7 +318,6 @@ function resetPlaylistOrder() {
 let myMusicTracks = []; // Массив для хранения индексов добавленных треков
 let prevButtonPressedOnce = false; // Флаг для отслеживания первого нажатия
 let currentPlaylist = playlist; // По умолчанию используем основной плейлист
-console.log("Initial currentPlaylist:", currentPlaylist); // Отладка
 let currentTrackIndex = 0;
 const coverElement = document.querySelector('.cover__src');   // Картинка обложки
 const trackTitleElement = document.querySelector('.songname'); // Заголовок трека
@@ -1145,12 +1145,12 @@ document.addEventListener('click', (event) => {
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
     // Telegram.WebApp.BackButton.onClick(function () {   
-    //     if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
-    //         collapsePlaylist1(); // Закрываем плейлист
-    //         return;
-    //     }   
-    //     // Если ничего не открыто, выполняем переход на home.html
-    //     loadHomePage();
+        // if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+        //     collapsePlaylist1(); // Закрываем плейлист
+        //     return;
+        // }   
+        // // Если ничего не открыто, выполняем переход на home.html
+        // loadHomePage();
     // });
 
     function collapsePlaylist1() {
