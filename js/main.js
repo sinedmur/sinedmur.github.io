@@ -110,14 +110,7 @@ function handleBackButtonPageNavigation() {
         playerContainer.classList.remove('show');
         undermenuContainer.classList.remove('hidden');
     }
-    
-    // Сначала скрываем кнопку по умолчанию
-    Telegram.WebApp.BackButton.hide();
-
-    // Если плейлист открыт, показываем кнопку "Назад"
-    if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
-        Telegram.WebApp.BackButton.show();
-    }
+        Telegram.WebApp.BackButton.hide();
 }
 
 function loadHomePage() {
@@ -125,10 +118,22 @@ function loadHomePage() {
     Telegram.WebApp.BackButton.hide();
 }
 
+function collapsePlaylist1() {
+    if (playlistOpen1) {
+        playlistOpen1.classList.remove('show'); // Скрываем плейлист
+    }
+        Telegram.WebApp.BackButton.hide();
+}
+
 Telegram.WebApp.BackButton.onClick(function () {
     if (playerContainer && playerContainer.classList.contains('show')) {
-        handleBackButtonPageNavigation(); // Закрываем плеер
+        handleBackButtonPageNavigation();
         return; // Прерываем выполнение, чтобы не переходить на home.html
+    }
+    if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
+        Telegram.WebApp.BackButton.show();
+        collapsePlaylist1();
+        return;
     }
     loadHomePage(); // Если плеер уже закрыт, переходим на home.html
 });
