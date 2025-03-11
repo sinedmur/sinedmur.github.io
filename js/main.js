@@ -1197,43 +1197,44 @@ function expandPlaylist4() {
  // Обработчик для кнопки "Назад"
  if (!window.isBackButtonHandlerAdded) { // Проверяем, чтобы обработчик не добавлялся повторно
     Telegram.WebApp.BackButton.onClick(function () {
-        // Если открыт плеер, сворачиваем его
-        if (playerContainer && playerContainer.classList.contains('show')) {
-            handleBackButtonPageNavigation();
-            return;
-        }
-
-        // Если открыт плейлист, сворачиваем его
+        // Если открыт плейлист, сворачиваем его первым
         if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
             collapsePlaylist1();
             return;
         }
-
+    
         if (playlistOpen2 && playlistOpen2.classList.contains('show')) {
             collapsePlaylist2();
             return;
         }
-
+    
         if (playlistOpen3 && playlistOpen3.classList.contains('show')) {
             collapsePlaylist3();
             return;
         }
-
+    
         if (playlistOpen4 && playlistOpen4.classList.contains('show')) {
             collapsePlaylist4();
             return;
         }
-
+    
+        // Если плеер открыт, скрываем его
+        if (playerContainer && playerContainer.classList.contains('show')) {
+            handleBackButtonPageNavigation();
+            return;
+        }
+    
         // Определяем текущую страницу
-        const currentPage = window.location.pathname.split('/').pop();
-
+        const currentPage = window.location.pathname.split('/').pop().toLowerCase();
+    
         // Страницы, для которых нужно выполнить переход на home.html
         const pagesWithBackToHome = ['missions.html', 'buy.html', 'settings.html'];
-
+    
         // Если текущая страница в списке, выполняем переход на home.html
         if (pagesWithBackToHome.includes(currentPage)) {
             loadHomePage();
-        } 
+            return;  // Добавляем return, чтобы обработчик завершался
+        }
     });
 
     window.isBackButtonHandlerAdded = true; // Помечаем, что обработчик добавлен
