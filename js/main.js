@@ -169,6 +169,9 @@ function handleSwipePrevAudioContainer() {
   function handleSwipeFromPlayerContainer() {
       if (touchEndY - touchStartY > 50) {  // Свайп вниз
         handleBackButtonPageNavigation();  // Сворачиваем плеер
+        if (isAnyPlaylistOpen()) {
+            Telegram.WebApp.BackButton.show(); // Оставляем кнопку назад видимой
+        }
       }
   }
 
@@ -258,7 +261,8 @@ function resetPlaylistOrder() {
         title: 'Нас не догонят',
         author: 'S1NTEZ',
         feat: '',
-        songautors: ''
+        songautors: '',
+        duration: '2:45'
     },
     {
         src: './audio/track2.mp3',
@@ -266,7 +270,8 @@ function resetPlaylistOrder() {
         title: 'Вера в любовь',
         author: 'S1NTEZ',
         feat: '',
-        songautors: ''
+        songautors: '',
+        duration: '2:17'
     },
     {
         src: './audio/track3.mp3',
@@ -274,7 +279,8 @@ function resetPlaylistOrder() {
         title: 'Услышь',
         author: 'S1NTEZ',
         feat: 'feat.',
-        songautors: 'Asper'
+        songautors: 'Asper',
+        duration: '2:21'
     },
     {
         src: './audio/track4.mp3',
@@ -282,7 +288,8 @@ function resetPlaylistOrder() {
         title: 'Покурим на двоих',
         author: 'S1NTEZ',
         feat: 'feat.',
-        songautors: 'Asper'
+        songautors: 'Asper',
+        duration: '3:03'
     }
 ];
 let myMusicTracks = []; // Массив для хранения индексов добавленных треков
@@ -619,6 +626,31 @@ function switchToMainPlaylist() {
     currentTrackIndex = 0; // Сбрасываем индекс трека
 }
 
+// Функция для создания треков
+function renderTracks() {
+    const trackContainer = document.querySelector('.track-container');
+    trackContainer.innerHTML = ''; // Очищаем контейнер перед добавлением новых элементов
+    playlist.forEach(track => {
+        const trackElement = document.createElement('div');
+        trackElement.classList.add('track1');
+
+        trackElement.innerHTML = `
+            <div class="cover1"><img src="${track.cover}" alt="cover"></div>
+            <div class="song2">
+                <div class="songtitle">${track.title}</div>
+                <div class="authors">
+                    <div class="songautor">${track.author}</div>
+                    <div class="feat">${track.feat}</div>
+                    <div class="songautors">${track.songautors}</div>
+                </div>
+            </div>
+            <div class="duration">${track.duration}</div>
+            <div class="info"><img src="./img/info.svg" alt="info"></div>
+        `;
+        trackContainer.appendChild(trackElement);
+    });
+    
+}
 
 const addBtn = document.querySelector('.add_btn');
 
@@ -660,10 +692,14 @@ function addTrackToMusicPage(trackIndex) {
          <div class="duration">${formatTime(audioBuffer.duration)}</div>
          <div class="info"><img src="./img/info.svg" alt="info"></div>`;
 
-    // Добавляем обработчик события на клик по треку
-    newTrack.addEventListener('click', () => {
-        console.log("Clicked track:", trackCopy); // Отладка
-        playTrackFromMusicPage(trackCopy); // Передаем копию трека
+         const info = newTrack.querySelector('.info');
+
+         // Добавляем обработчик события на клик по .song2
+        newTrack.addEventListener('click', (event) => {
+            if (!info.contains(event.target)) {
+                console.log("Clicked track:", trackCopy); // Отладка
+                playTrackFromMusicPage(trackCopy); // Передаем копию трека
+            }
     });
 
     const myMusicContainer = document.querySelector('.mymusic__container');
@@ -671,10 +707,6 @@ function addTrackToMusicPage(trackIndex) {
 }
 
 async function playTrackFromMusicPage(track) {
-    console.log("Current playlist:", currentPlaylist === playlist ? "Main playlist" : "MyMusicTracks");
-    console.log("Current track index:", currentTrackIndex);
-    console.log("Track to play:", currentPlaylist[currentTrackIndex].title);
-    console.log("Playing track from myMusicTracks:", track); // Отладка
 
     if (!track) {
         console.error("Track is undefined!"); // Проверка объекта трека
@@ -1170,6 +1202,7 @@ function isAnyPlaylistOpen() {
         playlistOpen4.classList.contains('show')
     );
 }
+
   // Использование MutationObserver для отслеживания появления элемента с классом .refresh
   const observer = new MutationObserver(() => {
 
@@ -1181,23 +1214,23 @@ function isAnyPlaylistOpen() {
     const playlistTwo = document.querySelector('.playlist2'); // Основной плейлист
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
-    let isPlayerClosed = false; // Флаг для отслеживания закрытия плеера
+    const mainPlaylist = document.querySelector('.playlist1_listen');
+
+    if (mainPlaylist) {
+        mainPlaylist.addEventListener('click', function () {
+            switchToMainPlaylist();
+        });
+    }
 
     Telegram.WebApp.BackButton.onClick(function () {
 
         // Если плеер открыт, скрываем его
         if (playerContainer && playerContainer.classList.contains('show')) {
             handleBackButtonPageNavigation();
-            isPlayerClosed = true; // Указываем, что плеер был закрыт
             if (isAnyPlaylistOpen()) {
                 Telegram.WebApp.BackButton.show(); // Оставляем кнопку назад видимой
             }
             return;
-        }
-        
-        if (isPlayerClosed) {
-            isPlayerClosed = false; // Сбрасываем флаг
-            return; // Не закрываем плейлист на этом нажатии
         }
 
         // Если открыт плейлист, сворачиваем его первым
@@ -1226,6 +1259,7 @@ function isAnyPlaylistOpen() {
     if (playlistOpen1 && playlistOne) {
         playlistOne.addEventListener('click', function () {
             expandPlaylist1();
+            renderTracks();
         });
     }
     
