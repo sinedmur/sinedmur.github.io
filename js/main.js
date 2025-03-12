@@ -649,16 +649,16 @@ function renderTracks() {
         `;
         trackContainer.appendChild(trackElement);
     });
-    
 }
 
 const addBtn = document.querySelector('.add_btn');
 
+// Обработчик для кнопки addBtn (добавление трека в массив)
 addBtn.addEventListener('click', () => {
-    addTrackToMusicPage(currentTrackIndex);
+    addTrackToMusicArray(currentTrackIndex);
 });
 
-function addTrackToMusicPage(trackIndex) {
+function addTrackToMusicArray(trackIndex) {
     const track = currentPlaylist[trackIndex]; // Получаем трек из основного плейлиста
 
     if (!track) {
@@ -674,36 +674,44 @@ function addTrackToMusicPage(trackIndex) {
 
     console.log("Added track to myMusicTracks:", trackCopy); // Отладка
     console.log("myMusicTracks:", myMusicTracks); // Отладка
+}
 
-    // Обновляем интерфейс
-    const newTrack = document.createElement('div');
-    newTrack.classList.add('track1');
+// Функция для отображения треков на странице
+function displayTracksInHtml() {
+    const myMusicContainer = document.querySelector('.mymusic__container');
+    // Очищаем контейнер перед выводом новых треков
+    myMusicContainer.innerHTML = '';
 
-    newTrack.innerHTML = 
-        `<div class="cover1"><img src="${trackCopy.cover}" alt="cover"></div>
-         <div class="song2">
-             <div class="songtitle">${trackCopy.title}</div>
-             <div class="authors">
-                 <div class="songautor">${trackCopy.author}</div>
-                 <div class="feat">${trackCopy.feat}</div>
-                 <div class="songautors">${trackCopy.songautors}</div>
+    // Проходим по массиву myMusicTracks и выводим каждый трек
+    myMusicTracks.forEach(trackCopy => {
+        const newTrack = document.createElement('div');
+        newTrack.classList.add('track1');
+
+        newTrack.innerHTML = 
+            `<div class="cover1"><img src="${trackCopy.cover}" alt="cover"></div>
+             <div class="song2">
+                 <div class="songtitle">${trackCopy.title}</div>
+                 <div class="authors">
+                     <div class="songautor">${trackCopy.author}</div>
+                     <div class="feat">${trackCopy.feat}</div>
+                     <div class="songautors">${trackCopy.songautors}</div>
+                 </div>
              </div>
-         </div>
-         <div class="duration">${formatTime(audioBuffer.duration)}</div>
-         <div class="info"><img src="./img/info.svg" alt="info"></div>`;
+             <div class="duration">${formatTime(audioBuffer.duration)}</div>
+             <div class="info"><img src="./img/info.svg" alt="info"></div>`;
 
-         const info = newTrack.querySelector('.info');
+        const info = newTrack.querySelector('.info');
 
-         // Добавляем обработчик события на клик по .song2
+        // Добавляем обработчик события на клик по .song2
         newTrack.addEventListener('click', (event) => {
             if (!info.contains(event.target)) {
                 console.log("Clicked track:", trackCopy); // Отладка
                 playTrackFromMusicPage(trackCopy); // Передаем копию трека
             }
-    });
+        });
 
-    const myMusicContainer = document.querySelector('.mymusic__container');
-    myMusicContainer.appendChild(newTrack);
+        myMusicContainer.appendChild(newTrack);
+    });
 }
 
 async function playTrackFromMusicPage(track) {
@@ -1071,6 +1079,7 @@ document.addEventListener('click', (event) => {
                 Telegram.WebApp.BackButton.hide();
             }
             if (page === 'music.html') {
+                displayTracksInHtml();
                 Telegram.WebApp.BackButton.hide();
             }
           if (page === 'wallet.html') {
