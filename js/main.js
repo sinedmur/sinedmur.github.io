@@ -1041,15 +1041,6 @@ document.addEventListener('click', (event) => {
             if (page === 'music.html') {
                 Telegram.WebApp.BackButton.hide();
             }
-          if (page === 'buy.html') {
-                Telegram.WebApp.BackButton.show();
-            }
-           if (page === 'missions.html') {
-                Telegram.WebApp.BackButton.show();
-           }
-            if (page === 'settings.html') {
-                Telegram.WebApp.BackButton.show();
-            }
           if (page === 'wallet.html') {
               initializeTonConnect();
               Telegram.WebApp.BackButton.hide(); // Инициализация TonConnect для страницы wallet.html
@@ -1167,11 +1158,18 @@ function expandPlaylist4() {
     }
 }
 
-function loadHomePage() {
-    loadPage('home.html');
-    Telegram.WebApp.BackButton.hide();
+function isAnyPlaylistOpen() {
+    const playlistOpen1 = document.querySelector('.playlist1_open');
+    const playlistOpen2 = document.querySelector('.playlist2_open');
+    const playlistOpen3 = document.querySelector('.playlist3_open');
+    const playlistOpen4 = document.querySelector('.playlist4_open');
+    return (
+        playlistOpen1.classList.contains('show') ||
+        playlistOpen2.classList.contains('show') ||
+        playlistOpen3.classList.contains('show') ||
+        playlistOpen4.classList.contains('show')
+    );
 }
-
   // Использование MutationObserver для отслеживания появления элемента с классом .refresh
   const observer = new MutationObserver(() => {
 
@@ -1185,6 +1183,16 @@ function loadHomePage() {
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
 
     Telegram.WebApp.BackButton.onClick(function () {
+
+        // Если плеер открыт, скрываем его
+        if (playerContainer && playerContainer.classList.contains('show')) {
+            handleBackButtonPageNavigation();
+            if (isAnyPlaylistOpen()) {
+                Telegram.WebApp.BackButton.show(); // Оставляем кнопку назад видимой
+            }
+            return;
+        }
+
         // Если открыт плейлист, сворачиваем его первым
         if (playlistOpen1 && playlistOpen1.classList.contains('show')) {
             collapsePlaylist1();
@@ -1206,22 +1214,6 @@ function loadHomePage() {
             return;
         }
     
-        // Если плеер открыт, скрываем его
-        if (playerContainer && playerContainer.classList.contains('show')) {
-            handleBackButtonPageNavigation();
-            return;
-        }
-        // Определяем текущую страницу
-    const currentPage = window.location.pathname.split('/').pop();
-
-    // Страницы, для которых нужно выполнить переход на home.html
-    const pagesWithBackToHome = ['missions.html', 'buy.html', 'settings.html'];
-
-    // Если текущая страница в списке, выполняем переход на home.html
-    if (pagesWithBackToHome.includes(currentPage)) {
-        loadHomePage();
-        return;
-    }
     });
 
     // Обработчик для открытия плейлиста
