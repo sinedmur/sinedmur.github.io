@@ -1098,7 +1098,7 @@ body, html {
 .connect__container,
 .invbtns .invite_btn,
 .invbtns .copy_btn,
-.track1 {
+.track1 .info {
   position: relative; /* для правильного позиционирования псевдоэлемента */
   transition: transform 0.1s ease;
 }
@@ -1124,12 +1124,12 @@ body, html {
 .address_container .copymini:active,
 .trash__container:active,
 .connect__container:active,
-.invbtns .copy_btn:active {
+.invbtns .copy_btn:active,
+.track1 .info:active {
   transform: scale(0.9); /* сжатие кнопки */
 }
 
-.invbtns .invite_btn:active,
-.track1:active {
+.invbtns .invite_btn:active {
   transform: scale(0.97); /* сжатие кнопки */
 }
 
@@ -1144,6 +1144,8 @@ body, html {
   transition: opacity 0.3s ease;
   left: 50%; /* Сдвигаем на 50% от левого края */
   transform: translateX(-50%); /* Центрируем по горизонтали */
+  overflow-y: auto; /* Разрешаем вертикальную прокрутку */
+  padding-bottom: 30%;
 }
 
 .playlist1_open.show, .playlist2_open.show, .playlist3_open.show, .playlist4_open.show {
@@ -1158,7 +1160,7 @@ body, html {
 }
 
 .playlist1_cover {
-  padding-top: 10%;
+  padding-top: 20%;
   display: flex;
   width: 100%;
   justify-content: center;
