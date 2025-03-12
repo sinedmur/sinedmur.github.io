@@ -1181,16 +1181,23 @@ function isAnyPlaylistOpen() {
     const playlistTwo = document.querySelector('.playlist2'); // Основной плейлист
     const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
     const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
+    let isPlayerClosed = false; // Флаг для отслеживания закрытия плеера
 
     Telegram.WebApp.BackButton.onClick(function () {
 
         // Если плеер открыт, скрываем его
         if (playerContainer && playerContainer.classList.contains('show')) {
             handleBackButtonPageNavigation();
+            isPlayerClosed = true; // Указываем, что плеер был закрыт
             if (isAnyPlaylistOpen()) {
                 Telegram.WebApp.BackButton.show(); // Оставляем кнопку назад видимой
             }
             return;
+        }
+        
+        if (isPlayerClosed) {
+            isPlayerClosed = false; // Сбрасываем флаг
+            return; // Не закрываем плейлист на этом нажатии
         }
 
         // Если открыт плейлист, сворачиваем его первым
@@ -1212,8 +1219,7 @@ function isAnyPlaylistOpen() {
         if (playlistOpen4 && playlistOpen4.classList.contains('show')) {
             collapsePlaylist4();
             return;
-        }
-    
+        }  
     });
 
     // Обработчик для открытия плейлиста
