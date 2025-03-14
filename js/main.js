@@ -690,15 +690,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function displayResults(tracks) {
             const dnoMessage = document.querySelector(".dno");
+            const query = searchInput.value.trim().toLowerCase();
+            
             searchResults.innerHTML = "";
-
+        
+            if (query === "") {
+                dnoMessage.style.display = "none"; // Скрываем dno, если строка пустая
+                return; // Не показываем ничего
+            }
+        
             if (tracks.length === 0) {
                 dnoMessage.style.display = "none"; // Скрываем dno
                 searchResults.innerHTML = `<p class="not-found">Ничего не найдено</p>`;
                 return;
             }
-            dnoMessage.style.display = "block"; // Показываем dno
-
+        
+            dnoMessage.style.display = "block"; // Показываем dno, если есть результаты
+        
             tracks.forEach(track => {
                 const trackElement = document.createElement("div");
                 trackElement.classList.add("track1");
