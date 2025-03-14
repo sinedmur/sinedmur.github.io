@@ -142,34 +142,5 @@
         </div>
     </div>
     <script src="./js/main.js"></script>
-    <script>
-        const translations = {
-            ru: {
-                main_menu: "Главное меню",
-                balance: "БАЛАНС",
-                playlist: "ПЛЕЙЛИСТ",
-                ad_placeholder: "Здесь могла быть Ваша реклама"
-            },
-            en: {
-                main_menu: "Main Menu",
-                balance: "BALANCE",
-                playlist: "PLAYLIST",
-                ad_placeholder: "Your ad could be here"
-            }
-        };
-
-        function applyTranslations() {
-            const userLang = window.Telegram.WebApp.initDataUnsafe?.user?.language_code;
-            const appLang = userLang === 'ru' ? 'ru' : 'en';
-            
-            document.querySelectorAll('[data-translate]').forEach(el => {
-                const key = el.getAttribute('data-translate');
-                if (translations[appLang][key]) {
-                    el.textContent = translations[appLang][key];
-                }
-            });
-        }
-        window.addEventListener("DOMContentLoaded", applyTranslations);
-    </script>
 </body>
 </html>
