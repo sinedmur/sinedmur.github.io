@@ -7,7 +7,8 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-body, html {
+body,
+html {
   overflow-x: hidden;
   width: 100%;
 }
@@ -78,7 +79,9 @@ body, html {
   gap: 5%;
 }
 
-.btn_buy, .btn_settings, .btn_missions {
+.btn_buy,
+.btn_settings,
+.btn_missions {
   cursor: pointer;
 }
 
@@ -87,11 +90,15 @@ body, html {
   width: 100%;
   height: 50px;
   background: #915382;
-  position: fixed; /* Фиксируем контейнер на экране */
-  bottom: 56px; /* Размещаем внизу экрана */
-  z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+  position: fixed;
+  /* Фиксируем контейнер на экране */
+  bottom: 56px;
+  /* Размещаем внизу экрана */
+  z-index: 10;
+  /* Убедимся, что контейнер поверх других элементов */
   transition: transform 0.3s ease, opacity 0.3s ease, background-color 0.5s ease;
-  overflow: hidden; /* Обеспечивает, что скругления контейнера не будут "размыты" прогрессом */
+  overflow: hidden;
+  /* Обеспечивает, что скругления контейнера не будут "размыты" прогрессом */
 }
 
 .progressmini {
@@ -112,7 +119,8 @@ body, html {
   width: 100%;
   height: 100%;
   background: #915382;
-  z-index: -1; /* Убедимся, что контейнер под audio__container */
+  z-index: -1;
+  /* Убедимся, что контейнер под audio__container */
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -134,16 +142,21 @@ body, html {
   align-items: center;
   width: 100%;
   height: 55px;
-  padding: 0 10px; /* Это поможет избежать сдвигов при изменении размеров */
+  padding: 0 10px;
+  /* Это поможет избежать сдвигов при изменении размеров */
 }
 
 .song {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Центрируем содержимое по горизонтали */
-  justify-content: center; /* Центрируем содержимое по вертикали */
-  text-align: center; /* Центрируем текст внутри */
-  flex-grow: 1; /* Растягиваем блок, чтобы занимал доступное пространство */
+  align-items: center;
+  /* Центрируем содержимое по горизонтали */
+  justify-content: center;
+  /* Центрируем содержимое по вертикали */
+  text-align: center;
+  /* Центрируем текст внутри */
+  flex-grow: 1;
+  /* Растягиваем блок, чтобы занимал доступное пространство */
   z-index: 1;
 }
 
@@ -165,11 +178,15 @@ body, html {
   color: #fff;
 }
 
-.btn_play, .btn_next {
-  width: 40px; /* Фиксированная ширина для кнопок */
-  height: 40px; /* Фиксированная высота для кнопок */
+.btn_play,
+.btn_next {
+  width: 40px;
+  /* Фиксированная ширина для кнопок */
+  height: 40px;
+  /* Фиксированная высота для кнопок */
   cursor: pointer;
-  background-size: contain; /* Для корректного отображения иконок */
+  background-size: contain;
+  /* Для корректного отображения иконок */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -180,24 +197,37 @@ body, html {
 }
 
 .undermenu__container {
-  position: fixed; /* Фиксируем контейнер на экране */
-  bottom: 0; /* Размещаем внизу экрана */
-  left: 50%; /* Сдвигаем на 50% от левого края */
-  transform: translateX(-50%); /* Центрируем по горизонтали */
+  position: fixed;
+  /* Фиксируем контейнер на экране */
+  bottom: 0;
+  /* Размещаем внизу экрана */
+  left: 50%;
+  /* Сдвигаем на 50% от левого края */
+  transform: translateX(-50%);
+  /* Центрируем по горизонтали */
   display: flex;
-  justify-content: center; /* Центрируем элементы внутри контейнера */
+  justify-content: center;
+  /* Центрируем элементы внутри контейнера */
   align-items: center;
   gap: 36px;
   white-space: nowrap;
   padding: 6px 30px 0 25px;
-  width: 100%; /* Ширина контейнера */
-  background: #d21e64; /* Фон, как у .mainmenu */
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Тень для красоты */
-  z-index: 10; /* Убедимся, что контейнер поверх других элементов */
+  width: 100%;
+  /* Ширина контейнера */
+  background: #d21e64;
+  /* Фон, как у .mainmenu */
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+  /* Тень для красоты */
+  z-index: 10;
+  /* Убедимся, что контейнер поверх других элементов */
   transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-.btn_menu, .btn_music, .btn_airdrop, .btn_friends, .btn_wallet {
+.btn_menu,
+.btn_music,
+.btn_airdrop,
+.btn_friends,
+.btn_wallet {
   cursor: pointer;
 }
 
@@ -209,13 +239,15 @@ body, html {
   padding: 0 29px;
 }
 
-.playlist1, .playlist2, .playlist3, .playlist4 {
+.playlist1,
+.playlist2,
+.playlist3,
+.playlist4 {
   cursor: pointer;
 }
 
 .mymusic {
   padding-left: 5%;
-  padding-top: 40px;
   font-weight: 400;
   font-size: 20px;
   color: #fff;
@@ -291,7 +323,8 @@ body, html {
   width: 100%;
   margin-top: 50px;
   justify-content: center;
-  z-index: 9999; /* Убедитесь, что элемент виден поверх других */
+  z-index: 9999;
+  /* Убедитесь, что элемент виден поверх других */
 }
 
 /* Анимация пульсации */
@@ -353,7 +386,8 @@ body, html {
   padding-bottom: 4%;
 }
 
-.invite__container, .invitepr__container {
+.invite__container,
+.invitepr__container {
   margin-top: 15%;
   display: flex;
   width: 90%;
@@ -373,13 +407,16 @@ body, html {
   width: 90%;
 }
 
-.inviteprvalue, .invitedes, .invitevalue {
+.inviteprvalue,
+.invitedes,
+.invitevalue {
   font-weight: 400;
   font-size: 14px;
   color: #fff;
 }
 
-.inviteprvalue, .invitevalue {
+.inviteprvalue,
+.invitevalue {
   color: #f52476;
   padding-left: 1%;
   padding-right: 1%;
@@ -391,7 +428,8 @@ body, html {
   align-items: center;
 }
 
-.inviteimg, .inviteprimg {
+.inviteimg,
+.inviteprimg {
   margin-left: auto;
   margin-right: 5%;
   align-items: center;
@@ -417,7 +455,8 @@ body, html {
   height: 60px;
   cursor: pointer;
 }
-.invbtns .invite-img, .invbtns .copy-img {
+.invbtns .invite-img,
+.invbtns .copy-img {
   position: absolute;
   top: 0;
   left: 0;
@@ -425,7 +464,8 @@ body, html {
   height: 100%;
   transition: opacity 0.3s ease;
 }
-.invbtns .invite-img-active, .invbtns .copy-img-active {
+.invbtns .invite-img-active,
+.invbtns .copy-img-active {
   display: none;
 }
 .invbtns .invite_btn:hover .invite-img {
@@ -474,8 +514,10 @@ body, html {
 
 .refresh img {
   transition: transform 0.5s ease;
-  transform-origin: center center; /* Убедитесь, что вращение происходит вокруг центра кнопки */
-  will-change: transform; /* Для улучшения производительности */
+  transform-origin: center center;
+  /* Убедитесь, что вращение происходит вокруг центра кнопки */
+  will-change: transform;
+  /* Для улучшения производительности */
 }
 
 .refresh.rotate img {
@@ -693,7 +735,8 @@ body, html {
   cursor: pointer;
 }
 
-.copymini, .tonicon {
+.copymini,
+.tonicon {
   padding-top: 1%;
 }
 
@@ -702,12 +745,14 @@ body, html {
 }
 
 .disabled {
-  pointer-events: none; /* Отключаем клик */
+  pointer-events: none;
+  /* Отключаем клик */
 }
 
 .settings-cover-img {
   width: 100%;
-  height: auto; /* Изменяется в зависимости от пропорций изображения */
+  height: auto;
+  /* Изменяется в зависимости от пропорций изображения */
 }
 
 .title_player {
@@ -722,7 +767,8 @@ body, html {
   width: 100%;
 }
 
-.playlist, .playlist_name {
+.playlist,
+.playlist_name {
   justify-content: center;
 }
 
@@ -782,7 +828,8 @@ body, html {
   align-items: center;
   cursor: pointer;
   margin: auto;
-  overflow: hidden; /* Обеспечивает, что скругления контейнера не будут "размыты" прогрессом */
+  overflow: hidden;
+  /* Обеспечивает, что скругления контейнера не будут "размыты" прогрессом */
 }
 .progress__container .progress {
   border-radius: 10px;
@@ -854,10 +901,13 @@ body, html {
 }
 
 .play_btn {
-  width: 45px; /* Фиксированная ширина для кнопок */
-  height: 45px; /* Фиксированная высота для кнопок */
+  width: 45px;
+  /* Фиксированная ширина для кнопок */
+  height: 45px;
+  /* Фиксированная высота для кнопок */
   cursor: pointer;
-  background-size: contain; /* Для корректного отображения иконок */
+  background-size: contain;
+  /* Для корректного отображения иконок */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -865,10 +915,13 @@ body, html {
 }
 
 .random_btn {
-  width: 25px; /* Фиксированная ширина для кнопок */
-  height: 25px; /* Фиксированная высота для кнопок */
+  width: 25px;
+  /* Фиксированная ширина для кнопок */
+  height: 25px;
+  /* Фиксированная высота для кнопок */
   cursor: pointer;
-  background-size: contain; /* Для корректного отображения иконок */
+  background-size: contain;
+  /* Для корректного отображения иконок */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -876,10 +929,13 @@ body, html {
 }
 
 .reverse_btn {
-  width: 25px; /* Фиксированная ширина для кнопок */
-  height: 25px; /* Фиксированная высота для кнопок */
+  width: 25px;
+  /* Фиксированная ширина для кнопок */
+  height: 25px;
+  /* Фиксированная высота для кнопок */
   cursor: pointer;
-  background-size: contain; /* Для корректного отображения иконок */
+  background-size: contain;
+  /* Для корректного отображения иконок */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1026,7 +1082,8 @@ body, html {
   padding-right: 3%;
 }
 
-.active__container, .complete__container {
+.active__container,
+.complete__container {
   display: flex;
   flex-direction: column;
   width: 95%;
@@ -1061,8 +1118,10 @@ body, html {
   font-size: 14px;
   color: #fff;
   align-items: center;
-  position: fixed; /* Фиксируем контейнер на экране */
-  bottom: 0; /* Размещаем внизу экрана */
+  position: fixed;
+  /* Фиксируем контейнер на экране */
+  bottom: 0;
+  /* Размещаем внизу экрана */
 }
 
 .tokenmini img {
@@ -1099,7 +1158,8 @@ body, html {
 .invbtns .invite_btn,
 .invbtns .copy_btn,
 .track1 .info {
-  position: relative; /* для правильного позиционирования псевдоэлемента */
+  position: relative;
+  /* для правильного позиционирования псевдоэлемента */
   transition: transform 0.1s ease;
 }
 
@@ -1126,29 +1186,41 @@ body, html {
 .connect__container:active,
 .invbtns .copy_btn:active,
 .track1 .info:active {
-  transform: scale(0.9); /* сжатие кнопки */
+  transform: scale(0.9);
+  /* сжатие кнопки */
 }
 
 .invbtns .invite_btn:active {
-  transform: scale(0.97); /* сжатие кнопки */
+  transform: scale(0.97);
+  /* сжатие кнопки */
 }
 
-.playlist1_open, .playlist2_open, .playlist3_open, .playlist4_open {
+.playlist1_open,
+.playlist2_open,
+.playlist3_open,
+.playlist4_open {
   position: fixed;
   top: 0;
   width: 100%;
   height: 100%;
   background: linear-gradient(360deg, #d21e64 0%, #26abb5 100%);
-  z-index: -1; /* Убедимся, что контейнер под audio__container */
+  z-index: -1;
+  /* Убедимся, что контейнер под audio__container */
   opacity: 0;
   transition: opacity 0.3s ease;
-  left: 50%; /* Сдвигаем на 50% от левого края */
-  transform: translateX(-50%); /* Центрируем по горизонтали */
-  overflow-y: auto; /* Разрешаем вертикальную прокрутку */
+  left: 50%;
+  /* Сдвигаем на 50% от левого края */
+  transform: translateX(-50%);
+  /* Центрируем по горизонтали */
+  overflow-y: auto;
+  /* Разрешаем вертикальную прокрутку */
   padding-bottom: 30%;
 }
 
-.playlist1_open.show, .playlist2_open.show, .playlist3_open.show, .playlist4_open.show {
+.playlist1_open.show,
+.playlist2_open.show,
+.playlist3_open.show,
+.playlist4_open.show {
   opacity: 1;
   z-index: 10;
   transition: opacity 0.3s ease, background-color 0.5s ease;
@@ -1219,11 +1291,13 @@ body, html {
 /* Стиль для всплывающего окна */
 .vopros_desription {
   display: none;
-  position: fixed; /* Фиксированное положение по центру экрана */
+  position: fixed;
+  /* Фиксированное положение по центру экрана */
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #000000; /* Прозрачный темный фон */
+  background: #000000;
+  /* Прозрачный темный фон */
   padding: 20px;
   border-radius: 10px;
   width: 360px;
@@ -1239,4 +1313,67 @@ body, html {
 /* Показываем описание при наведении */
 .vopros:hover .vopros_desription {
   display: block;
+}
+
+.buy__container {
+  display: flex;
+  justify-content: center;
+  font-weight: 400;
+  font-size: 24px;
+  text-align: center;
+  color: #fff;
+  width: 90%;
+  padding-top: 5%;
+  margin: auto;
+}
+
+.search__container {
+  display: flex;
+  align-items: center;
+  border: 1px solid #fff;
+  border-radius: 10px;
+  height: 40px;
+  margin-bottom: 5%;
+  padding-left: 5%;
+  width: 99.8%;
+  margin-top: 5%;
+}
+
+.search {
+  margin-left: 5%;
+  font-weight: 400;
+  background: none;
+  border: none;
+  outline: none;
+  color: white;
+  font-size: 16px;
+}
+
+.search::-moz-placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.search::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.loopa {
+  padding-top: 1%;
+}
+
+.dno {
+  font-weight: 400;
+  font-size: 16px;
+  color: #fff;
+  text-align: center;
+  margin-top: 5%;
+  display: none; /* По умолчанию скрыто */
+}
+
+.not-found {
+  color: white;
+  text-align: center;
+  font-size: 18px;
+  margin-top: 20px;
+  width: 100%;
 }/*# sourceMappingURL=main.css.map */
