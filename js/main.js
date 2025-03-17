@@ -582,6 +582,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 playAudio();
             }
             updatePlayPauseButtons();  // <-- вызываем тут
+            vibrateButton();
         });
 
         playButton2.addEventListener('click', async () => {
@@ -592,6 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 playAudio();
             }
             updatePlayPauseButtons();  // <-- и тут тоже
+            vibrateButton();
         });
     }
 
@@ -691,22 +693,22 @@ document.addEventListener('DOMContentLoaded', () => {
         function displayResults(tracks) {
             const dnoMessage = document.querySelector(".dno");
             const query = searchInput.value.trim().toLowerCase();
-            
+
             searchResults.innerHTML = "";
-        
+
             if (query === "") {
                 dnoMessage.style.display = "none"; // Скрываем dno, если строка пустая
                 return; // Не показываем ничего
             }
-        
+
             if (tracks.length === 0) {
                 dnoMessage.style.display = "none"; // Скрываем dno
                 searchResults.innerHTML = `<p class="not-found">Ничего не найдено</p>`;
                 return;
             }
-        
+
             dnoMessage.style.display = "block"; // Показываем dno, если есть результаты
-        
+
             tracks.forEach(track => {
                 const trackElement = document.createElement("div");
                 trackElement.classList.add("track1");
@@ -734,7 +736,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener("click", function (event) {
         setTimeout(initSearch, 500); // Даем время странице обновиться
     });
-
 
     const addBtn = document.querySelector('.add_btn');
 
@@ -1297,9 +1298,39 @@ document.addEventListener('DOMContentLoaded', () => {
         );
     }
 
+    function updateTotal() {
+        const quantityInput = document.getElementById('quantityInput');
+        const priceInput = document.getElementById('priceInput');
+        const totalPut = document.querySelector('.total__put');
+
+        let quantity = Math.max(1, parseInt(quantityInput.value));
+        let price = parseFloat(priceInput.value.replace(',', '.'));
+        if (isNaN(quantity) || isNaN(price)) {
+            totalPut.textContent = "Сумма";
+            totalPut.style.color = "rgba(255, 255, 255, 0.5)"; // Применяем стиль
+            return;  // Прерываем выполнение, чтобы не показывать NaN
+        }
+
+        price = Math.max(0.01, price);
+        quantityInput.value = quantity;
+        priceInput.value = price;
+
+        totalPut.textContent = (quantity * price).toFixed(2);
+        totalPut.style.color = "rgb(255, 255, 255)"; // Применяем стиль
+        
+    }
+
+    function vibrateButton() {
+        if (navigator.vibrate) {
+            navigator.vibrate(100); // Вибрация на 100 миллисекунд
+        }
+    }
+    
     // Использование MutationObserver для отслеживания появления элемента с классом .refresh
     const observer = new MutationObserver(() => {
-
+        const quantityInput = document.getElementById('quantityInput');
+        const priceInput = document.getElementById('priceInput');
+        const totalPut = document.querySelector('.total__put');
         const playlistOpen1 = document.querySelector('.playlist1_open');
         const playlistOpen2 = document.querySelector('.playlist2_open');
         const playlistOpen3 = document.querySelector('.playlist3_open');
@@ -1309,6 +1340,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const playlistThree = document.querySelector('.playlist3'); // Основной плейлист
         const playlistFour = document.querySelector('.playlist4'); // Основной плейлист
         const mainPlaylist = document.querySelector('.playlist1_listen');
+
+        if (quantityInput && priceInput && totalPut) {
+            quantityInput.addEventListener('input', updateTotal);
+            priceInput.addEventListener('input', updateTotal);
+            updateTotal();
+        }
 
         if (mainPlaylist) {
             mainPlaylist.addEventListener('click', function () {
