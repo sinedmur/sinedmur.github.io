@@ -72,52 +72,18 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    // Функция для сохранения значений в cloudStorage
-function saveValuesToCloudStorage() {
-    if (Telegram.WebApp.cloudStorage) {
-        Telegram.WebApp.cloudStorage.setItem('valueNormal', valueNormal.toString())
-            .catch(error => console.error('Ошибка сохранения valueNormal:', error));
+    function updateValue() {
 
-        Telegram.WebApp.cloudStorage.setItem('valueSpecial', valueSpecial.toString())
-            .catch(error => console.error('Ошибка сохранения valueSpecial:', error));
-    } else {
-        console.error('Cloud Storage не поддерживается');
+        if (playerContainer.classList.contains('show')) {
+            // Большой плеер открыт - начисляем в специальное значение
+            valueSpecial += 3;  // Коэффициент начисления при открытом плеере
+        } else {
+            // Маленький плеер - обычное начисление
+            valueNormal += 1;
+        }
+
+        updateValuesInDOM();
     }
-}
-
-// Функция для загрузки значений из cloudStorage
-function loadValuesFromCloudStorage() {
-    if (Telegram.WebApp.cloudStorage) {
-        Telegram.WebApp.cloudStorage.getItem('valueNormal')
-            .then(value => {
-                if (value !== null) valueNormal = parseInt(value, 10) || 0;
-                updateValuesInDOM();
-            })
-            .catch(error => console.error('Ошибка загрузки valueNormal:', error));
-
-        Telegram.WebApp.cloudStorage.getItem('valueSpecial')
-            .then(value => {
-                if (value !== null) valueSpecial = parseInt(value, 10) || 0;
-                updateValuesInDOM();
-            })
-            .catch(error => console.error('Ошибка загрузки valueSpecial:', error));
-    } else {
-        console.error('Cloud Storage не поддерживается');
-    }
-}
-loadValuesFromCloudStorage();
-// Функция обновления значения
-function updateValue() {
-    if (playerContainer.classList.contains('show')) {
-        valueSpecial += 3; // Коэффициент начисления при открытом плеере
-    } else {
-        valueNormal += 1;
-    }
-
-    updateValuesInDOM();
-    saveValuesToCloudStorage(); // Сохраняем новые значения в cloudStorage
-}
-
 
     function startValueUpdate() {
         if (valueUpdateInterval) clearInterval(valueUpdateInterval); // Убираем старый интервал
@@ -917,13 +883,8 @@ function updateValue() {
             const webApp = Telegram.WebApp;
             const user = webApp.initDataUnsafe.user;
             if (user) {
-                if (webApp.cloudStorage) {
-                    webApp.cloudStorage.setItem('userAvatar', user.photo_url)
-                        .then(() => displayUserInfo())
-                        .catch(error => console.error('Ошибка сохранения в cloudStorage:', error));
-                } else {
-                    console.error('Cloud Storage не поддерживается');
-                }
+                localStorage.setItem('userAvatar', user.photo_url);
+                displayUserInfo();
             } else {
                 console.error('User data is not available');
             }
@@ -931,24 +892,13 @@ function updateValue() {
             console.error('Telegram Web App is not available');
         }
     }
-    
+
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
-        if (!avatarElement) return;
-    
-        if (Telegram.WebApp.cloudStorage) {
-            Telegram.WebApp.cloudStorage.getItem('userAvatar')
-                .then(userAvatar => {
-                    avatarElement.src = userAvatar || './img/token.svg';
-                    avatarElement.style.display = 'block';
-                })
-                .catch(error => {
-                    console.error('Ошибка загрузки из cloudStorage:', error);
-                    avatarElement.src = './img/token.svg';
-                });
-        } else {
-            console.error('Cloud Storage не поддерживается');
-            avatarElement.src = './img/token.svg';
+        const userAvatar = localStorage.getItem('userAvatar');
+        if (avatarElement) {
+            avatarElement.src = userAvatar || './img/token.svg';
+            avatarElement.style.display = 'block';
         }
     }
 
