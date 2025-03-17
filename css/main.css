@@ -1448,6 +1448,10 @@ html {
   padding-left: 2%;
 }
 
+.total__put {
+  padding-top: 0.7%;
+}
+
 .quantity__input::-moz-placeholder, .price__input::-moz-placeholder {
   color: rgba(255, 255, 255, 0.5);
 }
