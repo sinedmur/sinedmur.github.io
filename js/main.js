@@ -72,18 +72,52 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    function updateValue() {
+    // Функция для сохранения значений в cloudStorage
+function saveValuesToCloudStorage() {
+    if (Telegram.WebApp.cloudStorage) {
+        Telegram.WebApp.cloudStorage.setItem('valueNormal', valueNormal.toString())
+            .catch(error => console.error('Ошибка сохранения valueNormal:', error));
 
-        if (playerContainer.classList.contains('show')) {
-            // Большой плеер открыт - начисляем в специальное значение
-            valueSpecial += 3;  // Коэффициент начисления при открытом плеере
-        } else {
-            // Маленький плеер - обычное начисление
-            valueNormal += 1;
-        }
-
-        updateValuesInDOM();
+        Telegram.WebApp.cloudStorage.setItem('valueSpecial', valueSpecial.toString())
+            .catch(error => console.error('Ошибка сохранения valueSpecial:', error));
+    } else {
+        console.error('Cloud Storage не поддерживается');
     }
+}
+
+// Функция для загрузки значений из cloudStorage
+function loadValuesFromCloudStorage() {
+    if (Telegram.WebApp.cloudStorage) {
+        Telegram.WebApp.cloudStorage.getItem('valueNormal')
+            .then(value => {
+                if (value !== null) valueNormal = parseInt(value, 10) || 0;
+                updateValuesInDOM();
+            })
+            .catch(error => console.error('Ошибка загрузки valueNormal:', error));
+
+        Telegram.WebApp.cloudStorage.getItem('valueSpecial')
+            .then(value => {
+                if (value !== null) valueSpecial = parseInt(value, 10) || 0;
+                updateValuesInDOM();
+            })
+            .catch(error => console.error('Ошибка загрузки valueSpecial:', error));
+    } else {
+        console.error('Cloud Storage не поддерживается');
+    }
+}
+loadValuesFromCloudStorage();
+// Функция обновления значения
+function updateValue() {
+    if (playerContainer.classList.contains('show')) {
+        valueSpecial += 3; // Коэффициент начисления при открытом плеере
+    } else {
+        valueNormal += 1;
+    }
+
+    updateValuesInDOM();
+    saveValuesToCloudStorage(); // Сохраняем новые значения в cloudStorage
+}
+
 
     function startValueUpdate() {
         if (valueUpdateInterval) clearInterval(valueUpdateInterval); // Убираем старый интервал
