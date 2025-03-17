@@ -883,8 +883,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const webApp = Telegram.WebApp;
             const user = webApp.initDataUnsafe.user;
             if (user) {
-                localStorage.setItem('userAvatar', user.photo_url);
-                displayUserInfo();
+                if (webApp.cloudStorage) {
+                    webApp.cloudStorage.setItem('userAvatar', user.photo_url)
+                        .then(() => displayUserInfo())
+                        .catch(error => console.error('Ошибка сохранения в cloudStorage:', error));
+                } else {
+                    console.error('Cloud Storage не поддерживается');
+                }
             } else {
                 console.error('User data is not available');
             }
@@ -892,13 +897,24 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Telegram Web App is not available');
         }
     }
-
+    
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
-        const userAvatar = localStorage.getItem('userAvatar');
-        if (avatarElement) {
-            avatarElement.src = userAvatar || './img/token.svg';
-            avatarElement.style.display = 'block';
+        if (!avatarElement) return;
+    
+        if (Telegram.WebApp.cloudStorage) {
+            Telegram.WebApp.cloudStorage.getItem('userAvatar')
+                .then(userAvatar => {
+                    avatarElement.src = userAvatar || './img/token.svg';
+                    avatarElement.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Ошибка загрузки из cloudStorage:', error);
+                    avatarElement.src = './img/token.svg';
+                });
+        } else {
+            console.error('Cloud Storage не поддерживается');
+            avatarElement.src = './img/token.svg';
         }
     }
 
