@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // SeaTable конфигурация
     const SEATABLE_CONFIG = {
         BASE_URL: "https://cloud.seatable.io",
-        API_TOKEN: "f97c04059d18570419abdeec55805cea3ee75428", // Замените на реальный токен
+        API_TOKEN: "5c0dd7f15984719d52fc15e6d81b62886d055cd8", // Замените на реальный токен
         TABLE_NAME: "Users", // Имя вашей таблицы
         WORKSPACE_ID: 74367 // ID вашего рабочего пространства
     };
