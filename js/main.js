@@ -1,5 +1,39 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+    // SeaTable конфигурация
+    const SEATABLE_CONFIG = {
+        BASE_URL: "https://cloud.seatable.io",
+        API_TOKEN: "f97c04059d18570419abdeec55805cea3ee75428", // Замените на реальный токен
+        TABLE_NAME: "Users", // Имя вашей таблицы
+        WORKSPACE_ID: 74367 // ID вашего рабочего пространства
+    };
+
+    async function saveToSeatable(userData) {
+    try {
+        const response = await fetch(`${SEATABLE_CONFIG.BASE_URL}/api/v2.1/workspace/${SEATABLE_CONFIG.WORKSPACE_ID}/dtable/rows/`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Token ${SEATABLE_CONFIG.API_TOKEN}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                table_name: SEATABLE_CONFIG.TABLE_NAME,
+                rows: [{
+                    "User ID": userData.userId,
+                    "Wallet": userData.wallet,
+                    "Balance": userData.balance,
+                    "Last Active": new Date().toISOString()
+                }]
+            })
+        });
+
+        if (!response.ok) throw new Error('Ошибка сохранения');
+        console.log('Данные сохранены в SeaTable');
+        } catch (error) {
+            console.error('Ошибка:', error);
+        }
+    }
+
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
     const activeContainer = document.querySelector('.active__container');
@@ -83,7 +117,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         updateValuesInDOM();
+            // Сохраняем данные при изменении баланса
+        saveToSeatable({
+            userId: localStorage.getItem('tgUserId'),
+            wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
+            balance: valueNormal + valueSpecial
+        });
     }
+
+    // Вешаем обработчик на событие закрытия
+    Telegram.WebApp.onEvent('viewportChanged', (data) => {
+        if (data.is_state_stable === false) {
+            saveToSeatable({
+                userId: localStorage.getItem('tgUserId'),
+                wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
+                balance: valueNormal + valueSpecial
+            });
+        }
+    });
 
     function startValueUpdate() {
         if (valueUpdateInterval) clearInterval(valueUpdateInterval); // Убираем старый интервал
@@ -877,21 +928,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-    // Telegram Auth
-    function initializeTelegramAuth() {
-        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-            const webApp = Telegram.WebApp;
-            const user = webApp.initDataUnsafe.user;
-            if (user) {
-                localStorage.setItem('userAvatar', user.photo_url);
-                displayUserInfo();
-            } else {
-                console.error('User data is not available');
-            }
-        } else {
-            console.error('Telegram Web App is not available');
+function initializeTelegramAuth() {
+    if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+        const webApp = Telegram.WebApp;
+        const user = webApp.initDataUnsafe.user;
+        
+        if (user) {
+            const userId = user.id.toString();
+            localStorage.setItem('tgUserId', userId);
+            localStorage.setItem('userAvatar', user.photo_url);
+            
+            // Сохраняем данные при инициализации
+            saveToSeatable({
+                userId: userId,
+                wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
+                balance: valueNormal + valueSpecial
+            });
+            
+            displayUserInfo();
         }
     }
+}
 
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
@@ -1025,6 +1082,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 addressContainer.style.display = 'none'; // Если адрес не обработан, скрываем его
             }
         }
+            // Сохраняем при подключении кошелька
+        saveToSeatable({
+            userId: localStorage.getItem('tgUserId'),
+            wallet: address,
+            balance: valueNormal + valueSpecial
+        });
     }
 
     // Обработчик события для кнопки copymini
