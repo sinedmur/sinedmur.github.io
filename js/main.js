@@ -1,11 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-
     const SEATABLE_CONFIG = {
         BASE_URL: "https://cloud.seatable.io",
         API_TOKEN: "1fefd91f9e5c6bcfeb8fb5b0a5ebd9a65b3b2b9d", // Замените на реальный токен
         TABLE_NAME: "Users"
     };
-    
+
     // Функция получения dtable_uuid и access_token
     async function getAccessToken() {
         try {
@@ -15,38 +14,53 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Authorization': `Token ${SEATABLE_CONFIG.API_TOKEN}`
                 }
             });
-    
+
             if (!response.ok) {
                 throw new Error(`Ошибка получения access_token: ${response.status} ${await response.text()}`);
             }
-    
+
             const data = await response.json();
             console.log("Получен dtable_uuid:", data.dtable_uuid);
             console.log("Получен access_token:", data.access_token);
-            
+
             return data; // Возвращаем объект { dtable_uuid, access_token }
         } catch (error) {
             console.error("Ошибка при получении access_token:", error.message);
             return null;
         }
     }
-    
+
     // Функция для сохранения данных в таблицу
     async function saveToSeatable(userData) {
+        // Логируем перед отправкой данных
+        console.log("Сохраняемые данные в Seatable:", userData);
+
+        if (!userData.balance || userData.balance === 0) {
+            console.warn("Баланс отсутствует или равен 0!");
+            return; // Если баланс равен 0, не отправляем данные
+        }
+
+        if (!userData.userId) {
+            console.error("Не найден userId!");
+            return; // Если отсутствует userId, не отправляем данные
+        }
+
+        // Получаем dtable_uuid и access_token
+        const tokenData = await getAccessToken();
+        if (!tokenData) {
+            console.error("Не удалось получить токены Seatable!");
+            return; // Если токены не получены, не отправляем запрос
+        }
+
+        const { dtable_uuid, access_token } = tokenData;
+        const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
+        console.log("Отправка запроса на URL:", url);
+
         try {
-            // Получаем access_token и dtable_uuid
-            const tokenData = await getAccessToken();
-            if (!tokenData) throw new Error("Не удалось получить access_token");
-    
-            const { dtable_uuid, access_token } = tokenData;
-            const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`; // !!! изменён URL
-    
-            console.log("Отправка запроса на URL:", url);
-    
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Token ${access_token}`, // Используем access_token
+                    'Authorization': `Token ${access_token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -54,20 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     rows: [userData]
                 })
             });
-    
-            console.log("HTTP статус ответа:", response.status);
+
             const responseText = await response.text();
             console.log("Ответ сервера:", responseText);
-    
+
             if (!response.ok) throw new Error(responseText);
-    
+
         } catch (error) {
             console.error("Ошибка при сохранении в Seatable:", {
                 error: error.message,
                 sentData: userData
             });
         }
-    } 
+    }
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
@@ -142,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchEndX = 0;
 
     function updateValue() {
-
         if (playerContainer.classList.contains('show')) {
             // Большой плеер открыт - начисляем в специальное значение
             valueSpecial += 3;  // Коэффициент начисления при открытом плеере
@@ -151,8 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
             valueNormal += 1;
         }
 
-        updateValuesInDOM();
-            // Сохраняем данные при изменении баланса
+        console.log("Обновленный баланс:", valueNormal + valueSpecial); // Логируем новый баланс
+
         saveToSeatable({
             userId: localStorage.getItem('tgUserId'),
             wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
@@ -963,27 +975,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
-function initializeTelegramAuth() {
-    if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
-        const webApp = Telegram.WebApp;
-        const user = webApp.initDataUnsafe.user;
-        
-        if (user) {
-            const userId = user.id.toString();
-            localStorage.setItem('tgUserId', userId);
-            localStorage.setItem('userAvatar', user.photo_url);
-            
-            // Сохраняем данные при инициализации
-            saveToSeatable({
-                userId: userId,
-                wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
-                balance: valueNormal + valueSpecial
-            });
-            
-            displayUserInfo();
+    function initializeTelegramAuth() {
+        if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+            const webApp = Telegram.WebApp;
+            const user = webApp.initDataUnsafe.user;
+
+            if (user) {
+                const userId = user.id.toString();
+                localStorage.setItem('tgUserId', userId);
+                localStorage.setItem('userAvatar', user.photo_url);
+
+                // Сохраняем данные при инициализации
+                saveToSeatable({
+                    userId: userId,
+                    wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
+                    balance: valueNormal + valueSpecial
+                });
+
+                displayUserInfo();
+            }
         }
     }
-}
 
     function displayUserInfo() {
         const avatarElement = document.getElementById('avatar');
