@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
         TABLE_NAME: "Users"
     };
 
-    // Функция для получения строки по UserID
+  // Функция для поиска строки по UserID
 async function getUserRowByUserId(userId) {
     try {
         const tokenData = await getAccessToken();
@@ -14,6 +14,7 @@ async function getUserRowByUserId(userId) {
         const { dtable_uuid, access_token } = tokenData;
         const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
 
+        // Запрос для поиска строки по UserID
         const response = await fetch(url + `?UserID=${userId}`, {
             method: 'GET',
             headers: {
