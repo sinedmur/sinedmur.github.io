@@ -1,38 +1,73 @@
 document.addEventListener('DOMContentLoaded', () => {
 
-    // SeaTable конфигурация
     const SEATABLE_CONFIG = {
         BASE_URL: "https://cloud.seatable.io",
         API_TOKEN: "1fefd91f9e5c6bcfeb8fb5b0a5ebd9a65b3b2b9d", // Замените на реальный токен
-        TABLE_NAME: "Users", // Имя вашей таблицы
-        WORKSPACE_ID: 74367 // ID вашего рабочего пространства
+        TABLE_NAME: "Users"
     };
-
-    async function saveToSeatable(userData) {
-    try {
-        const response = await fetch(`${SEATABLE_CONFIG.BASE_URL}/api/v2.1/workspace/${SEATABLE_CONFIG.WORKSPACE_ID}/dtable/rows/`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Token ${SEATABLE_CONFIG.API_TOKEN}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                table_name: SEATABLE_CONFIG.TABLE_NAME,
-                rows: [{
-                    "User ID": userData.userId,
-                    "Wallet": userData.wallet,
-                    "Balance": userData.balance,
-                    "Last Active": new Date().toISOString()
-                }]
-            })
-        });
-
-        if (!response.ok) throw new Error('Ошибка сохранения');
-        console.log('Данные сохранены в SeaTable');
+    
+    // Функция получения dtable_uuid и access_token
+    async function getAccessToken() {
+        try {
+            const response = await fetch(`${SEATABLE_CONFIG.BASE_URL}/api/v2.1/dtable/app-access-token/`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Token ${SEATABLE_CONFIG.API_TOKEN}`
+                }
+            });
+    
+            if (!response.ok) {
+                throw new Error(`Ошибка получения access_token: ${response.status} ${await response.text()}`);
+            }
+    
+            const data = await response.json();
+            console.log("Получен dtable_uuid:", data.dtable_uuid);
+            console.log("Получен access_token:", data.access_token);
+            
+            return data; // Возвращаем объект { dtable_uuid, access_token }
         } catch (error) {
-            console.error('Ошибка:', error);
+            console.error("Ошибка при получении access_token:", error.message);
+            return null;
         }
     }
+    
+    // Функция для сохранения данных в таблицу
+    async function saveToSeatable(userData) {
+        try {
+            // Получаем access_token и dtable_uuid
+            const tokenData = await getAccessToken();
+            if (!tokenData) throw new Error("Не удалось получить access_token");
+    
+            const { dtable_uuid, access_token } = tokenData;
+            const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`; // !!! изменён URL
+    
+            console.log("Отправка запроса на URL:", url);
+    
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Token ${access_token}`, // Используем access_token
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    table_name: SEATABLE_CONFIG.TABLE_NAME,
+                    rows: [userData]
+                })
+            });
+    
+            console.log("HTTP статус ответа:", response.status);
+            const responseText = await response.text();
+            console.log("Ответ сервера:", responseText);
+    
+            if (!response.ok) throw new Error(responseText);
+    
+        } catch (error) {
+            console.error("Ошибка при сохранении в Seatable:", {
+                error: error.message,
+                sentData: userData
+            });
+        }
+    } 
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
