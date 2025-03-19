@@ -33,34 +33,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // Функция для сохранения данных в таблицу
     async function saveToSeatable(userData) {
         try {
-            // Получаем access_token и dtable_uuid
+            console.log("Данные перед отправкой:", userData); // Логирование данных перед отправкой
+
             const tokenData = await getAccessToken();
             if (!tokenData) throw new Error("Не удалось получить access_token");
-    
+
             const { dtable_uuid, access_token } = tokenData;
             const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
-    
-            console.log("Отправка запроса на URL:", url);
-            console.log("Данные для отправки:", userData);  // Логируем данные перед отправкой
-    
+
+            // Проверим, правильно ли формируем данные
+            const requestBody = {
+                table_name: SEATABLE_CONFIG.TABLE_NAME,
+                row: {
+                    'User ID': userData.UserID,
+                    'Wallet': userData.Wallet,
+                    'Balance': userData.Balance,
+                    'Last Active': userData.LastActive
+                }
+            };
+            console.log("Отправляемые данные:", JSON.stringify(requestBody, null, 2));
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Token ${access_token}`, // Используем access_token
+                    'Authorization': `Token ${access_token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({
-                    table_name: SEATABLE_CONFIG.TABLE_NAME,  // Указание имени таблицы
-                    rows: [userData] // Записываем только данные
-                })
+                body: JSON.stringify(requestBody)
             });
-    
-            console.log("HTTP статус ответа:", response.status);
+
             const responseText = await response.text();
             console.log("Ответ сервера:", responseText);
-    
+
             if (!response.ok) throw new Error(responseText);
-    
+
         } catch (error) {
             console.error("Ошибка при сохранении в Seatable:", {
                 error: error.message,
