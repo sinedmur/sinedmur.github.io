@@ -1171,28 +1171,31 @@ async function saveToSeatable(userData) {
     async function updateWalletUI(address) {
         const connectContainer = document.querySelector('.connect__container');
         const addressContainer = document.querySelector('.address__container');
-
+    
         if (connectContainer) connectContainer.style.display = 'none'; // Скрываем кнопку подключения
         if (addressContainer) {
             const nonBounceableAddress = await getNonBounceableAddress(address); // Получаем non-bounceable адрес
-
+    
             if (nonBounceableAddress) {
                 const shortAddress = shortenAddress(nonBounceableAddress); // Сокращаем адрес
                 addressContainer.style.display = 'flex'; // Показываем контейнер с адресом
                 addressContainer.querySelector('.address').textContent = shortAddress; // Выводим сокращенный адрес
                 addressContainer.querySelector('.address').title = nonBounceableAddress; // Добавляем полный адрес в подсказку
+    
+                // Логируем перед сохранением
+                console.log("Сохраняем данные при подключении кошелька:", nonBounceableAddress);
+                
+                // Сохраняем nonBounceableAddress в Seatable
+                saveToSeatable({
+                    UserID: localStorage.getItem('tgUserId'),
+                    Wallet: nonBounceableAddress, // Сохраняем nonBounceableAddress
+                    Balance: valueNormal + valueSpecial,
+                    LastActive: new Date().toISOString() // Добавляем текущую дату и время как Last Active
+                });
             } else {
                 addressContainer.style.display = 'none'; // Если адрес не обработан, скрываем его
             }
         }
-        // Логируем перед сохранением
-        console.log("Сохраняем данные при подключении кошелька:", address);
-        saveToSeatable({
-            UserID: localStorage.getItem('tgUserId'),
-            Wallet: address,
-            Balance: valueNormal + valueSpecial,
-            LastActive: new Date().toISOString() // Добавляем текущую дату и время как Last Active
-        });
     }
 
     // Обработчик события для кнопки copymini
