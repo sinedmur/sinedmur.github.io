@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log("Получен dtable_uuid:", data.dtable_uuid);
             console.log("Получен access_token:", data.access_token);
-
+            
             return data; // Возвращаем объект { dtable_uuid, access_token }
         } catch (error) {
             console.error("Ошибка при получении access_token:", error.message);
@@ -32,44 +32,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функция для сохранения данных в таблицу
     async function saveToSeatable(userData) {
-        // Логируем перед отправкой данных
-        console.log("Сохраняемые данные в Seatable:", userData);
-
-        // Проверка на наличие необходимых данных
-        if (!userData.UserID || !userData.Wallet || userData.Balance === undefined || userData.Balance === null) {
-            console.error("Ошибка! Отсутствуют обязательные данные:", userData);
-            return; // Не отправляем данные, если важные параметры пусты
-        }
-
-        // Получаем dtable_uuid и access_token
-        const tokenData = await getAccessToken();
-        if (!tokenData) {
-            console.error("Не удалось получить токены Seatable!");
-            return; // Если токены не получены, не отправляем запрос
-        }
-
-        const { dtable_uuid, access_token } = tokenData;
-        const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
-        console.log("Отправка запроса на URL:", url);
-
         try {
+            // Получаем access_token и dtable_uuid
+            const tokenData = await getAccessToken();
+            if (!tokenData) throw new Error("Не удалось получить access_token");
+    
+            const { dtable_uuid, access_token } = tokenData;
+            const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
+    
+            console.log("Отправка запроса на URL:", url);
+            console.log("Данные для отправки:", userData);  // Логируем данные перед отправкой
+    
             const response = await fetch(url, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Token ${access_token}`,
+                    'Authorization': `Token ${access_token}`, // Используем access_token
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    table_name: SEATABLE_CONFIG.TABLE_NAME,
-                    rows: [userData]
+                    table_name: SEATABLE_CONFIG.TABLE_NAME,  // Указание имени таблицы
+                    rows: [userData] // Записываем только данные
                 })
             });
-
+    
+            console.log("HTTP статус ответа:", response.status);
             const responseText = await response.text();
             console.log("Ответ сервера:", responseText);
-
+    
             if (!response.ok) throw new Error(responseText);
-
+    
         } catch (error) {
             console.error("Ошибка при сохранении в Seatable:", {
                 error: error.message,
@@ -151,40 +142,30 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchEndX = 0;
 
     function updateValue() {
+        // Если большой плеер открыт - начисляем в специальное значение
         if (playerContainer.classList.contains('show')) {
-            valueSpecial += 3;  // Коэффициент начисления при открытом плеере
+            valueSpecial += 3;
         } else {
-            valueNormal += 1;  // Маленький плеер - обычное начисление
+            valueNormal += 1;
         }
 
-        console.log("Обновленный баланс:", valueNormal + valueSpecial);
-
-        const userId = localStorage.getItem('tgUserId');
-        const wallet = localStorage.getItem('tonWalletAddress') || 'Не подключен';
-
-        // Логируем данные перед отправкой
-        console.log("UserId:", userId, "Wallet:", wallet, "Balance:", valueNormal + valueSpecial);
-
+        // Сохраняем данные при изменении баланса
         saveToSeatable({
-            UserID: userId,        // Передаем правильные имена столбцов
-            Wallet: wallet,        // Передаем правильные имена столбцов
-            Balance: valueNormal + valueSpecial,  // Передаем правильные имена столбцов
-            LastActive: new Date().toISOString() // Добавляем текущую дату и время как Last Active
+            "UserID": localStorage.getItem('tgUserId'),
+            "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
+            "Balance": valueNormal + valueSpecial,
+            "LastActive": new Date().toISOString()
         });
     }
 
     // Вешаем обработчик на событие закрытия
     Telegram.WebApp.onEvent('viewportChanged', (data) => {
         if (data.is_state_stable === false) {
-            const userId = localStorage.getItem('tgUserId');
-            const wallet = localStorage.getItem('tonWalletAddress') || 'Не подключен';
-
-            console.log("Отправка данных при изменении состояния:", userId, wallet, valueNormal + valueSpecial);
             saveToSeatable({
-                UserID: userId,
-                Wallet: wallet,
-                Balance: valueNormal + valueSpecial,
-                LastActive: new Date().toISOString() // Добавляем текущую дату и время как Last Active
+                "UserID": localStorage.getItem('tgUserId'),
+                "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
+                "Balance": valueNormal + valueSpecial,
+                "LastActive": new Date().toISOString()
             });
         }
     });
@@ -991,13 +972,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('tgUserId', userId);
                 localStorage.setItem('userAvatar', user.photo_url);
 
-                console.log("Инициализация пользователя:", userId);
-
+                // Сохраняем данные при инициализации
                 saveToSeatable({
-                    UserID: userId,
-                    Wallet: localStorage.getItem('tonWalletAddress') || 'Не подключен',
-                    Balance: valueNormal + valueSpecial,
-                    LastActive: new Date().toISOString() // Добавляем текущую дату и время как Last Active
+                    "UserID": userId,
+                    "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
+                    "Balance": valueNormal + valueSpecial,
+                    "LastActive": new Date().toISOString()
                 });
 
                 displayUserInfo();
