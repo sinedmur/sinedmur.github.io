@@ -49,7 +49,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log("🔍 Проверяем строки из Seatable:", data.rows);
     
-            // Приводим `UserID` к строке перед сравнением
             const userRow = data.rows.find(row => String(row.UserID) === String(userId));
     
             return userRow || null;
@@ -73,25 +72,25 @@ document.addEventListener('DOMContentLoaded', () => {
             const existingUserRow = await getUserRowByUserId(userData.UserID);
     
             let requestBody;
+            const newBalance = Number(userData.Balance);  // Убедитесь, что передаете правильное число
+    
             if (existingUserRow) {
                 console.log("✅ Найдена строка, обновляем:", existingUserRow);
     
-                // Приводим Balance к числу
-                const newBalance = Number(userData.Balance);
                 if (isNaN(newBalance)) throw new Error("❌ Ошибка: Balance не является числом!");
     
                 requestBody = {
                     row: {
                         'UserID': userData.UserID,
                         'Wallet': userData.Wallet,
-                        'Balance': newBalance,  // Убедимся, что отправляем число
+                        'Balance': newBalance,  // Используем newBalance
                         'LastActive': userData.LastActive
                     }
                 };
     
                 const updateUrl = `${url}${existingUserRow._id}/`;
                 const response = await fetch(updateUrl, {
-                    method: 'PATCH',
+                    method: 'PUT',
                     headers: {
                         'Authorization': `Token ${access_token}`,
                         'Content-Type': 'application/json'
@@ -109,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     row: {
                         'UserID': userData.UserID,
                         'Wallet': userData.Wallet,
-                        'Balance': Number(userData.Balance),
+                        'Balance': newBalance,  // Используем newBalance
                         'LastActive': userData.LastActive
                     }
                 };
@@ -1635,7 +1634,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Начинаем наблюдение за изменениями в DOM
     observer.observe(document.body, { childList: true, subtree: true });
 
-
     const coverImage = document.querySelector(".cover__src"); // Картинка обложки
     const colorThief = new ColorThief(); // Объект ColorThief
 
@@ -1657,4 +1655,5 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         coverImage.addEventListener("load", applyColor);
     }
+    
 });
