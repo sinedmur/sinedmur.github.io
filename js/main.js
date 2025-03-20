@@ -206,8 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    function updateValue() {
-        // Проверяем, что переменные определены
+    async function updateValue() {
         if (typeof valueNormal === 'undefined' || typeof valueSpecial === 'undefined') {
             console.error("❌ Ошибка: переменные `valueNormal` или `valueSpecial` не определены!");
             return;
@@ -223,15 +222,35 @@ document.addEventListener('DOMContentLoaded', () => {
         // Вычисляем общий баланс
         const totalBalance = valueNormal + valueSpecial;
     
-        console.log("🔄 Обновляем баланс:", totalBalance);
+        console.log("🔄 Отправляем баланс в Seatable:", totalBalance);
     
-        // Сохраняем данные при изменении баланса
-        saveToSeatable({
+        // Сначала отправляем баланс в базу
+        await saveToSeatable({
             "UserID": localStorage.getItem('tgUserId'),
             "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-            "Balance": totalBalance, // Теперь точно передаём число
+            "Balance": totalBalance,
             "LastActive": new Date().toISOString()
         });
+    
+        // Затем загружаем баланс из базы
+        await loadBalanceFromSeatable();
+    }
+    
+    // Функция загрузки баланса из Seatable
+    async function loadBalanceFromSeatable() {
+        const userId = localStorage.getItem('tgUserId');
+        const userRow = await getUserRowByUserId(userId);
+        
+        if (userRow) {
+            const balance = userRow.Balance || 0;
+            console.log("✅ Загруженный баланс из Seatable:", balance);
+    
+            // Обновляем интерфейс
+            if (valueDisplay) valueDisplay.textContent = balance;
+            if (valueDisplayMini) valueDisplayMini.textContent = balance;
+        } else {
+            console.warn("⚠️ Пользователь не найден в базе, баланс не обновлен.");
+        }
     }
     
 
@@ -258,11 +277,6 @@ document.addEventListener('DOMContentLoaded', () => {
             clearInterval(valueUpdateInterval);
             valueUpdateInterval = null;
         }
-    }
-
-    function updateValuesInDOM() {
-        valueDisplay.textContent = valueNormal + valueSpecial;
-        valueDisplayMini.textContent = valueNormal + valueSpecial;
     }
 
     function handleBackButtonPageNavigation() {
@@ -359,8 +373,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let reverseState = 0; // Состояние кнопки reverse_btn: 0 - исходное, 1 - один трек, 2 - плейлист
     let isRandom = false; // Флаг для random режима
 
-    // Обновляем отображение сохраненных значений
-    updateValuesInDOM();
     const reverseBtn = document.querySelector('.reverse_btn'); // Кнопка reverse
     const randomBtn = document.querySelector('.random_btn');   // Кнопка random
     const reverseSrc = document.querySelector('.reverse__src'); // Изображение внутри reverse_btn
@@ -696,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = false;
             updatePlayPauseButtons();
             lastUpdateTime = 0;  // Сбрасываем метку времени последнего обновления
-            updateValuesInDOM();
             stopValueUpdate(); // Останавливаем начисление value при паузе
         }
     }
@@ -719,15 +730,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Проверяем, если прошло 1 секунда или больше с последнего обновления
         if (currentTime - lastUpdateTime >= 1) {
             lastUpdateTime = currentTime;  // Обновляем метку времени
-
-            if (playerContainer.classList.contains('show')) {
-                // Если контейнер открыт, начисляем 2 балла за секунду
-                valueSpecial += 3;
-            } else {
-                // Если контейнер не открыт, начисляем 1 балл за секунду
-                valueNormal += 1;
-            }
-            updateValuesInDOM();
         }
 
         if (isPlaying) {
@@ -1634,7 +1636,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Начинаем наблюдение за изменениями в DOM
     observer.observe(document.body, { childList: true, subtree: true });
-    updateValuesInDOM();
 
 
     const coverImage = document.querySelector(".cover__src"); // Картинка обложки
