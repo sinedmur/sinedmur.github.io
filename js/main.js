@@ -5,38 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
         TABLE_NAME: "Users"
     };
 
-  // Функция для поиска строки по UserID
-async function getUserRowByUserId(userId) {
-    try {
-        const tokenData = await getAccessToken();
-        if (!tokenData) throw new Error("Не удалось получить access_token");
-
-        const { dtable_uuid, access_token } = tokenData;
-        const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
-
-        // Запрос для поиска строки по UserID
-        const response = await fetch(url + `?UserID=${userId}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Token ${access_token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error(`Ошибка при получении строки: ${response.status} ${await response.text()}`);
-
-        const data = await response.json();
-        if (data.rows && data.rows.length > 0) {
-            return data.rows[0]; // Возвращаем первую строку
-        } else {
-            return null; // Если не нашли, возвращаем null
-        }
-    } catch (error) {
-        console.error("Ошибка при поиске строки по UserID:", error.message);
-        return null;
-    }
-}
-
     // Функция получения dtable_uuid и access_token
     async function getAccessToken() {
         try {
@@ -62,10 +30,39 @@ async function getUserRowByUserId(userId) {
         }
     }
 
-   // Функция для сохранения или обновления данных в таблице
+// Функция для получения всех строк и поиска нужной строки по UserID
+async function getUserRowByUserId(userId) {
+    try {
+        const tokenData = await getAccessToken();
+        if (!tokenData) throw new Error("Не удалось получить access_token");
+
+        const { dtable_uuid, access_token } = tokenData;
+        const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/?table_name=${SEATABLE_CONFIG.TABLE_NAME}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Token ${access_token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) throw new Error(`Ошибка при получении строк: ${response.status} ${await response.text()}`);
+
+        const data = await response.json();
+        const userRow = data.rows.find(row => row.UserID === userId); // Фильтруем вручную
+
+        return userRow || null; // Возвращаем строку или null, если не нашли
+    } catch (error) {
+        console.error("Ошибка при поиске строки по UserID:", error.message);
+        return null;
+    }
+}
+
+// Функция для сохранения или обновления данных в таблице
 async function saveToSeatable(userData) {
     try {
-        console.log("Данные перед отправкой:", userData); // Логирование данных перед отправкой
+        console.log("Данные перед отправкой:", userData);
 
         const tokenData = await getAccessToken();
         if (!tokenData) throw new Error("Не удалось получить access_token");
@@ -75,22 +72,20 @@ async function saveToSeatable(userData) {
 
         // Проверяем, существует ли уже запись с таким UserID
         const existingUserRow = await getUserRowByUserId(userData.UserID);
-        
-        let requestBody;
 
+        let requestBody;
         if (existingUserRow) {
-            // Если запись существует, создаем запрос на обновление
+            // Если запись существует, обновляем её
             requestBody = {
-                table_name: SEATABLE_CONFIG.TABLE_NAME,
                 row: {
-                    'User ID': userData.UserID,
+                    'UserID': userData.UserID,
                     'Wallet': userData.Wallet,
                     'Balance': userData.Balance,
-                    'Last Active': userData.LastActive
+                    'LastActive': userData.LastActive
                 }
             };
 
-            const updateUrl = `${url}${existingUserRow.uuid}/`; // Указываем UUID строки для обновления
+            const updateUrl = `${url}${existingUserRow._id}/`; // _id — уникальный идентификатор строки в Seatable
             const response = await fetch(updateUrl, {
                 method: 'PUT',
                 headers: {
@@ -100,19 +95,17 @@ async function saveToSeatable(userData) {
                 body: JSON.stringify(requestBody)
             });
 
-            const responseText = await response.text();
-            console.log("Ответ сервера (обновление):", responseText);
-
-            if (!response.ok) throw new Error(responseText);
+            console.log("Ответ сервера (обновление):", await response.text());
+            if (!response.ok) throw new Error(`Ошибка при обновлении: ${response.status}`);
         } else {
-            // Если записи нет, отправляем новый запрос на создание
+            // Если записи нет, создаем новую
             requestBody = {
                 table_name: SEATABLE_CONFIG.TABLE_NAME,
                 row: {
-                    'User ID': userData.UserID,
+                    'UserID': userData.UserID,
                     'Wallet': userData.Wallet,
                     'Balance': userData.Balance,
-                    'Last Active': userData.LastActive
+                    'LastActive': userData.LastActive
                 }
             };
 
@@ -125,16 +118,11 @@ async function saveToSeatable(userData) {
                 body: JSON.stringify(requestBody)
             });
 
-            const responseText = await response.text();
-            console.log("Ответ сервера (создание):", responseText);
-
-            if (!response.ok) throw new Error(responseText);
+            console.log("Ответ сервера (создание):", await response.text());
+            if (!response.ok) throw new Error(`Ошибка при создании: ${response.status}`);
         }
     } catch (error) {
-        console.error("Ошибка при сохранении в Seatable:", {
-            error: error.message,
-            sentData: userData
-        });
+        console.error("Ошибка при сохранении в Seatable:", error.message);
     }
 }
 
@@ -1173,28 +1161,25 @@ async function saveToSeatable(userData) {
         const connectContainer = document.querySelector('.connect__container');
         const addressContainer = document.querySelector('.address__container');
     
-        if (connectContainer) connectContainer.style.display = 'none'; // Скрываем кнопку подключения
+        if (connectContainer) connectContainer.style.display = 'none';
         if (addressContainer) {
-            const nonBounceableAddress = await getNonBounceableAddress(address); // Получаем non-bounceable адрес
+            const nonBounceableAddress = await getNonBounceableAddress(address);
     
             if (nonBounceableAddress) {
-                const shortAddress = shortenAddress(nonBounceableAddress); // Сокращаем адрес
-                addressContainer.style.display = 'flex'; // Показываем контейнер с адресом
-                addressContainer.querySelector('.address').textContent = shortAddress; // Выводим сокращенный адрес
-                addressContainer.querySelector('.address').title = nonBounceableAddress; // Добавляем полный адрес в подсказку
+                const shortAddress = shortenAddress(nonBounceableAddress);
+                addressContainer.style.display = 'flex';
+                addressContainer.querySelector('.address').textContent = shortAddress;
+                addressContainer.querySelector('.address').title = nonBounceableAddress;
     
-                // Логируем перед сохранением
                 console.log("Сохраняем данные при подключении кошелька:", nonBounceableAddress);
-                
-                // Сохраняем nonBounceableAddress в Seatable
                 saveToSeatable({
                     UserID: localStorage.getItem('tgUserId'),
-                    Wallet: nonBounceableAddress, // Сохраняем nonBounceableAddress
+                    Wallet: nonBounceableAddress,
                     Balance: valueNormal + valueSpecial,
-                    LastActive: new Date().toISOString() // Добавляем текущую дату и время как Last Active
+                    LastActive: new Date().toISOString()
                 });
             } else {
-                addressContainer.style.display = 'none'; // Если адрес не обработан, скрываем его
+                addressContainer.style.display = 'none';
             }
         }
     }
