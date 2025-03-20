@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function getUserRowByUserId(userId) {
         try {
             const tokenData = await getAccessToken();
-            if (!tokenData) throw new Error("Не удалось получить access_token");
+            if (!tokenData) throw new Error("❌ Не удалось получить access_token");
     
             const { dtable_uuid, access_token } = tokenData;
             const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/?table_name=${SEATABLE_CONFIG.TABLE_NAME}`;
@@ -46,24 +46,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
     
-            if (!response.ok) throw new Error(`Ошибка при получении строк: ${response.status} ${await response.text()}`);
+            if (!response.ok) throw new Error(`❌ Ошибка при получении строк: ${response.status} ${await response.text()}`);
     
             const data = await response.json();
-            console.log("Запрашиваем UserID:", userId);
-            console.log("Все строки в Seatable:", JSON.stringify(data.rows, null, 2));
+            console.log("🔍 Проверяем строки из Seatable:", data.rows);
     
+            // Приводим `UserID` к строке перед сравнением
             const userRow = data.rows.find(row => String(row.UserID) === String(userId));
     
             return userRow || null;
         } catch (error) {
-            console.error("Ошибка при поиске строки по UserID:", error.message);
+            console.error("🔥 Ошибка при поиске строки по UserID:", error.message);
             return null;
         }
     }
     
+    
     async function saveToSeatable(userData) {
         try {
-            console.log("Данные перед отправкой:", userData);
+            console.log("🔍 Данные перед отправкой в Seatable:", userData);
     
             const tokenData = await getAccessToken();
             if (!tokenData) throw new Error("Не удалось получить access_token");
@@ -75,12 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
     
             let requestBody;
             if (existingUserRow) {
-                console.log("Обновляем строку с _id:", existingUserRow._id);
+                console.log("✅ Найдена строка, обновляем:", existingUserRow);
+    
+                // Приводим Balance к числу
+                const newBalance = Number(userData.Balance);
+                if (isNaN(newBalance)) throw new Error("❌ Ошибка: Balance не является числом!");
+    
                 requestBody = {
                     row: {
                         'UserID': userData.UserID,
                         'Wallet': userData.Wallet,
-                        'Balance': userData.Balance,
+                        'Balance': newBalance,  // Убедимся, что отправляем число
                         'LastActive': userData.LastActive
                     }
                 };
@@ -95,16 +101,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(requestBody)
                 });
     
-                console.log("Ответ сервера (обновление):", await response.text());
-                if (!response.ok) throw new Error(`Ошибка при обновлении: ${response.status}`);
+                console.log("🔄 Ответ сервера (обновление):", await response.text());
+                if (!response.ok) throw new Error(`❌ Ошибка при обновлении: ${response.status}`);
             } else {
-                console.log("Создаем новую строку, так как старой не найдено.");
+                console.log("➕ Создаем новую строку, так как старой не найдено.");
+    
                 requestBody = {
                     table_name: SEATABLE_CONFIG.TABLE_NAME,
                     row: {
                         'UserID': userData.UserID,
                         'Wallet': userData.Wallet,
-                        'Balance': userData.Balance,
+                        'Balance': Number(userData.Balance),
                         'LastActive': userData.LastActive
                     }
                 };
@@ -118,13 +125,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(requestBody)
                 });
     
-                console.log("Ответ сервера (создание):", await response.text());
-                if (!response.ok) throw new Error(`Ошибка при создании: ${response.status}`);
+                console.log("🆕 Ответ сервера (создание):", await response.text());
+                if (!response.ok) throw new Error(`❌ Ошибка при создании: ${response.status}`);
             }
         } catch (error) {
-            console.error("Ошибка при сохранении в Seatable:", error.message);
+            console.error("🔥 Ошибка при сохранении в Seatable:", error.message);
         }
     }
+    
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
@@ -199,21 +207,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchEndX = 0;
 
     function updateValue() {
+        // Проверяем, что переменные определены
+        if (typeof valueNormal === 'undefined' || typeof valueSpecial === 'undefined') {
+            console.error("❌ Ошибка: переменные `valueNormal` или `valueSpecial` не определены!");
+            return;
+        }
+    
         // Если большой плеер открыт - начисляем в специальное значение
         if (playerContainer.classList.contains('show')) {
             valueSpecial += 3;
         } else {
             valueNormal += 1;
         }
-
+    
+        // Вычисляем общий баланс
+        const totalBalance = valueNormal + valueSpecial;
+    
+        console.log("🔄 Обновляем баланс:", totalBalance);
+    
         // Сохраняем данные при изменении баланса
         saveToSeatable({
             "UserID": localStorage.getItem('tgUserId'),
             "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-            "Balance": valueNormal + valueSpecial,
+            "Balance": totalBalance, // Теперь точно передаём число
             "LastActive": new Date().toISOString()
         });
     }
+    
 
     // Вешаем обработчик на событие закрытия
     Telegram.WebApp.onEvent('viewportChanged', (data) => {
