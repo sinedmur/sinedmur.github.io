@@ -20,8 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            console.log("Получен dtable_uuid:", data.dtable_uuid);
-            console.log("Получен access_token:", data.access_token);
             
             return data; // Возвращаем объект { dtable_uuid, access_token }
         } catch (error) {
@@ -93,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
                 const updateUrl = `${url}${existingUserRow._id}/`;
                 const response = await fetch(updateUrl, {
-                    method: 'PUT',
+                    method: 'PATCH',
                     headers: {
                         'Authorization': `Token ${access_token}`,
                         'Content-Type': 'application/json'
