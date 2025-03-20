@@ -30,101 +30,101 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-// Функция для получения всех строк и поиска нужной строки по UserID
-async function getUserRowByUserId(userId) {
-    try {
-        const tokenData = await getAccessToken();
-        if (!tokenData) throw new Error("Не удалось получить access_token");
-
-        const { dtable_uuid, access_token } = tokenData;
-        const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/?table_name=${SEATABLE_CONFIG.TABLE_NAME}`;
-
-        const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Token ${access_token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) throw new Error(`Ошибка при получении строк: ${response.status} ${await response.text()}`);
-
-        const data = await response.json();
-        const userRow = data.rows.find(row => row.UserID === userId); // Фильтруем вручную
-
-        return userRow || null; // Возвращаем строку или null, если не нашли
-    } catch (error) {
-        console.error("Ошибка при поиске строки по UserID:", error.message);
-        return null;
-    }
-}
-
-// Функция для сохранения или обновления данных в таблице
-async function saveToSeatable(userData) {
-    try {
-        console.log("Данные перед отправкой:", userData);
-
-        const tokenData = await getAccessToken();
-        if (!tokenData) throw new Error("Не удалось получить access_token");
-
-        const { dtable_uuid, access_token } = tokenData;
-        const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
-
-        // Проверяем, существует ли уже запись с таким UserID
-        const existingUserRow = await getUserRowByUserId(userData.UserID);
-
-        let requestBody;
-        if (existingUserRow) {
-            // Если запись существует, обновляем её
-            requestBody = {
-                row: {
-                    'UserID': userData.UserID,
-                    'Wallet': userData.Wallet,
-                    'Balance': userData.Balance,
-                    'LastActive': userData.LastActive
-                }
-            };
-
-            const updateUrl = `${url}${existingUserRow._id}/`; // _id — уникальный идентификатор строки в Seatable
-            const response = await fetch(updateUrl, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Token ${access_token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
-            });
-
-            console.log("Ответ сервера (обновление):", await response.text());
-            if (!response.ok) throw new Error(`Ошибка при обновлении: ${response.status}`);
-        } else {
-            // Если записи нет, создаем новую
-            requestBody = {
-                table_name: SEATABLE_CONFIG.TABLE_NAME,
-                row: {
-                    'UserID': userData.UserID,
-                    'Wallet': userData.Wallet,
-                    'Balance': userData.Balance,
-                    'LastActive': userData.LastActive
-                }
-            };
-
+    async function getUserRowByUserId(userId) {
+        try {
+            const tokenData = await getAccessToken();
+            if (!tokenData) throw new Error("Не удалось получить access_token");
+    
+            const { dtable_uuid, access_token } = tokenData;
+            const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/?table_name=${SEATABLE_CONFIG.TABLE_NAME}`;
+    
             const response = await fetch(url, {
-                method: 'POST',
+                method: 'GET',
                 headers: {
                     'Authorization': `Token ${access_token}`,
                     'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestBody)
+                }
             });
-
-            console.log("Ответ сервера (создание):", await response.text());
-            if (!response.ok) throw new Error(`Ошибка при создании: ${response.status}`);
+    
+            if (!response.ok) throw new Error(`Ошибка при получении строк: ${response.status} ${await response.text()}`);
+    
+            const data = await response.json();
+            console.log("Запрашиваем UserID:", userId);
+            console.log("Все строки в Seatable:", JSON.stringify(data.rows, null, 2));
+    
+            const userRow = data.rows.find(row => String(row.UserID) === String(userId));
+    
+            return userRow || null;
+        } catch (error) {
+            console.error("Ошибка при поиске строки по UserID:", error.message);
+            return null;
         }
-    } catch (error) {
-        console.error("Ошибка при сохранении в Seatable:", error.message);
     }
-}
+    
+    async function saveToSeatable(userData) {
+        try {
+            console.log("Данные перед отправкой:", userData);
+    
+            const tokenData = await getAccessToken();
+            if (!tokenData) throw new Error("Не удалось получить access_token");
+    
+            const { dtable_uuid, access_token } = tokenData;
+            const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
+    
+            const existingUserRow = await getUserRowByUserId(userData.UserID);
+    
+            let requestBody;
+            if (existingUserRow) {
+                console.log("Обновляем строку с _id:", existingUserRow._id);
+                requestBody = {
+                    row: {
+                        'UserID': userData.UserID,
+                        'Wallet': userData.Wallet,
+                        'Balance': userData.Balance,
+                        'LastActive': userData.LastActive
+                    }
+                };
+    
+                const updateUrl = `${url}${existingUserRow._id}/`;
+                const response = await fetch(updateUrl, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Token ${access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+    
+                console.log("Ответ сервера (обновление):", await response.text());
+                if (!response.ok) throw new Error(`Ошибка при обновлении: ${response.status}`);
+            } else {
+                console.log("Создаем новую строку, так как старой не найдено.");
+                requestBody = {
+                    table_name: SEATABLE_CONFIG.TABLE_NAME,
+                    row: {
+                        'UserID': userData.UserID,
+                        'Wallet': userData.Wallet,
+                        'Balance': userData.Balance,
+                        'LastActive': userData.LastActive
+                    }
+                };
+    
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Token ${access_token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+    
+                console.log("Ответ сервера (создание):", await response.text());
+                if (!response.ok) throw new Error(`Ошибка при создании: ${response.status}`);
+            }
+        } catch (error) {
+            console.error("Ошибка при сохранении в Seatable:", error.message);
+        }
+    }
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
