@@ -1,4 +1,27 @@
 document.addEventListener('DOMContentLoaded', () => {
+
+    async function initializeBalance() {
+        const userId = localStorage.getItem('tgUserId');
+        const userRow = await getUserRowByUserId(userId);
+        
+        if (userRow) {
+            const balance = userRow.Balance || 0;
+            valueNormal = balance; // Инициализируем valueNormal значением из Seatable
+            valueSpecial = 0; // Инициализируем valueSpecial нулем
+            updateBalanceDisplay(); // Обновляем отображение баланса на странице
+        } else {
+            console.warn("⚠️ Пользователь не найден в базе, баланс не обновлен.");
+        }
+    }
+
+    initializeBalance();
+
+    function updateBalanceDisplay() {
+        const totalBalance = valueNormal + valueSpecial;
+        if (valueDisplay) valueDisplay.textContent = totalBalance;
+        if (valueDisplayMini) valueDisplayMini.textContent = totalBalance;
+    }
+
     const SEATABLE_CONFIG = {
         BASE_URL: "https://cloud.seatable.io",
         API_TOKEN: "1fefd91f9e5c6bcfeb8fb5b0a5ebd9a65b3b2b9d", // Замените на реальный токен
@@ -91,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
                 const updateUrl = `${url}${existingUserRow._id}/`;
                 const response = await fetch(updateUrl, {
-                    method: 'PATCH',
+                    method: 'PUT',
                     headers: {
                         'Authorization': `Token ${access_token}`,
                         'Content-Type': 'application/json'
@@ -205,51 +228,51 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchEndX = 0;
 
     async function updateValue() {
-        if (typeof valueNormal === 'undefined' || typeof valueSpecial === 'undefined') {
-            console.error("❌ Ошибка: переменные `valueNormal` или `valueSpecial` не определены!");
-            return;
-        }
-    
-        // Если большой плеер открыт - начисляем в специальное значение
-        if (playerContainer.classList.contains('show')) {
-            valueSpecial += 3;
-        } else {
-            valueNormal += 1;
-        }
-    
-        // Вычисляем общий баланс
-        const totalBalance = valueNormal + valueSpecial;
-    
-        console.log("🔄 Отправляем баланс в Seatable:", totalBalance);
-    
-        // Сначала отправляем баланс в базу
-        await saveToSeatable({
-            "UserID": localStorage.getItem('tgUserId'),
-            "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-            "Balance": totalBalance,
-            "LastActive": new Date().toISOString()
-        });
-    
-        // Затем загружаем баланс из базы
-        await loadBalanceFromSeatable();
+    if (typeof valueNormal === 'undefined' || typeof valueSpecial === 'undefined') {
+        console.error("❌ Ошибка: переменные `valueNormal` или `valueSpecial` не определены!");
+        return;
     }
+
+    // Если большой плеер открыт - начисляем в специальное значение
+    if (playerContainer.classList.contains('show')) {
+        valueSpecial += 3;
+    } else {
+        valueNormal += 1;
+    }
+
+    // Вычисляем общий баланс
+    const totalBalance = valueNormal + valueSpecial;
+
+    console.log("🔄 Отправляем баланс в Seatable:", totalBalance);
+
+    // Сначала отправляем баланс в базу
+    await saveToSeatable({
+        "UserID": localStorage.getItem('tgUserId'),
+        "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
+        "Balance": totalBalance,
+        "LastActive": new Date().toISOString()
+    });
+
+    // Обновляем отображение баланса на странице
+    updateBalanceDisplay();
+}
     
-    // Функция загрузки баланса из Seatable
-    async function loadBalanceFromSeatable() {
-        const userId = localStorage.getItem('tgUserId');
-        const userRow = await getUserRowByUserId(userId);
+    // // Функция загрузки баланса из Seatable
+    // async function loadBalanceFromSeatable() {
+    //     const userId = localStorage.getItem('tgUserId');
+    //     const userRow = await getUserRowByUserId(userId);
         
-        if (userRow) {
-            const balance = userRow.Balance || 0;
-            console.log("✅ Загруженный баланс из Seatable:", balance);
+    //     if (userRow) {
+    //         const balance = userRow.Balance || 0;
+    //         console.log("✅ Загруженный баланс из Seatable:", balance);
     
-            // Обновляем интерфейс
-            if (valueDisplay) valueDisplay.textContent = balance;
-            if (valueDisplayMini) valueDisplayMini.textContent = balance;
-        } else {
-            console.warn("⚠️ Пользователь не найден в базе, баланс не обновлен.");
-        }
-    }
+    //         // Обновляем интерфейс
+    //         if (valueDisplay) valueDisplay.textContent = balance;
+    //         if (valueDisplayMini) valueDisplayMini.textContent = balance;
+    //     } else {
+    //         console.warn("⚠️ Пользователь не найден в базе, баланс не обновлен.");
+    //     }
+    // }
     
 
     // Вешаем обработчик на событие закрытия
@@ -1622,14 +1645,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Обновление значений valueNormal и valueSpecial
-        const valueDisplay = document.querySelector('.balanc .value');
-        const valueDisplayMini = document.querySelector('.balances .value');
-
-        if (valueDisplay && valueDisplayMini) {
-            valueDisplay.textContent = valueNormal + valueSpecial;
-            valueDisplayMini.textContent = valueNormal + valueSpecial;
-        }
     });
 
     // Начинаем наблюдение за изменениями в DOM
