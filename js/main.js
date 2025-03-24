@@ -29,6 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let currentBalance = 0;  // Переменная для текущего баланса
+
     async function getUserRowByUserId(userId) {
         try {
             const tokenData = await getAccessToken();
@@ -50,17 +52,34 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
             console.log("🔍 Проверяем строки из Seatable:", data.rows);
     
-            // Приводим `UserID` к строке перед сравнением
             const userRow = data.rows.find(row => String(row.UserID) === String(userId));
     
-            return userRow || null;
+            if (userRow && userRow.Balance !== undefined) {
+                currentBalance = Number(userRow.Balance); // Загружаем баланс в переменную
+            } else {
+                console.error("Не найдено значение баланса для пользователя");
+                currentBalance = 0; // Если баланса нет, устанавливаем 0
+            }
         } catch (error) {
             console.error("🔥 Ошибка при поиске строки по UserID:", error.message);
-            return null;
+            currentBalance = 0; // В случае ошибки ставим баланс в 0
         }
     }
     
+    // Функция для обновления баланса на сайте
+    async function updateBalanceDisplay() {
+        // Обновляем элементы на странице с текущим значением баланса
+        if (valueDisplay) {
+            valueDisplay.textContent = currentBalance;
+        }
     
+        if (valueDisplayMini) {
+            valueDisplayMini.textContent = currentBalance;
+        }
+    
+        console.log(`Баланс обновлен на сайте: ${currentBalance}`);
+    }
+
     async function saveToSeatable(userData) {
         try {
             console.log("🔍 Данные перед отправкой в Seatable:", userData);
@@ -77,15 +96,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (existingUserRow) {
                 console.log("✅ Найдена строка, обновляем:", existingUserRow);
     
-                // Приводим Balance к числу
-                const newBalance = Number(userData.Balance);
-                if (isNaN(newBalance)) throw new Error("❌ Ошибка: Balance не является числом!");
-    
                 requestBody = {
                     row: {
                         'UserID': userData.UserID,
                         'Wallet': userData.Wallet,
-                        'Balance': newBalance,  // Убедимся, что отправляем число
+                        'Balance': userData.Balance,
                         'LastActive': userData.LastActive
                     }
                 };
@@ -131,7 +146,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("🔥 Ошибка при сохранении в Seatable:", error.message);
         }
     }
-    
 
     const activeBtn = document.querySelector('.active_btn');
     const completeBtn = document.querySelector('.complete_btn');
@@ -165,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         console.error("Метод disableVerticalSwipes недоступен.");
     }
+    
     // Проверяем, что Telegram WebApp API доступен
     if (window.Telegram && window.Telegram.WebApp) {
         // Получаем информацию о платформе
@@ -206,31 +221,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchEndX = 0;
 
     async function updateValue() {
-    if (typeof valueNormal === 'undefined' || typeof valueSpecial === 'undefined') {
-        console.error("❌ Ошибка: переменные `valueNormal` или `valueSpecial` не определены!");
-        return;
+        try {
+            if (typeof currentBalance === 'undefined') {
+                console.error("❌ Ошибка: переменная `currentBalance` не определена!");
+                return;
+            }
+    
+            // Если большой плеер открыт - начисляем в специальное значение
+            if (playerContainer.classList.contains('show')) {
+                currentBalance += 3; // Добавляем 3 для специального случая
+            } else {
+                currentBalance += 1; // Добавляем 1 для обычного случая
+            }
+    
+            // Обновляем отображение баланса на сайте
+            await updateBalanceDisplay();
+    
+            // Отправляем новый баланс в Seatable
+            await saveToSeatable({
+                "UserID": localStorage.getItem('tgUserId'),
+                "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
+                "Balance": currentBalance,
+                "LastActive": new Date().toISOString()
+            });
+    
+            console.log("🔄 Новый баланс успешно отправлен в Seatable:", currentBalance);
+        } catch (error) {
+            console.error("Ошибка при обновлении баланса:", error.message);
+        }
     }
-
-    // Если большой плеер открыт - начисляем в специальное значение
-    if (playerContainer.classList.contains('show')) {
-        valueSpecial += 3;
-    } else {
-        valueNormal += 1;
-    }
-
-    // Вычисляем общий баланс
-    const totalBalance = valueNormal + valueSpecial;
-
-    console.log("🔄 Отправляем баланс в Seatable:", totalBalance);
-
-    // Сначала отправляем баланс в базу
-    await saveToSeatable({
-        "UserID": localStorage.getItem('tgUserId'),
-        "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-        "Balance": totalBalance,
-        "LastActive": new Date().toISOString()
-    });
-}
     
 
     // Вешаем обработчик на событие закрытия
