@@ -1,10 +1,11 @@
 document.addEventListener('DOMContentLoaded', () => {
-
     const SEATABLE_CONFIG = {
         BASE_URL: "https://cloud.seatable.io",
         API_TOKEN: "1fefd91f9e5c6bcfeb8fb5b0a5ebd9a65b3b2b9d", // Замените на реальный токен
         TABLE_NAME: "Users"
     };
+
+    let currentBalance = 0;  // Переменная для текущего баланса
 
     // Функция получения dtable_uuid и access_token
     async function getAccessToken() {
@@ -29,16 +30,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let currentBalance = 0;  // Переменная для текущего баланса
-
     async function getUserRowByUserId(userId) {
         try {
             const tokenData = await getAccessToken();
             if (!tokenData) throw new Error("❌ Не удалось получить access_token");
-    
+
             const { dtable_uuid, access_token } = tokenData;
             const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/?table_name=${SEATABLE_CONFIG.TABLE_NAME}`;
-    
+
             const response = await fetch(url, {
                 method: 'GET',
                 headers: {
@@ -46,56 +45,60 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Content-Type': 'application/json'
                 }
             });
-    
+
             if (!response.ok) throw new Error(`❌ Ошибка при получении строк: ${response.status} ${await response.text()}`);
-    
+
             const data = await response.json();
             console.log("🔍 Проверяем строки из Seatable:", data.rows);
-    
+
             const userRow = data.rows.find(row => String(row.UserID) === String(userId));
-    
+
             if (userRow && userRow.Balance !== undefined) {
                 currentBalance = Number(userRow.Balance); // Загружаем баланс в переменную
             } else {
                 console.error("Не найдено значение баланса для пользователя");
                 currentBalance = 0; // Если баланса нет, устанавливаем 0
             }
+
+            // Обновляем отображение баланса на сайте
+            await updateBalanceDisplay();
         } catch (error) {
             console.error("🔥 Ошибка при поиске строки по UserID:", error.message);
             currentBalance = 0; // В случае ошибки ставим баланс в 0
         }
     }
-    
+
     // Функция для обновления баланса на сайте
     async function updateBalanceDisplay() {
         // Обновляем элементы на странице с текущим значением баланса
         if (valueDisplay) {
             valueDisplay.textContent = currentBalance;
         }
-    
+
         if (valueDisplayMini) {
             valueDisplayMini.textContent = currentBalance;
         }
-    
+
         console.log(`Баланс обновлен на сайте: ${currentBalance}`);
     }
 
+    // Функция сохранения обновленного баланса в Seatable
     async function saveToSeatable(userData) {
         try {
             console.log("🔍 Данные перед отправкой в Seatable:", userData);
-    
+
             const tokenData = await getAccessToken();
             if (!tokenData) throw new Error("Не удалось получить access_token");
-    
+
             const { dtable_uuid, access_token } = tokenData;
             const url = `${SEATABLE_CONFIG.BASE_URL}/dtable-server/api/v1/dtables/${dtable_uuid}/rows/`;
-    
+
             const existingUserRow = await getUserRowByUserId(userData.UserID);
-    
+
             let requestBody;
             if (existingUserRow) {
                 console.log("✅ Найдена строка, обновляем:", existingUserRow);
-    
+
                 requestBody = {
                     row: {
                         'UserID': userData.UserID,
@@ -104,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'LastActive': userData.LastActive
                     }
                 };
-    
+
                 const updateUrl = `${url}${existingUserRow._id}/`;
                 const response = await fetch(updateUrl, {
                     method: 'PATCH',
@@ -114,12 +117,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(requestBody)
                 });
-    
+
                 console.log("🔄 Ответ сервера (обновление):", await response.text());
                 if (!response.ok) throw new Error(`❌ Ошибка при обновлении: ${response.status}`);
             } else {
                 console.log("➕ Создаем новую строку, так как старой не найдено.");
-    
+
                 requestBody = {
                     table_name: SEATABLE_CONFIG.TABLE_NAME,
                     row: {
@@ -129,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'LastActive': userData.LastActive
                     }
                 };
-    
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -138,7 +141,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(requestBody)
                 });
-    
+
                 console.log("🆕 Ответ сервера (создание):", await response.text());
                 if (!response.ok) throw new Error(`❌ Ошибка при создании: ${response.status}`);
             }
