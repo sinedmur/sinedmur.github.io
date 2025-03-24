@@ -260,7 +260,7 @@ getUserRowByUserId(localStorage.getItem('tgUserId'));
             saveToSeatable({
                 "UserID": localStorage.getItem('tgUserId'),
                 "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-                "Balance": valueNormal + valueSpecial,
+                "Balance": currentBalance,
                 "LastActive": new Date().toISOString()
             });
         }
@@ -1055,7 +1055,7 @@ getUserRowByUserId(localStorage.getItem('tgUserId'));
                 saveToSeatable({
                     "UserID": userId,
                     "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-                    "Balance": valueNormal + valueSpecial,
+                    "Balance": currentBalance,
                     "LastActive": new Date().toISOString()
                 });
 
@@ -1197,7 +1197,7 @@ getUserRowByUserId(localStorage.getItem('tgUserId'));
                 saveToSeatable({
                     UserID: localStorage.getItem('tgUserId'),
                     Wallet: nonBounceableAddress,
-                    Balance: valueNormal + valueSpecial,
+                    Balance: currentBalance,
                     LastActive: new Date().toISOString()
                 });
             } else {
