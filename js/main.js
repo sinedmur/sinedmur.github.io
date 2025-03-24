@@ -220,37 +220,36 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartX = 0;
     let touchEndX = 0;
 
-    async function updateValue() {
-        try {
-            if (typeof currentBalance === 'undefined') {
-                console.error("❌ Ошибка: переменная `currentBalance` не определена!");
-                return;
-            }
-    
-            // Если большой плеер открыт - начисляем в специальное значение
-            if (playerContainer.classList.contains('show')) {
-                currentBalance += 3; // Добавляем 3 для специального случая
-            } else {
-                currentBalance += 1; // Добавляем 1 для обычного случая
-            }
-    
-            // Обновляем отображение баланса на сайте
-            await updateBalanceDisplay();
-    
-            // Отправляем новый баланс в Seatable
-            await saveToSeatable({
-                "UserID": localStorage.getItem('tgUserId'),
-                "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
-                "Balance": currentBalance,
-                "LastActive": new Date().toISOString()
-            });
-    
-            console.log("🔄 Новый баланс успешно отправлен в Seatable:", currentBalance);
-        } catch (error) {
-            console.error("Ошибка при обновлении баланса:", error.message);
-        }
+ // Функция для обновления значения баланса
+ async function updateValue() {
+    if (typeof currentBalance === 'undefined') {
+        console.error("❌ Ошибка: переменная `currentBalance` не определена!");
+        return;
     }
-    
+
+    // Если большой плеер открыт - начисляем в специальное значение
+    if (playerContainer.classList.contains('show')) {
+        currentBalance += 3; // Добавляем 3 для специального случая
+    } else {
+        currentBalance += 1; // Добавляем 1 для обычного случая
+    }
+
+    // Обновляем отображение баланса на сайте
+    await updateBalanceDisplay();
+
+    // Отправляем новый баланс в Seatable
+    await saveToSeatable({
+        "UserID": localStorage.getItem('tgUserId'),
+        "Wallet": localStorage.getItem('tonWalletAddress') || 'Не подключен',
+        "Balance": currentBalance,
+        "LastActive": new Date().toISOString()
+    });
+
+    console.log("🔄 Новый баланс успешно отправлен в Seatable:", currentBalance);
+}
+
+// Загружаем данные о пользователе и балансе при загрузке страницы
+getUserRowByUserId(localStorage.getItem('tgUserId'));
 
     // Вешаем обработчик на событие закрытия
     Telegram.WebApp.onEvent('viewportChanged', (data) => {
