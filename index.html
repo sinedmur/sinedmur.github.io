@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BeatMarket | Площадка для битмейкеров и артистов</title>
+    <meta name="telegram:theme" content="dark">
+    <meta name="telegram:payment_provider_token" content="TON_TEST:YOUR_PROVIDER_TOKEN">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="app.js" defer></script>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">BeatMarket</div>
+            <div class="user-balance" id="userBalance">0 TON</div>
+        </header>
+        
+        <main class="main-content">
+            <div class="role-selector">
+                <button class="role-btn active" data-role="buyer">Я артист</button>
+                <button class="role-btn" data-role="seller">Я битмейкер</button>
+            </div>
+            
+            <!-- Для покупателей -->
+            <section class="buyer-section active">
+                <div class="search-bar">
+                    <input type="text" placeholder="Поиск по жанру, настроению, BPM..." id="searchInput">
+                    <button class="search-btn">Найти</button>
+                </div>
+                
+                <div class="filters">
+                    <select id="genreFilter">
+                        <option value="">Все жанры</option>
+                        <option value="trap">Trap</option>
+                        <option value="drill">Drill</option>
+                        <option value="rnb">R&B</option>
+                        <option value="hiphop">Hip-Hop</option>
+                    </select>
+                    
+                    <select id="bpmFilter">
+                        <option value="">Любой BPM</option>
+                        <option value="60-80">60-80</option>
+                        <option value="80-100">80-100</option>
+                        <option value="100-140">100-140</option>
+                        <option value="140+">140+</option>
+                    </select>
+                </div>
+                
+                <div class="beats-grid" id="beatsGrid">
+                    <!-- Будет заполнено через JS -->
+                </div>
+            </section>
+            
+            <!-- Для продавцов -->
+            <section class="seller-section">
+                <button class="upload-btn" id="uploadBeatBtn">Загрузить новый бит</button>
+                
+                <div class="my-beats" id="myBeatsList">
+                    <!-- Список загруженных битов -->
+                    <div class="empty-state">
+                        <p>У вас пока нет загруженных битов</p>
+                    </div>
+                </div>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h3>Всего продаж</h3>
+                        <p id="totalSales">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Заработано</h3>
+                        <p id="totalEarned">0 TON</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-section="discover">
+                <i class="icon-search"></i>
+                <span>Найти</span>
+            </button>
+            <button class="nav-btn" data-section="favorites">
+                <i class="icon-heart"></i>
+                <span>Избранное</span>
+            </button>
+            <button class="nav-btn" data-section="purchases">
+                <i class="icon-bag"></i>
+                <span>Покупки</span>
+            </button>
+            <button class="nav-btn" data-section="profile">
+                <i class="icon-user"></i>
+                <span>Профиль</span>
+            </button>
+        </nav>
+    </div>
+    
+    <!-- Модальное окно загрузки бита -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <h2>Загрузить новый бит</h2>
+            <form id="uploadForm">
+                <div class="form-group">
+                    <label for="beatTitle">Название бита</label>
+                    <input type="text" id="beatTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beatGenre">Жанр</label>
+                    <select id="beatGenre" required>
+                        <option value="trap">Trap</option>
+                        <option value="drill">Drill</option>
+                        <option value="rnb">R&B</option>
+                        <option value="hiphop">Hip-Hop</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beatBpm">BPM</label>
+                    <input type="number" id="beatBpm" min="60" max="200" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beatPrice">Цена (TON)</label>
+                    <input type="number" id="beatPrice" min="1" step="0.1" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="beatFile">Аудио файл (MP3, WAV)</label>
+                    <input type="file" id="beatFile" accept="audio/*" required>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" id="cancelUpload">Отмена</button>
+                    <button type="submit" class="submit-btn">Опубликовать</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Модальное окно проигрывателя -->
+    <div class="modal" id="playerModal">
+        <div class="modal-content player-content">
+            <button class="close-player" id="closePlayer">×</button>
+            <div class="beat-cover" id="beatCover"></div>
+            <h2 id="playerTitle">Название бита</h2>
+            <p class="beat-info" id="playerInfo">Жанр: Trap • BPM: 140</p>
+            
+            <div class="audio-player">
+                <audio id="audioPlayer" controls></audio>
+                <div class="player-controls">
+                    <button class="control-btn" id="playPauseBtn">
+                        <i class="icon-play"></i>
+                    </button>
+                    <input type="range" id="progressBar" value="0">
+                    <span class="time" id="currentTime">0:00</span>
+                    <span class="time" id="duration">0:00</span>
+                </div>
+            </div>
+            
+            <div class="beat-actions">
+                <button class="action-btn favorite" id="favoriteBtn">
+                    <i class="icon-heart"></i> В избранное
+                </button>
+                <button class="action-btn buy" id="buyBtn">
+                    Купить за <span id="beatPriceDisplay">0</span> TON
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
