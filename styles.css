@@ -452,11 +452,31 @@ body {
     color: var(--tg-theme-button-text-color);
 }
 
+.icon-search img{
+    margin-bottom: -30%;
+    width: 30px;
+    height: 30px;
+}
+
+.icon-heart img{
+    margin-bottom: -30%;
+    width: 30px;
+    height: 30px;
+}
+
+.icon-bag img{
+    margin-bottom: -30%;
+    width: 30px;
+    height: 30px;
+}
+
+.icon-user img{
+    margin-bottom: -30%;
+    width: 30px;
+    height: 30px;
+}
+
 /* Иконки (можно заменить на реальные иконки) */
-.icon-search::before { content: "🔍"; }
-.icon-heart::before { content: "❤️"; }
-.icon-bag::before { content: "🛍️"; }
-.icon-user::before { content: "👤"; }
 .icon-play::before { content: "▶️"; }
 
 /* Добавляем новые стили для дополнительных секций */
