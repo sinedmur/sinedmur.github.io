@@ -657,7 +657,6 @@ function setupSearch() {
 function showProducerSearchResults(producers) {
     const beatsGrid = document.getElementById('beatsGrid');
     beatsGrid.innerHTML = '';
-    
     producers.forEach(producer => {
         const producerCard = document.createElement('div');
         producerCard.className = 'producer-search-card';
