@@ -444,7 +444,7 @@ function createBeatCard(beat) {
     beatCard.innerHTML = `
         <div class="beat-cover">
             ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
-            <div class="play-icon">▶️</div>
+            
         </div>
         <div class="beat-info">
             <div class="beat-title">${beat.title}</div>
