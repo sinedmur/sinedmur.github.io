@@ -560,7 +560,6 @@ function openPlayer(beat) {
     
     document.getElementById('playerTitle').textContent = beat.title;
     document.getElementById('playerInfo').textContent = `Жанр: ${getGenreName(beat.genre)} • BPM: ${beat.bpm}`;
-    document.getElementById('beatPriceDisplay').textContent = `${beat.price} ⭐`;
     
     const beatCover = document.getElementById('beatCover');
     beatCover.innerHTML = beat.cover ? 
@@ -600,12 +599,9 @@ function closePlayer() {
     const audioPlayer = document.getElementById('audioPlayer');
     if (audioPlayer) {
         audioPlayer.pause();
-        audioPlayer.currentTime = 0; // Сбрасываем время воспроизведения
     }
     document.getElementById('playerModal').classList.remove('active');
     state.currentBeat = null;
-    state.isPlaying = false;
-    updatePlayPauseButton(); // Обновляем состояние кнопки
 }
 
 function togglePlayPause() {
