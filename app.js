@@ -12,7 +12,31 @@ const state = {
     balance: 0, // Начальный баланс 0, будет обновлен из Telegram
     currentBeat: null,
     isPlaying: false,
-    currentSection: 'discover'
+    currentSection: 'discover',
+    currentProducer: null,
+    producers: [
+        {
+            id: 'prod1',
+            name: 'prod.by.night',
+            avatar: 'https://via.placeholder.com/150',
+            beats: ['1'],
+            followers: 1250
+        },
+        {
+            id: 'prod2',
+            name: 'icybeats',
+            avatar: 'https://via.placeholder.com/150/0000FF/FFFFFF',
+            beats: ['2'],
+            followers: 850
+        },
+        {
+            id: 'prod3',
+            name: 'soulfulprod',
+            avatar: 'https://via.placeholder.com/150/008000/FFFFFF',
+            beats: ['3'],
+            followers: 2300
+        }
+    ]
 };
 
 // Инициализация приложения
@@ -34,6 +58,8 @@ async function init() {
     
     // Загрузка данных пользователя из Telegram
     loadUserData();
+
+    setupSearch();
 
     // Обработчик для входящих платежей
     tg.onEvent('invoiceClosed', async (eventData) => {
@@ -129,6 +155,80 @@ function createAdditionalSections() {
                 preview.innerHTML = `<img src="${event.target.result}" alt="Превью обложки" style="max-width: 100px; max-height: 100px;">`;
             };
             reader.readAsDataURL(file);
+        }
+    });
+
+    // Секция битмейкера
+    const producerSection = document.createElement('section');
+    producerSection.className = 'producer-section';
+    producerSection.innerHTML = `
+        <div class="producer-header" id="producerHeader">
+            <button class="back-btn" id="backToBeats">← Назад</button>
+            <h2 id="producerName"></h2>
+        </div>
+        <div class="producer-info" id="producerInfo"></div>
+        <h3>Биты этого автора</h3>
+        <div class="producer-beats-grid" id="producerBeatsGrid"></div>
+    `;
+    mainContent.appendChild(producerSection);
+}
+
+// Функция для открытия карточки битмейкера
+function openProducer(producerId) {
+    const producer = state.producers.find(p => p.id === producerId);
+    if (!producer) return;
+
+    state.currentProducer = producer;
+    state.currentSection = 'producer';
+    
+    // Заполняем информацию
+    document.getElementById('producerName').textContent = producer.name;
+    
+    const producerInfo = document.getElementById('producerInfo');
+    producerInfo.innerHTML = `
+        <div class="producer-card">
+            <img src="${producer.avatar}" alt="${producer.name}" class="producer-avatar">
+            <div class="producer-stats">
+                <div class="stat-item">
+                    <span>${producer.beats.length}</span>
+                    <span>Битов</span>
+                </div>
+                <div class="stat-item">
+                    <span>${producer.followers}</span>
+                    <span>Подписчиков</span>
+                </div>
+            </div>
+            <button class="follow-btn" id="followBtn">Подписаться</button>
+        </div>
+    `;
+    
+    // Отображаем биты битмейкера
+    renderProducerBeats(producer.beats);
+    
+    // Обновляем UI
+    updateUI();
+    
+    // Обработчик кнопки "Назад"
+    document.getElementById('backToBeats').addEventListener('click', () => {
+        state.currentSection = 'discover';
+        updateUI();
+    });
+    
+    // Обработчик подписки
+    document.getElementById('followBtn').addEventListener('click', () => {
+        tg.showAlert(`Вы подписались на ${producer.name}`);
+    });
+}
+
+// Функция для отображения битов битмейкера
+function renderProducerBeats(beatIds) {
+    const grid = document.getElementById('producerBeatsGrid');
+    grid.innerHTML = '';
+    
+    beatIds.forEach(beatId => {
+        const beat = state.beats.find(b => b.id === beatId);
+        if (beat) {
+            grid.appendChild(createBeatCard(beat));
         }
     });
 }
@@ -364,7 +464,9 @@ function updateUI() {
         state.currentSection === 'profile' && state.role === 'buyer' ? 'block' : 'none';
     document.querySelector('.seller-section').style.display = 
         state.role === 'seller' ? 'block' : 'none';
-    
+    document.querySelector('.producer-section').style.display = 
+        state.currentSection === 'producer' ? 'block' : 'none';
+
     // Контент
     if (state.role === 'buyer') {
         switch(state.currentSection) {
@@ -493,24 +595,83 @@ function createBeatCard(beat) {
     const isFavorite = state.favorites.includes(beat.id);
     const isPurchased = state.purchases.includes(beat.id);
     
-    const beatCard = document.createElement('div');
+const beatCard = document.createElement('div');
     beatCard.className = 'beat-card';
-    beatCard.dataset.id = beat.id;
     beatCard.innerHTML = `
         <div class="beat-cover">
-            ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}            
+            ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
         </div>
         <div class="beat-info">
             <div class="beat-title">${beat.title}</div>
             <div class="beat-meta">
-                <span>${beat.artist}</span>
+                <span class="producer-link" data-producer="${getProducerIdByBeat(beat.id)}">${beat.artist}</span>
                 <span>${beat.price} ⭐</span>
             </div>
         </div>
     `;
     
-    beatCard.addEventListener('click', () => openPlayer(beat));
+    // Клик по карточке - открываем плеер
+    beatCard.querySelector('.beat-cover').addEventListener('click', () => openPlayer(beat));
+    
+    // Клик по имени битмейкера - открываем его профиль
+    beatCard.querySelector('.producer-link').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const producerId = e.target.getAttribute('data-producer');
+        openProducer(producerId);
+    });
+    
     return beatCard;
+}
+
+// Вспомогательная функция для поиска битмейкера по ID бита
+function getProducerIdByBeat(beatId) {
+    const producer = state.producers.find(p => p.beats.includes(beatId));
+    return producer ? producer.id : '';
+}
+
+// Добавляем поиск битмейкеров
+function setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        
+        if (query.startsWith('@')) {
+            // Поиск по битмейкерам
+            const producerName = query.substring(1);
+            const foundProducers = state.producers.filter(p => 
+                p.name.toLowerCase().includes(producerName)
+            );
+            
+            if (foundProducers.length > 0) {
+                // Показываем список найденных битмейкеров
+                showProducerSearchResults(foundProducers);
+            }
+        } else {
+            // Обычный поиск по битам
+            filterBeats();
+        }
+    });
+}
+
+// Показываем результаты поиска по битмейкерам
+function showProducerSearchResults(producers) {
+    const beatsGrid = document.getElementById('beatsGrid');
+    beatsGrid.innerHTML = '';
+    
+    producers.forEach(producer => {
+        const producerCard = document.createElement('div');
+        producerCard.className = 'producer-search-card';
+        producerCard.innerHTML = `
+            <img src="${producer.avatar}" alt="${producer.name}" class="producer-search-avatar">
+            <div class="producer-search-info">
+                <h3>${producer.name}</h3>
+                <p>${producer.beats.length} битов • ${producer.followers} подписчиков</p>
+            </div>
+        `;
+        
+        producerCard.addEventListener('click', () => openProducer(producer.id));
+        beatsGrid.appendChild(producerCard);
+    });
 }
 
 function filterBeats() {
