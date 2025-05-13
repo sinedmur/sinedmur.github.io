@@ -9,19 +9,22 @@ const state = {
     myBeats: [],
     favorites: [],
     purchases: [],
-    balance: 100, // Стартовый баланс в Stars
+    balance: 0, // Начальный баланс 0, будет обновлен из Telegram
     currentBeat: null,
     isPlaying: false,
     currentSection: 'discover'
 };
 
 // Инициализация приложения
-function init() {
+async function init() {
     // Создаем дополнительные секции
     createAdditionalSections();
     
     // Загрузка тестовых данных
     loadMockData();
+    
+    // Получаем баланс пользователя из Telegram
+    await fetchUserBalance();
     
     // Установка обработчиков событий
     setupEventListeners();
@@ -33,20 +36,50 @@ function init() {
     loadUserData();
 
     // Обработчик для входящих платежей
-    tg.onEvent('invoiceClosed', (eventData) => {
+    tg.onEvent('invoiceClosed', async (eventData) => {
         if (eventData.status === 'paid') {
+            // Обновляем баланс после успешной оплаты
+            await fetchUserBalance();
+            
             const payload = JSON.parse(eventData.payload || '{}');
             if (payload.beatId) {
                 state.purchases.push(payload.beatId);
                 updateUI();
                 tg.showAlert('Покупка подтверждена! Теперь вы можете слушать бит полностью.');
-            } else if (payload.topUp) {
-                state.balance += parseInt(payload.topUp);
-                updateUI();
-                tg.showAlert(`Баланс пополнен на ${payload.topUp} Stars!`);
             }
         }
     });
+}
+
+// Функция для получения баланса пользователя из Telegram
+async function fetchUserBalance() {
+    try {
+        // Используем метод Telegram WebApp для получения баланса
+        if (tg?.CloudStorage?.getItem) {
+            const balance = await tg.CloudStorage.getItem('userBalance');
+            state.balance = balance ? parseInt(balance) : 0;
+        } else {
+            // Для тестирования в WebApp (реальный баланс можно получить через backend)
+            console.log('CloudStorage API not available, using test balance');
+            state.balance = 100; // Тестовое значение
+        }
+    } catch (error) {
+        console.error('Error fetching user balance:', error);
+        state.balance = 0;
+    }
+}
+
+// Функция для обновления баланса через Telegram Mini Apps
+async function updateTelegramBalance(newBalance) {
+    try {
+        if (tg?.CloudStorage?.setItem) {
+            await tg.CloudStorage.setItem('userBalance', newBalance.toString());
+        }
+        // В реальном приложении здесь должен быть вызов вашего backend API
+        // для синхронизации баланса с сервером
+    } catch (error) {
+        console.error('Error updating balance:', error);
+    }
 }
 
 function createAdditionalSections() {
@@ -168,6 +201,7 @@ function loadUserData() {
     }
 }
 
+// Обновленная функция updateProfileSection
 function updateProfileSection(user) {
     const profileInfo = document.getElementById('profileInfo');
     if (!profileInfo) return;
@@ -200,7 +234,7 @@ function updateProfileSection(user) {
     document.getElementById('topupBtn')?.addEventListener('click', topUpBalance);
 }
 
-function topUpBalance() {
+async function topUpBalance() {
     tg.showPopup({
         title: 'Пополнение баланса',
         message: 'Выберите сумму для пополнения:',
@@ -226,7 +260,9 @@ function topUpBalance() {
                 });
                 
                 if (result.status === 'paid') {
+                    // Обновляем баланс после пополнения
                     state.balance += amount;
+                    await updateTelegramBalance(state.balance);
                     updateUI();
                     tg.showAlert(`Баланс успешно пополнен на ${amount} Stars!`);
                 }
@@ -462,8 +498,7 @@ function createBeatCard(beat) {
     beatCard.dataset.id = beat.id;
     beatCard.innerHTML = `
         <div class="beat-cover">
-            ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
-            
+            ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}            
         </div>
         <div class="beat-info">
             <div class="beat-title">${beat.title}</div>
@@ -513,7 +548,15 @@ function filterBeats() {
 }
 
 function openPlayer(beat) {
+    // Сбрасываем текущее состояние плеера
+    const audioPlayer = document.getElementById('audioPlayer');
+    if (audioPlayer) {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+    }
+    
     state.currentBeat = beat;
+    state.isPlaying = false;
     
     document.getElementById('playerTitle').textContent = beat.title;
     document.getElementById('playerInfo').textContent = `Жанр: ${getGenreName(beat.genre)} • BPM: ${beat.bpm}`;
@@ -524,14 +567,30 @@ function openPlayer(beat) {
         `<img src="${beat.cover}" alt="${beat.title}">` : 
         '<div class="default-cover">🎵</div>';
     
-    const audioPlayer = document.getElementById('audioPlayer');
-    audioPlayer.src = beat.audio;
+    // Обновляем источник аудио
+    if (audioPlayer) {
+        audioPlayer.src = beat.audio;
+        audioPlayer.load(); // Важно: перезагружаем аудио элемент
+    }
     
     updateFavoriteButton();
     updatePurchaseButton();
     
+    // Сбрасываем прогресс-бар
+    const progressBar = document.getElementById('progressBar');
+    if (progressBar) {
+        progressBar.value = 0;
+    }
+    document.getElementById('currentTime').textContent = '0:00';
+    document.getElementById('duration').textContent = formatTime(beat.duration || 0);
+    
+    // Показываем модальное окно
     document.getElementById('playerModal').classList.add('active');
     
+    // Обновляем состояние кнопки play/pause
+    updatePlayPauseButton();
+    
+    // Если бит куплен, начинаем воспроизведение
     if (state.purchases.includes(beat.id)) {
         audioPlayer.play().catch(e => console.log('Autoplay prevented:', e));
     }
@@ -541,9 +600,12 @@ function closePlayer() {
     const audioPlayer = document.getElementById('audioPlayer');
     if (audioPlayer) {
         audioPlayer.pause();
+        audioPlayer.currentTime = 0; // Сбрасываем время воспроизведения
     }
     document.getElementById('playerModal').classList.remove('active');
     state.currentBeat = null;
+    state.isPlaying = false;
+    updatePlayPauseButton(); // Обновляем состояние кнопки
 }
 
 function togglePlayPause() {
@@ -655,13 +717,17 @@ function updatePurchaseButton() {
     buyBtn.innerHTML = `Купить за ${state.currentBeat.price} ⭐`;
 }
 
-function purchaseBeat() {
+// Обновленная функция purchaseBeat с реальным балансом
+async function purchaseBeat() {
     if (!state.currentBeat) return;
     
     if (state.purchases.includes(state.currentBeat.id)) {
         tg.showAlert('Вы уже купили этот бит');
         return;
     }
+    
+    // Получаем актуальный баланс перед покупкой
+    await fetchUserBalance();
     
     if (state.balance < state.currentBeat.price) {
         tg.showPopup({
@@ -701,8 +767,8 @@ function purchaseBeat() {
             try {
                 // Открываем платежную форму Telegram Stars
                 const result = await tg.openInvoice({
-                    currency: 'XTR', // Код валюты для Telegram Stars
-                    amount: state.currentBeat.price * 100, // Сумма в центах (1 Star = 100 центов)
+                    currency: 'XTR',
+                    amount: state.currentBeat.price * 100,
                     description: `Покупка бита: ${state.currentBeat.title}`,
                     payload: JSON.stringify({
                         beatId: state.currentBeat.id,
@@ -713,7 +779,11 @@ function purchaseBeat() {
                 if (result.status === 'paid') {
                     // Успешная оплата
                     state.purchases.push(state.currentBeat.id);
+                    
+                    // Обновляем баланс после покупки
                     state.balance -= state.currentBeat.price;
+                    await updateTelegramBalance(state.balance);
+                    
                     updateUI();
                     updatePurchaseButton();
                     
