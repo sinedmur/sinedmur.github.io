@@ -657,7 +657,8 @@ function setupSearch() {
 function showProducerSearchResults(producers) {
     const beatsGrid = document.getElementById('beatsGrid');
     beatsGrid.innerHTML = '';
-    beatsGrid.classList.add('producers-list');
+    document.body.classList.add('searching'); // Добавляем класс searching
+
     producers.forEach(producer => {
         const producerCard = document.createElement('div');
         producerCard.className = 'producer-search-card';
@@ -675,6 +676,7 @@ function showProducerSearchResults(producers) {
 }
 
 function filterBeats() {
+    document.body.classList.remove('searching'); // Убираем класс searching
     const searchTerm = document.getElementById('searchInput').value.toLowerCase();
     const genreFilter = document.getElementById('genreFilter').value;
     const bpmFilter = document.getElementById('bpmFilter').value;
