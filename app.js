@@ -79,6 +79,25 @@ function createAdditionalSections() {
         <button class="logout-btn" id="logoutBtn">Выйти</button>
     `;
     mainContent.appendChild(profileSection);
+    // Добавляем превью обложки
+    document.getElementById('beatCoverFile')?.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            // Проверяем тип файла
+            if (!file.type.match('image.*')) {
+                tg.showAlert('Пожалуйста, выберите файл изображения');
+                e.target.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const preview = document.getElementById('coverPreview');
+                preview.innerHTML = `<img src="${event.target.result}" alt="Превью обложки" style="max-width: 100px; max-height: 100px;">`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
 }
 
 function loadMockData() {
