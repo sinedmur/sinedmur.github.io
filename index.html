@@ -109,6 +109,7 @@
                 <div class="form-group">
                     <label for="beatGenre">Жанр</label>
                     <select id="beatGenre" required>
+                        <option value="">Выберите жанр</option>
                         <option value="trap">Trap</option>
                         <option value="drill">Drill</option>
                         <option value="rnb">R&B</option>
@@ -125,14 +126,14 @@
                     <input type="number" id="beatPrice" min="10" step="5" required>
                 </div>
                 <div class="form-group">
-                    <label for="beatCoverFile">Обложка (опционально)</label>
-                    <input type="file" id="beatCoverFile" accept="image/*">
+                    <label for="beatCoverFile">Обложка</label>
+                    <input type="file" id="beatCoverFile" accept="image/*" required>
                     <div class="file-preview" id="coverPreview"></div>
                 </div>
                 <div class="form-group">
-                    <label for="beatFile">Аудио файл</label>
+                    <label for="beatFile">Аудио файл (MP3, WAV)</label>
                     <input type="file" id="beatFile" accept="audio/*" required>
-                </div>               
+                </div>          
                 <div class="form-actions">
                     <button type="button" class="cancel-btn" id="cancelUpload">Отмена</button>
                     <button type="submit" class="submit-btn">Опубликовать</button>
