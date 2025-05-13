@@ -805,7 +805,7 @@ function uploadNewBeat() {
         document.getElementById('coverPreview').innerHTML = ''; // Очищаем превью
         updateUI();
         
-        tg.showAlert('Бит с обложкой успешно загружен!');
+        tg.showAlert('Бит успешно загружен!');
     }).catch((error) => {
         console.error('Ошибка при загрузке файлов:', error);
         tg.showAlert(error.message || 'Произошла ошибка при загрузке файлов');
