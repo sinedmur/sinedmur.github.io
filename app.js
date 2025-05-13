@@ -721,13 +721,21 @@ function uploadNewBeat() {
     const genre = document.getElementById('beatGenre').value;
     const bpm = parseInt(document.getElementById('beatBpm').value);
     const price = parseFloat(document.getElementById('beatPrice').value);
-    const file = document.getElementById('beatFile').files[0];
+    const audioFile = document.getElementById('beatFile').files[0];
+    const coverFile = document.getElementById('beatCoverFile').files[0];
     
-    if (!title || !genre || isNaN(bpm) || isNaN(price) || !file) {
-        tg.showAlert('Пожалуйста, заполните все поля корректно');
+    if (!title || !genre || isNaN(bpm) || isNaN(price) || !audioFile) {
+        tg.showAlert('Пожалуйста, заполните все обязательные поля корректно');
         return;
     }
-    
+
+    // Показываем индикатор загрузки
+    const uploadBtn = document.getElementById('uploadBtn');
+    const originalText = uploadBtn.textContent;
+    uploadBtn.textContent = 'Загрузка...';
+    uploadBtn.disabled = true;
+
+    // Создаем объект для нового бита
     const newBeat = {
         id: Date.now().toString(),
         title,
@@ -735,20 +743,55 @@ function uploadNewBeat() {
         bpm,
         price,
         cover: null,
-        audio: URL.createObjectURL(file),
+        audio: null,
         artist: tg.initDataUnsafe.user?.username || 'You',
         duration: 180,
         uploadDate: new Date().toISOString().split('T')[0],
         sales: 0,
         earned: 0
     };
-    
-    state.myBeats.unshift(newBeat);
-    document.getElementById('uploadModal').classList.remove('active');
-    document.getElementById('uploadForm').reset();
-    updateUI();
-    
-    tg.showAlert('Бит успешно загружен!');
+
+    // Функция для обработки загрузки файлов
+    const processFiles = () => {
+        return new Promise((resolve) => {
+            // Обработка аудио
+            const audioReader = new FileReader();
+            audioReader.onload = (e) => {
+                newBeat.audio = e.target.result;
+
+                // Если есть обложка, обрабатываем ее
+                if (coverFile) {
+                    const coverReader = new FileReader();
+                    coverReader.onload = (e) => {
+                        newBeat.cover = e.target.result;
+                        resolve(newBeat);
+                    };
+                    coverReader.readAsDataURL(coverFile);
+                } else {
+                    // Используем стандартную обложку, если не загружена
+                    newBeat.cover = 'https://via.placeholder.com/300';
+                    resolve(newBeat);
+                }
+            };
+            audioReader.readAsDataURL(audioFile);
+        });
+    };
+
+    // Обрабатываем файлы и добавляем бит
+    processFiles().then((beatWithFiles) => {
+        state.myBeats.unshift(beatWithFiles);
+        document.getElementById('uploadModal').classList.remove('active');
+        document.getElementById('uploadForm').reset();
+        updateUI();
+        
+        tg.showAlert('Бит успешно загружен!');
+    }).catch((error) => {
+        console.error('Ошибка при загрузке файлов:', error);
+        tg.showAlert('Произошла ошибка при загрузке файлов');
+    }).finally(() => {
+        uploadBtn.textContent = originalText;
+        uploadBtn.disabled = false;
+    });
 }
 
 function getGenreName(genreKey) {
