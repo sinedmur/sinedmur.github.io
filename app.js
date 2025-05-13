@@ -724,8 +724,9 @@ function uploadNewBeat() {
     const audioFile = document.getElementById('beatFile').files[0];
     const coverFile = document.getElementById('beatCoverFile').files[0];
     
-    if (!title || !genre || isNaN(bpm) || isNaN(price) || !audioFile) {
-        tg.showAlert('Пожалуйста, заполните все обязательные поля корректно');
+    // Проверка обязательных полей, включая обложку
+    if (!title || !genre || isNaN(bpm) || isNaN(price) || !audioFile || !coverFile) {
+        tg.showAlert('Пожалуйста, заполните все обязательные поля и загрузите обложку');
         return;
     }
 
@@ -753,25 +754,25 @@ function uploadNewBeat() {
 
     // Функция для обработки загрузки файлов
     const processFiles = () => {
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             // Обработка аудио
             const audioReader = new FileReader();
             audioReader.onload = (e) => {
                 newBeat.audio = e.target.result;
 
-                // Если есть обложка, обрабатываем ее
-                if (coverFile) {
-                    const coverReader = new FileReader();
-                    coverReader.onload = (e) => {
-                        newBeat.cover = e.target.result;
-                        resolve(newBeat);
-                    };
-                    coverReader.readAsDataURL(coverFile);
-                } else {
-                    // Используем стандартную обложку, если не загружена
-                    newBeat.cover = 'https://via.placeholder.com/300';
+                // Обработка обложки (теперь обязательной)
+                const coverReader = new FileReader();
+                coverReader.onload = (e) => {
+                    newBeat.cover = e.target.result;
                     resolve(newBeat);
-                }
+                };
+                coverReader.onerror = () => {
+                    reject(new Error('Ошибка загрузки обложки'));
+                };
+                coverReader.readAsDataURL(coverFile);
+            };
+            audioReader.onerror = () => {
+                reject(new Error('Ошибка загрузки аудио'));
             };
             audioReader.readAsDataURL(audioFile);
         });
@@ -782,12 +783,13 @@ function uploadNewBeat() {
         state.myBeats.unshift(beatWithFiles);
         document.getElementById('uploadModal').classList.remove('active');
         document.getElementById('uploadForm').reset();
+        document.getElementById('coverPreview').innerHTML = ''; // Очищаем превью
         updateUI();
         
-        tg.showAlert('Бит успешно загружен!');
+        tg.showAlert('Бит с обложкой успешно загружен!');
     }).catch((error) => {
         console.error('Ошибка при загрузке файлов:', error);
-        tg.showAlert('Произошла ошибка при загрузке файлов');
+        tg.showAlert(error.message || 'Произошла ошибка при загрузке файлов');
     }).finally(() => {
         uploadBtn.textContent = originalText;
         uploadBtn.disabled = false;
