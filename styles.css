@@ -658,12 +658,16 @@ body {
 }
 
 /* Стили для поиска битмейкеров */
+/* Стили для карточек битмейкеров */
 .producer-search-card {
-    display: flex;
+    display: flex; /* Внутри карточки элементы остаются в строке */
     align-items: center;
     padding: 15px;
-    border-bottom: 1px solid #eee;
+    border: 1px solid #eee;
+    border-radius: 8px;
     cursor: pointer;
+    width: 100%; /* Карточка занимает всю ширину */
+    box-sizing: border-box;
 }
 
 .producer-search-avatar {
@@ -671,6 +675,22 @@ body {
     height: 50px;
     border-radius: 50%;
     margin-right: 15px;
+    object-fit: cover;
+}
+
+.producer-search-info {
+    flex-grow: 1;
+}
+
+.producer-search-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+}
+
+.producer-search-info p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
 }
 
 .producer-link {
