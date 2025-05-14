@@ -658,8 +658,18 @@ body {
 }
 
 /* Стили для поиска битмейкеров */
+
+/* Фиксируем навигацию при поиске */
 .searching .bottom-nav {
     position: fixed; /* Или fixed, если нужно оставить внизу */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+}
+
+.searching .main-content {
+    padding-bottom: 60px; /* Компенсируем отсутствие фиксированного меню */
 }
 
 /* Карточка битмейкера в поиске */
