@@ -334,7 +334,6 @@ function updateProfileSection(user) {
                 <h3>${user.first_name} ${user.last_name || ''}</h3>
                 ${user.username ? `<p>@${user.username}</p>` : ''}
                 <p>Баланс: ${state.balance} <span class="stars-icon">⭐</span></p>
-                <button class="topup-btn" id="topupBtn">Пополнить баланс</button>
             </div>
         </div>
         <div class="profile-stats">
