@@ -20,21 +20,21 @@ const state = {
         {
             id: 'prod1',
             name: 'prod.by.night',
-            avatar: 'https://via.placeholder.com/150',
+            avatar: 'https://i.pinimg.com/originals/86/5f/bc/865fbcc916ca629fa9169ea0fbbb7581.jpg',
             beats: ['1'],
             followers: 1250
         },
         {
             id: 'prod2',
             name: 'icybeats',
-            avatar: 'https://via.placeholder.com/150/0000FF/FFFFFF',
+            avatar: 'https://i.pinimg.com/736x/3f/ee/cb/3feecb770c9c7c61dcdab3f7348ac25d.jpg',
             beats: ['2'],
             followers: 850
         },
         {
             id: 'prod3',
             name: 'soulfulprod',
-            avatar: 'https://via.placeholder.com/150/008000/FFFFFF',
+            avatar: 'https://i1.sndcdn.com/artworks-UyKZvQ1HeTjNJFuQ-0q1EvQ-t500x500.jpg',
             beats: ['3'],
             followers: 2300
         }
