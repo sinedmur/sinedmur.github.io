@@ -12,6 +12,8 @@ const state = {
     balance: 0, // Начальный баланс 0, будет обновлен из Telegram
     currentBeat: null,
     isPlaying: false,
+    isSearchingProducers: false,
+    lastSearchQuery: '',
     currentSection: 'discover',
     currentProducer: null,
     producers: [
@@ -175,6 +177,7 @@ function createAdditionalSections() {
 
 // Функция для открытия карточки битмейкера
 function openProducer(producerId) {
+    state.currentSectionBeforeProducer = state.currentSection;
     const producer = state.producers.find(p => p.id === producerId);
     if (!producer) return;
 
@@ -210,14 +213,30 @@ function openProducer(producerId) {
     
     // Обработчик кнопки "Назад"
     document.getElementById('backToBeats').addEventListener('click', () => {
-        state.currentSection = 'discover';
-        updateUI();
+        backToBeats();
     });
     
     // Обработчик подписки
     document.getElementById('followBtn').addEventListener('click', () => {
         tg.showAlert(`Вы подписались на ${producer.name}`);
     });
+}
+
+// В функции backToBeats (при клике на кнопку "Назад")
+function backToBeats() {
+    if (state.currentSectionBeforeProducer === 'discover' && state.isSearchingProducers) {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = state.lastSearchQuery;
+            const producerName = state.lastSearchQuery.substring(1);
+            const foundProducers = state.producers.filter(p => 
+                p.name.toLowerCase().includes(producerName)
+            );
+            showProducerSearchResults(foundProducers);
+        }
+    }
+    state.currentSection = state.currentSectionBeforeProducer || 'discover';
+    updateUI();
 }
 
 // Функция для отображения битов битмейкера
@@ -495,6 +514,19 @@ function updateUI() {
     if (userBalance) {
         userBalance.textContent = `${state.balance} ⭐`;
     }
+
+     // При возврате в раздел поиска проверяем состояние
+    if (state.currentSection === 'discover' && state.isSearchingProducers) {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.value = state.lastSearchQuery;
+            const producerName = state.lastSearchQuery.substring(1);
+            const foundProducers = state.producers.filter(p => 
+                p.name.toLowerCase().includes(producerName)
+            );
+            showProducerSearchResults(foundProducers);
+        }
+    }
 }
 
 function renderBeatsGrid() {
@@ -632,22 +664,19 @@ function getProducerIdByBeat(beatId) {
 // Добавляем поиск битмейкеров
 function setupSearch() {
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', () => {
-        const query = searchInput.value.toLowerCase();
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim().toLowerCase();
+        state.lastSearchQuery = query;
         
         if (query.startsWith('@')) {
-            // Поиск по битмейкерам
+            state.isSearchingProducers = true;
             const producerName = query.substring(1);
             const foundProducers = state.producers.filter(p => 
                 p.name.toLowerCase().includes(producerName)
             );
-            
-            if (foundProducers.length > 0) {
-                // Показываем список найденных битмейкеров
-                showProducerSearchResults(foundProducers);
-            }
+            showProducerSearchResults(foundProducers);
         } else {
-            // Обычный поиск по битам
+            state.isSearchingProducers = false;
             filterBeats();
         }
     });
@@ -659,19 +688,27 @@ function showProducerSearchResults(producers) {
     beatsGrid.innerHTML = '';
     document.body.classList.add('searching'); // Добавляем класс searching
 
+    if (producers.length === 0) {
+        beatsGrid.innerHTML = '<p class="empty-message">Битмейкеры не найдены</p>';
+        return;
+    }
+    
     producers.forEach(producer => {
-        const producerCard = document.createElement('div');
-        producerCard.className = 'producer-search-card';
-        producerCard.innerHTML = `
+        const card = document.createElement('div');
+        card.className = 'producer-search-card';
+        card.innerHTML = `
             <img src="${producer.avatar}" alt="${producer.name}" class="producer-search-avatar">
             <div class="producer-search-info">
                 <h3>${producer.name}</h3>
                 <p>${producer.beats.length} битов • ${producer.followers} подписчиков</p>
             </div>
         `;
-        
-        producerCard.addEventListener('click', () => openProducer(producer.id));
-        beatsGrid.appendChild(producerCard);
+        card.addEventListener('click', () => {
+            openProducer(producer.id);
+            // Сохраняем состояние поиска
+            state.currentSectionBeforeProducer = 'discover';
+        });
+        beatsGrid.appendChild(card);
     });
 }
 
