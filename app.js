@@ -1000,84 +1000,57 @@ async function purchaseBeat() {
     });
 }
 
-function uploadNewBeat() {
+async function uploadNewBeat() {
     const title = document.getElementById('beatTitle').value.trim();
     const genre = document.getElementById('beatGenre').value;
     const bpm = parseInt(document.getElementById('beatBpm').value);
     const price = parseFloat(document.getElementById('beatPrice').value);
     const audioFile = document.getElementById('beatFile').files[0];
     const coverFile = document.getElementById('beatCoverFile').files[0];
-    
-    // Проверка обязательных полей, включая обложку
+
     if (!title || !genre || isNaN(bpm) || isNaN(price) || !audioFile || !coverFile) {
         tg.showAlert('Пожалуйста, заполните все обязательные поля и загрузите обложку');
         return;
     }
 
-    // Показываем индикатор загрузки
     const uploadBtn = document.getElementById('uploadBtn');
     const originalText = uploadBtn.textContent;
     uploadBtn.textContent = 'Загрузка...';
     uploadBtn.disabled = true;
 
-    // Создаем объект для нового бита
-    const newBeat = {
-        id: Date.now().toString(),
-        title,
-        genre,
-        bpm,
-        price,
-        cover: null,
-        audio: null,
-        artist: tg.initDataUnsafe.user?.username || 'You',
-        duration: 180,
-        uploadDate: new Date().toISOString().split('T')[0],
-        sales: 0,
-        earned: 0
-    };
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('genre', genre);
+    formData.append('bpm', bpm);
+    formData.append('price', price);
+    formData.append('artist', tg.initDataUnsafe.user?.username || 'Unknown');
+    formData.append('audio', audioFile);
+    formData.append('cover', coverFile);
 
-    // Функция для обработки загрузки файлов
-    const processFiles = () => {
-        return new Promise((resolve, reject) => {
-            // Обработка аудио
-            const audioReader = new FileReader();
-            audioReader.onload = (e) => {
-                newBeat.audio = e.target.result;
-
-                // Обработка обложки (теперь обязательной)
-                const coverReader = new FileReader();
-                coverReader.onload = (e) => {
-                    newBeat.cover = e.target.result;
-                    resolve(newBeat);
-                };
-                coverReader.onerror = () => {
-                    reject(new Error('Ошибка загрузки обложки'));
-                };
-                coverReader.readAsDataURL(coverFile);
-            };
-            audioReader.onerror = () => {
-                reject(new Error('Ошибка загрузки аудио'));
-            };
-            audioReader.readAsDataURL(audioFile);
+    try {
+        const response = await fetch('https://beatmarketserver.onrender.com/upload', {
+            method: 'POST',
+            body: formData
         });
-    };
 
-    // Обрабатываем файлы и добавляем бит
-    processFiles().then((beatWithFiles) => {
-        state.myBeats.unshift(beatWithFiles);
-        document.getElementById('uploadModal').classList.remove('active');
-        document.getElementById('uploadForm').reset();
-        document.getElementById('coverPreview').innerHTML = ''; // Очищаем превью
-        updateUI();
-        
-        tg.showAlert('Бит успешно загружен!');
-    }).catch((error) => {
-        console.error('Ошибка при загрузке файлов:', error);
-        tg.showAlert(error.message || 'Произошла ошибка при загрузке файлов');
-    }).finally(() => {
+        const result = await response.json();
+        if (result.success) {
+            state.myBeats.unshift(result.beat);
+            document.getElementById('uploadModal').classList.remove('active');
+            document.getElementById('uploadForm').reset();
+            document.getElementById('coverPreview').innerHTML = '';
+            updateUI();
+            tg.showAlert('Бит успешно загружен!');
+        } else {
+            tg.showAlert('Ошибка загрузки: ' + (result.error || 'неизвестная ошибка'));
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        tg.showAlert('Ошибка при отправке данных на сервер');
+    } finally {
         uploadBtn.textContent = originalText;
         uploadBtn.disabled = false;
-    });
+    }
 }
 
 function getGenreName(genreKey) {
