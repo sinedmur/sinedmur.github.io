@@ -46,9 +46,6 @@ async function init() {
     // Создаем дополнительные секции
     createAdditionalSections();
     
-    // Загрузка тестовых данных
-    loadMockData();
-    
     // Получаем баланс пользователя из Telegram
     await fetchUserBalance();
     
