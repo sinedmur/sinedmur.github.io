@@ -1035,6 +1035,12 @@ async function uploadNewBeat() {
 
         const result = await response.json();
         if (result.success) {
+        console.log('Upload response:', result); // Проверьте URL обложки
+        
+        // Убедитесь, что URL абсолютный
+        if (result.beat.cover && !result.beat.cover.startsWith('http')) {
+            result.beat.cover = `https://beatmarketserver.onrender.com${result.beat.cover}`;
+        }
             state.myBeats.unshift(result.beat);
             document.getElementById('uploadModal').classList.remove('active');
             document.getElementById('uploadForm').reset();
