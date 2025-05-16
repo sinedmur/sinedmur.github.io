@@ -938,6 +938,7 @@ async function toggleFavorite() {
     console.error('Ошибка toggleFavorite:', err);
     tg.showAlert('Сервер недоступен');
   }
+  updateFavoriteButton();
 }
 
 function updatePurchaseButton() {
