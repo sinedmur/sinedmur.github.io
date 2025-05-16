@@ -43,29 +43,19 @@ const state = {
 
 // Инициализация приложения
 async function init() {
-    // Создаем дополнительные секции
     createAdditionalSections();
-    
-    // Получаем баланс пользователя из Telegram
+    // loadMockData();
     await fetchUserBalance();
-    
-    // Установка обработчиков событий
     setupEventListeners();
-    
-    // Обновление интерфейса
+    await loadBeatsFromServer();
     updateUI();
-    
-    // Загрузка данных пользователя из Telegram
     loadUserData();
-
     setupSearch();
 
     // Обработчик для входящих платежей
     tg.onEvent('invoiceClosed', async (eventData) => {
         if (eventData.status === 'paid') {
-            // Обновляем баланс после успешной оплаты
             await fetchUserBalance();
-            
             const payload = JSON.parse(eventData.payload || '{}');
             if (payload.beatId) {
                 state.purchases.push(payload.beatId);
@@ -74,6 +64,28 @@ async function init() {
             }
         }
     });
+}
+
+async function loadBeatsFromServer() {
+    try {
+        const response = await fetch('https://beatmarketserver.onrender.com/beats');
+        if (response.ok) {
+            const serverBeats = await response.json();
+            
+            // Обновляем state.beats, сохраняя локальные изменения
+            state.beats = serverBeats.map(serverBeat => {
+                const localBeat = state.beats.find(b => b.id === serverBeat.id);
+                return localBeat || serverBeat;
+            });
+            
+            // Обновляем связи с продюсерами
+            updateProducersBeats();
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки битов:', error);
+        // Если сервер недоступен, используем мок данные
+        loadMockData();
+    }
 }
 
 // Функция для получения баланса пользователя из Telegram
@@ -250,64 +262,64 @@ function renderProducerBeats(beatIds) {
 }
 
 function loadMockData() {
-    state.beats = [
-        {
-            id: '1',
-            title: 'Dark Trap Beat',
-            genre: 'trap',
-            bpm: 140,
-            price: 50,
-            cover: 'https://cdn-images.dzcdn.net/images/cover/9b727c3451bd7ef32f18bff6711e4794/0x1900-000000-80-0-0.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            artist: 'prod.by.night',
-            duration: 180,
-            uploadDate: '2025-05-10'
-        },
-        {
-            id: '2',
-            title: 'Melodic Drill',
-            genre: 'drill',
-            bpm: 150,
-            price: 75,
-            cover: 'https://i1.sndcdn.com/artworks-RW1l8QJFfKfDCT6e-GRzRVg-t500x500.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-            artist: 'icybeats',
-            duration: 210,
-            uploadDate: '2025-05-08'
-        },
-        {
-            id: '3',
-            title: 'R&B Vibes',
-            genre: 'rnb',
-            bpm: 90,
-            price: 40,
-            cover: 'https://i1.sndcdn.com/artworks-ajILrkHGlLnAOcCN-o3uaKg-t500x500.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-            artist: 'soulfulprod',
-            duration: 195,
-            uploadDate: '2025-05-05'
-        }
-    ];
-    
-    state.myBeats = [
-        {
-            id: '5',
-            title: 'My First Beat',
-            genre: 'trap',
-            bpm: 140,
-            price: 40,
-            cover: 'https://i1.sndcdn.com/artworks-000606959152-f623qa-t500x500.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-            artist: tg.initDataUnsafe.user?.username || 'You',
-            duration: 185,
-            uploadDate: '2025-04-28',
-            sales: 3,
-            earned: 120
-        }
-    ];
-    
-    state.favorites = ['1', '3'];
-    state.purchases = ['2'];
+    if (state.beats.length === 0) {
+        state.beats = [
+            {
+                id: '1',
+                title: 'Dark Trap Beat',
+                genre: 'trap',
+                bpm: 140,
+                price: 50,
+                cover: 'https://cdn-images.dzcdn.net/images/cover/9b727c3451bd7ef32f18bff6711e4794/0x1900-000000-80-0-0.jpg',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+                artist: 'prod.by.night',
+                duration: 180,
+                uploadDate: '2025-05-10'
+            },
+            {
+                id: '2',
+                title: 'Melodic Drill',
+                genre: 'drill',
+                bpm: 150,
+                price: 75,
+                cover: 'https://i1.sndcdn.com/artworks-RW1l8QJFfKfDCT6e-GRzRVg-t500x500.jpg',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+                artist: 'icybeats',
+                duration: 210,
+                uploadDate: '2025-05-08'
+            },
+            {
+                id: '3',
+                title: 'R&B Vibes',
+                genre: 'rnb',
+                bpm: 90,
+                price: 40,
+                cover: 'https://i1.sndcdn.com/artworks-ajILrkHGlLnAOcCN-o3uaKg-t500x500.jpg',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
+                artist: 'soulfulprod',
+                duration: 195,
+                uploadDate: '2025-05-05'
+            }
+        ];
+    }    
+    if (state.myBeats.length === 0) {
+        state.myBeats = [
+            {
+                id: '5',
+                title: 'My First Beat',
+                genre: 'trap',
+                bpm: 140,
+                price: 40,
+                cover: 'https://i1.sndcdn.com/artworks-000606959152-f623qa-t500x500.jpg',
+                audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
+                artist: tg.initDataUnsafe.user?.username || 'You',
+                duration: 185,
+                uploadDate: '2025-04-28',
+                sales: 3,
+                earned: 120
+            }
+        ];
+    }    
 }
 
 function loadUserData() {
@@ -1011,48 +1023,95 @@ async function uploadNewBeat() {
     }
 
     const uploadBtn = document.getElementById('uploadBtn');
+    uploadBtn.disabled = true;
     const originalText = uploadBtn.textContent;
     uploadBtn.textContent = 'Загрузка...';
-    uploadBtn.disabled = true;
-
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('genre', genre);
-    formData.append('bpm', bpm);
-    formData.append('price', price);
-    formData.append('artist', tg.initDataUnsafe.user?.username || 'Unknown');
-    formData.append('audio', audioFile);
-    formData.append('cover', coverFile);
 
     try {
-        const response = await fetch('https://beatmarketserver.onrender.com/upload', {
-            method: 'POST',
-            body: formData
-        });
+        // 1. Сначала загружаем файлы в Cloudinary
+        const coverResult = await uploadToCloudinary(coverFile, 'covers');
+        const audioResult = await uploadToCloudinary(audioFile, 'audio', 'video');
 
-        const result = await response.json();
-        if (result.success) {
-        console.log('Upload response:', result); // Проверьте URL обложки
+        // 2. Создаем объект бита
+        const newBeat = {
+            id: Date.now().toString(),
+            title,
+            genre,
+            bpm,
+            price,
+            artist: tg.initDataUnsafe.user?.username || 'Unknown',
+            cover: coverResult.secure_url,
+            audio: audioResult.secure_url,
+            uploadDate: new Date().toISOString(),
+            sales: 0,
+            earned: 0,
+            cloudinary: {
+                cover_public_id: coverResult.public_id,
+                audio_public_id: audioResult.public_id
+            }
+        };
+
+        // 3. Добавляем бит в локальное состояние
+        state.beats.unshift(newBeat);
+        state.myBeats.unshift(newBeat);
         
-        // Убедитесь, что URL абсолютный
-        if (result.beat.cover && !result.beat.cover.startsWith('http')) {
-            result.beat.cover = `https://beatmarketserver.onrender.com${result.beat.cover}`;
-        }
-            state.myBeats.unshift(result.beat);
-            document.getElementById('uploadModal').classList.remove('active');
-            document.getElementById('uploadForm').reset();
-            document.getElementById('coverPreview').innerHTML = '';
-            updateUI();
-            tg.showAlert('Бит успешно загружен!');
-        } else {
-            tg.showAlert('Ошибка загрузки: ' + (result.error || 'неизвестная ошибка'));
-        }
+        // 4. Обновляем связи с продюсерами
+        updateProducersBeats();
+
+        // 5. Отправляем на сервер (асинхронно, не ждем ответа)
+        sendBeatToServer(newBeat);
+
+        // 6. Обновляем UI
+        document.getElementById('uploadModal').classList.remove('active');
+        document.getElementById('uploadForm').reset();
+        document.getElementById('coverPreview').innerHTML = '';
+        updateUI();
+        tg.showAlert('Бит успешно загружен!');
     } catch (error) {
         console.error('Ошибка загрузки:', error);
-        tg.showAlert('Ошибка при отправке данных на сервер');
+        tg.showAlert('Ошибка при загрузке бита: ' + error.message);
     } finally {
         uploadBtn.textContent = originalText;
         uploadBtn.disabled = false;
+    }
+}
+
+// 4. Новая функция для отправки бита на сервер
+async function sendBeatToServer(beat) {
+    try {
+        await fetch('https://beatmarketserver.onrender.com/upload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(beat)
+        });
+    } catch (error) {
+        console.error('Ошибка синхронизации с сервером:', error);
+    }
+}
+
+// 5. Новая функция для обновления связей продюсеров
+function updateProducersBeats() {
+    // Находим текущего пользователя как продюсера
+    const currentUser = tg.initDataUnsafe.user?.username;
+    let producer = state.producers.find(p => p.name === currentUser);
+    
+    if (!producer && currentUser) {
+        // Создаем нового продюсера, если его нет
+        producer = {
+            id: 'prod' + Date.now(),
+            name: currentUser,
+            avatar: tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150',
+            beats: [],
+            followers: 0
+        };
+        state.producers.push(producer);
+    }
+    
+    if (producer) {
+        // Обновляем список битов продюсера
+        producer.beats = state.myBeats.map(beat => beat.id);
     }
 }
 
