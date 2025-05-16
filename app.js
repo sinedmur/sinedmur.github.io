@@ -77,6 +77,9 @@ async function loadBeatsFromServer() {
                 const localBeat = state.beats.find(b => b.id === serverBeat.id);
                 return localBeat || serverBeat;
             });
+            state.myBeats = serverBeats.filter(
+            beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
+            );
             
             // Обновляем связи с продюсерами
             updateProducersBeats();
@@ -322,11 +325,18 @@ function loadMockData() {
     }
 }
 
-function loadUserData() {
-    if (tg.initDataUnsafe?.user) {
-        const user = tg.initDataUnsafe.user;
-        updateProfileSection(user);
-    }
+async function loadUserData() {
+  if (tg.initDataUnsafe?.user) {
+    const userId = tg.initDataUnsafe.user.id;
+    const res = await fetch(`https://beatmarketserver.onrender.com/user/${userId}`);
+    const userData = await res.json();
+
+    // Сохраняем ID
+    state.purchases = userData.purchases?.map(b => b._id.toString()) || [];
+    state.favorites = userData.favorites?.map(b => b._id.toString()) || [];
+
+    updateProfileSection(userData);
+  }
 }
 
 // Обновленная функция updateProfileSection
@@ -897,17 +907,37 @@ function updateFavoriteButton() {
     favoriteBtn.classList.toggle('active', isFavorite);
 }
 
-function toggleFavorite() {
-    if (!state.currentBeat) return;
-    
-    const index = state.favorites.indexOf(state.currentBeat.id);
-    if (index === -1) {
-        state.favorites.push(state.currentBeat.id);
+async function toggleFavorite() {
+  const beatId = state.currentBeat?.id;
+  const userId = tg.initDataUnsafe.user?.id;
+
+  if (!beatId || !userId) return;
+
+  const isFav = state.favorites.includes(beatId);
+  const action = isFav ? 'remove' : 'add';
+
+  try {
+    const res = await fetch('https://beatmarketserver.onrender.com/favorite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, beatId, action })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      if (action === 'add') {
+        state.favorites.push(beatId);
+      } else {
+        state.favorites = state.favorites.filter(id => id !== beatId);
+      }
+      updateUI();
     } else {
-        state.favorites.splice(index, 1);
+      tg.showAlert('Ошибка при обновлении избранного');
     }
-    
-    updateFavoriteButton();
+  } catch (err) {
+    console.error('Ошибка toggleFavorite:', err);
+    tg.showAlert('Сервер недоступен');
+  }
 }
 
 function updatePurchaseButton() {
@@ -1035,6 +1065,7 @@ async function uploadNewBeat() {
     formData.append('artist', tg.initDataUnsafe.user?.username || 'Unknown');
     formData.append('audio', audioFile);
     formData.append('cover', coverFile);
+    formData.append('ownerTelegramId', tg.initDataUnsafe.user?.id);
 
     try {
         const response = await fetch('https://beatmarketserver.onrender.com/upload', {
