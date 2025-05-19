@@ -198,53 +198,62 @@ function createAdditionalSections() {
 }
 
 // Функция для открытия карточки битмейкера
-function openProducer(producerId) {
-  state.currentSectionBeforeProducer = state.currentSection;
-  const producer = state.producers.find(p => p.id === producerId);
-  if (!producer) return;
-
-  state.currentProducer = producer;
-  state.currentSection = 'producer';
-  
-  document.getElementById('producerName').textContent = producer.name;
-  
-  const producerInfo = document.getElementById('producerInfo');
-  producerInfo.innerHTML = `
-    <div class="producer-card">
-      <img src="${producer.avatar}" alt="${producer.name}" class="producer-avatar">
-      <div class="producer-stats">
-        <div class="stat-item">
-          <span>${producer.beats.length}</span>
-          <span>Битов</span>
+async function openProducer(producerId) {
+  try {
+    state.currentSectionBeforeProducer = state.currentSection;
+    
+    // Загружаем информацию о продюсере с сервера
+    const response = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
+    if (!response.ok) throw new Error('Producer not found');
+    
+    const producer = await response.json();
+    state.currentProducer = producer;
+    state.currentSection = 'producer';
+    
+    document.getElementById('producerName').textContent = producer.name;
+    
+    const producerInfo = document.getElementById('producerInfo');
+    producerInfo.innerHTML = `
+      <div class="producer-card">
+        <img src="${producer.avatar || 'https://via.placeholder.com/150'}" 
+             alt="${producer.name}" class="producer-avatar">
+        <div class="producer-stats">
+          <div class="stat-item">
+            <span>${producer.beats?.length || 0}</span>
+            <span>Битов</span>
+          </div>
+          <div class="stat-item">
+            <span>${producer.followers || 0}</span>
+            <span>Подписчиков</span>
+          </div>
         </div>
-        <div class="stat-item">
-          <span>${producer.followers}</span>
-          <span>Подписчиков</span>
-        </div>
+        ${producer.id !== tg.initDataUnsafe.user?.id ? 
+          `<button class="follow-btn" id="followBtn">Подписаться</button>` : ''}
       </div>
-      <button class="follow-btn" id="followBtn">Подписаться</button>
-    </div>
-  `;
-  
-  // Получаем все биты этого продюсера из state.beats
-  const producerBeats = state.beats.filter(beat => 
-    beat.ownerTelegramId === producerId.replace('prod_', '') || 
-    producer.beats.includes(beat._id || beat.id)
-  );
-  
-  // Отображаем биты
-  const grid = document.getElementById('producerBeatsGrid');
-  grid.innerHTML = '';
-  producerBeats.forEach(beat => {
-    grid.appendChild(createBeatCard(beat));
-  });
-  
-  updateUI();
-  
-  document.getElementById('backToBeats').addEventListener('click', backToBeats);
-  document.getElementById('followBtn').addEventListener('click', () => {
-    tg.showAlert(`Вы подписались на ${producer.name}`);
-  });
+    `;
+    
+    // Загружаем биты продюсера
+    const beatsResponse = await fetch(`https://beatmarketserver.onrender.com/beats?producer=${producerId}`);
+    const producerBeats = beatsResponse.ok ? await beatsResponse.json() : [];
+    
+    // Отображаем биты
+    const grid = document.getElementById('producerBeatsGrid');
+    grid.innerHTML = '';
+    producerBeats.forEach(beat => {
+        grid.appendChild(createBeatCard(beat));
+    });
+    
+    updateUI();
+    
+    document.getElementById('backToBeats').addEventListener('click', backToBeats);
+    document.getElementById('followBtn')?.addEventListener('click', () => {
+        followProducer(producerId);
+    });
+  } catch (error) {
+    console.error('Error opening producer:', error);
+    tg.showAlert('Не удалось загрузить информацию о битмейкере');
+    backToBeats();
+  }
 }
 
 // В функции backToBeats (при клике на кнопку "Назад")
@@ -783,9 +792,9 @@ function getProducerIdByBeat(beatId) {
   const beat = state.beats.find(b => (b._id || b.id) === beatId);
   if (!beat) return '';
   
-  // Ищем продюсера по ownerTelegramId
+  // Для битов с указанным владельцем
   if (beat.ownerTelegramId) {
-    return `prod_${beat.ownerTelegramId}`;
+    return beat.ownerTelegramId;
   }
   
   // Для старых битов (если нет ownerTelegramId)
@@ -793,20 +802,61 @@ function getProducerIdByBeat(beatId) {
   return producer ? producer.id : '';
 }
 
-// Добавляем поиск битмейкеров
+async function followProducer(producerId) {
+  try {
+    const response = await fetch('https://beatmarketserver.onrender.com/follow', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: tg.initDataUnsafe.user?.id,
+        producerId
+      })
+    });
+    
+    if (response.ok) {
+      tg.showAlert('Вы успешно подписались на битмейкера');
+      // Обновляем информацию о продюсере
+      if (state.currentProducer?.id === producerId) {
+        const producerResponse = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
+        if (producerResponse.ok) {
+          state.currentProducer = await producerResponse.json();
+          updateUI();
+        }
+      }
+    } else {
+      const error = await response.json();
+      tg.showAlert(error.message || 'Ошибка подписки');
+    }
+  } catch (error) {
+    console.error('Follow error:', error);
+    tg.showAlert('Ошибка соединения');
+  }
+}
+
 function setupSearch() {
     const searchInput = document.getElementById('searchInput');
-    searchInput.addEventListener('input', (e) => {
+    searchInput.addEventListener('input', async (e) => {
         const query = e.target.value.trim().toLowerCase();
         state.lastSearchQuery = query;
         
         if (query.startsWith('@')) {
             state.isSearchingProducers = true;
             const producerName = query.substring(1);
-            const foundProducers = state.producers.filter(p => 
-                p.name.toLowerCase().includes(producerName)
-            );
-            showProducerSearchResults(foundProducers);
+            
+            // Загружаем всех продюсеров с сервера
+            try {
+                const response = await fetch('https://beatmarketserver.onrender.com/producers');
+                if (response.ok) {
+                    const producers = await response.json();
+                    const foundProducers = producers.filter(p => 
+                        p.name.toLowerCase().includes(producerName)
+                    );
+                    showProducerSearchResults(foundProducers);
+                }
+            } catch (error) {
+                console.error('Ошибка поиска продюсеров:', error);
+                showProducerSearchResults([]);
+            }
         } else {
             state.isSearchingProducers = false;
             filterBeats();
