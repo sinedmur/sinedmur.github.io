@@ -72,13 +72,12 @@ async function loadBeatsFromServer() {
         if (response.ok) {
             const serverBeats = await response.json();
             
-            // Обновляем state.beats, сохраняя локальные изменения
-            state.beats = serverBeats.map(serverBeat => {
-                const localBeat = state.beats.find(b => b.id === serverBeat.id);
-                return localBeat || serverBeat;
-            });
+            // Полностью заменяем state.beats на данные с сервера
+            state.beats = serverBeats;
+            
+            // Обновляем myBeats, фильтруя по ownerTelegramId
             state.myBeats = serverBeats.filter(
-            beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
+                beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
             );
             
             // Обновляем связи с продюсерами
@@ -1075,13 +1074,18 @@ async function uploadNewBeat() {
         });
 
         const result = await response.json();
-        if (result.success) {
-        updateProducersBeats();
-        // Убедитесь, что URL абсолютный
-        if (result.beat.cover && !result.beat.cover.startsWith('http')) {
-            result.beat.cover = `https://beatmarketserver.onrender.com${result.beat.cover}`;
-        }
-            state.myBeats.unshift(result.beat);
+        if (result.success && result.beat) {
+            // Добавляем новый бит в общий список
+            state.beats.unshift(result.beat);
+            
+            // Обновляем myBeats
+            state.myBeats = state.beats.filter(
+                beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
+            );
+            
+            // Обновляем связи продюсеров
+            updateProducersBeats();
+            
             document.getElementById('uploadModal').classList.remove('active');
             document.getElementById('uploadForm').reset();
             document.getElementById('coverPreview').innerHTML = '';
@@ -1101,15 +1105,20 @@ async function uploadNewBeat() {
 
 // 5. Новая функция для обновления связей продюсеров
 function updateProducersBeats() {
-    // Находим текущего пользователя как продюсера
-    const currentUser = tg.initDataUnsafe.user?.username;
-    let producer = state.producers.find(p => p.name === currentUser);
+    const currentUserId = tg.initDataUnsafe.user?.id;
+    if (!currentUserId) return;
+
+    // Находим все биты текущего пользователя
+    const userBeats = state.beats.filter(beat => beat.ownerTelegramId === currentUserId);
     
-    if (!producer && currentUser) {
-        // Создаем нового продюсера, если его нет
+    // Находим или создаем продюсера
+    let producer = state.producers.find(p => p.id === `prod_${currentUserId}`);
+    const username = tg.initDataUnsafe.user?.username || 'Unknown';
+    
+    if (!producer) {
         producer = {
-            id: 'prod' + Date.now(),
-            name: currentUser,
+            id: `prod_${currentUserId}`,
+            name: username,
             avatar: tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150',
             beats: [],
             followers: 0
@@ -1117,10 +1126,12 @@ function updateProducersBeats() {
         state.producers.push(producer);
     }
     
-    if (producer) {
-        // Обновляем список битов продюсера
-        producer.beats = state.myBeats.map(beat => beat.id);
-    }
+    // Обновляем аватар и имя на случай, если они изменились
+    producer.avatar = tg.initDataUnsafe.user?.photo_url || producer.avatar;
+    producer.name = username;
+    
+    // Обновляем список битов продюсера
+    producer.beats = userBeats.map(beat => beat._id || beat.id);
 }
 
 function getGenreName(genreKey) {
