@@ -72,8 +72,9 @@ async function loadBeatsFromServer() {
 
 function updateMyBeats() {
     if (tg.initDataUnsafe?.user?.id) {
+        const userId = tg.initDataUnsafe.user.id.toString();
         state.myBeats = state.beats.filter(
-            beat => beat.ownerTelegramId === tg.initDataUnsafe.user.id
+            beat => beat.ownerTelegramId && beat.ownerTelegramId.toString() === userId
         );
     } else {
         state.myBeats = [];
@@ -1203,39 +1204,38 @@ async function uploadNewBeat() {
     formData.append('artist', tg.initDataUnsafe.user?.username || 'Unknown');
     formData.append('audio', audioFile);
     formData.append('cover', coverFile);
-    formData.append('ownerTelegramId', tg.initDataUnsafe.user?.id);
+    formData.append('ownerTelegramId', tg.initDataUnsafe.user?.id.toString());
 
-    try {
-        const response = await fetch('https://beatmarketserver.onrender.com/upload', {
-            method: 'POST',
-            body: formData
-        });
+try {
+    const response = await fetch('https://beatmarketserver.onrender.com/upload', {
+        method: 'POST',
+        body: formData
+    });
 
-        const result = await response.json();
-        if (result.success && result.beat) {
-            // Добавляем новый бит в общий список
-            state.beats.unshift(result.beat);
-            
-            // Обновляем myBeats
-            state.myBeats = state.beats.filter(
-                beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
-            );
-            
-            // Обновляем связи продюсеров
-            updateProducersBeats();
-            
-            document.getElementById('uploadModal').classList.remove('active');
-            document.getElementById('uploadForm').reset();
-            document.getElementById('coverPreview').innerHTML = '';
-            updateUI();
-            tg.showAlert('Бит успешно загружен!');
-        } else {
-            tg.showAlert('Ошибка загрузки: ' + (result.error || 'неизвестная ошибка'));
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки:', error);
-        tg.showAlert('Ошибка при отправке данных на сервер');
-    } finally {
+    const result = await response.json();
+    if (result.success && result.beat) {
+        // Добавляем новый бит с правильным ID
+        const newBeat = {
+            ...result.beat,
+            id: result.beat._id || result.beat.id,
+            ownerTelegramId: tg.initDataUnsafe.user?.id.toString()
+        };
+        
+        state.beats.unshift(newBeat);
+        updateMyBeats(); // Явно обновляем myBeats
+        
+        document.getElementById('uploadModal').classList.remove('active');
+        document.getElementById('uploadForm').reset();
+        document.getElementById('coverPreview').innerHTML = '';
+        updateUI();
+        tg.showAlert('Бит успешно загружен!');
+    } else {
+        tg.showAlert('Ошибка загрузки: ' + (result.error || 'неизвестная ошибка'));
+    }
+} catch (error) {
+    console.error('Ошибка загрузки:', error);
+    tg.showAlert('Ошибка при отправке данных на сервер');
+} finally {
         uploadBtn.textContent = originalText;
         uploadBtn.disabled = false;
     }
