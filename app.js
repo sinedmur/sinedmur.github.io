@@ -9,50 +9,27 @@ const state = {
     myBeats: [],
     favorites: [],
     purchases: [],
-    balance: 0, // Начальный баланс 0, будет обновлен из Telegram
+    balance: 0,
     currentBeat: null,
     isPlaying: false,
     isSearchingProducers: false,
     lastSearchQuery: '',
     currentSection: 'discover',
     currentProducer: null,
-    producers: [
-        {
-            id: 'prod1',
-            name: 'prod.by.night',
-            avatar: 'https://i.pinimg.com/originals/86/5f/bc/865fbcc916ca629fa9169ea0fbbb7581.jpg',
-            beats: ['1'],
-            followers: 1250
-        },
-        {
-            id: 'prod2',
-            name: 'icybeats',
-            avatar: 'https://i.pinimg.com/736x/3f/ee/cb/3feecb770c9c7c61dcdab3f7348ac25d.jpg',
-            beats: ['2'],
-            followers: 850
-        },
-        {
-            id: 'prod3',
-            name: 'soulfulprod',
-            avatar: 'https://i1.sndcdn.com/artworks-UyKZvQ1HeTjNJFuQ-0q1EvQ-t500x500.jpg',
-            beats: ['3'],
-            followers: 2300
-        }
-    ]
+    producers: []
 };
 
 // Инициализация приложения
 async function init() {
     createAdditionalSections();
-    // loadMockData();
     await fetchUserBalance();
     setupEventListeners();
     await loadBeatsFromServer();
+    await loadProducers();
     updateUI();
-    loadUserData();
+    await loadUserData();
     setupSearch();
 
-    // Обработчик для входящих платежей
     tg.onEvent('invoiceClosed', async (eventData) => {
         if (eventData.status === 'paid') {
             await fetchUserBalance();
@@ -66,52 +43,51 @@ async function init() {
     });
 }
 
-async function loadBeatsFromServer() {
-  try {
-    const response = await fetch('https://beatmarketserver.onrender.com/beats');
-    if (response.ok) {
-      const serverBeats = await response.json();
-      
-      state.beats = serverBeats.map(beat => ({
-        ...beat,
-        id: beat._id || beat.id
-      }));
-      
-      // Обновляем myBeats
-      updateMyBeats();
-      
-      // Обновляем связи с продюсерами
-      updateProducersBeats();
+async function loadProducers() {
+    try {
+        const response = await fetch('https://beatmarketserver.onrender.com/producers');
+        if (response.ok) {
+            state.producers = await response.json();
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки продюсеров:', error);
     }
-  } catch (error) {
-    console.error('Ошибка загрузки битов:', error);
-    loadMockData();
-  }
 }
 
-// Новая функция для обновления myBeats
+async function loadBeatsFromServer() {
+    try {
+        const response = await fetch('https://beatmarketserver.onrender.com/beats');
+        if (response.ok) {
+            const serverBeats = await response.json();
+            state.beats = serverBeats.map(beat => ({
+                ...beat,
+                id: beat._id || beat.id
+            }));
+            updateMyBeats();
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки битов:', error);
+    }
+}
+
 function updateMyBeats() {
-  if (tg.initDataUnsafe?.user?.id) {
-    state.myBeats = state.beats.filter(
-      beat => beat.ownerTelegramId === tg.initDataUnsafe.user.id
-    );
-  } else {
-    state.myBeats = [];
-  }
+    if (tg.initDataUnsafe?.user?.id) {
+        state.myBeats = state.beats.filter(
+            beat => beat.ownerTelegramId === tg.initDataUnsafe.user.id
+        );
+    } else {
+        state.myBeats = [];
+    }
 }
 
-
-// Функция для получения баланса пользователя из Telegram
 async function fetchUserBalance() {
     try {
-        // Используем метод Telegram WebApp для получения баланса
-        if (tg?.CloudStorage?.getItem) {
-            const balance = await tg.CloudStorage.getItem('userBalance');
-            state.balance = balance ? parseInt(balance) : 0;
-        } else {
-            // Для тестирования в WebApp (реальный баланс можно получить через backend)
-            console.log('CloudStorage API not available, using test balance');
-            state.balance = 100; // Тестовое значение
+        if (tg?.initDataUnsafe?.user?.id) {
+            const response = await fetch(`https://beatmarketserver.onrender.com/user/${tg.initDataUnsafe.user.id}`);
+            if (response.ok) {
+                const userData = await response.json();
+                state.balance = userData.balance || 0;
+            }
         }
     } catch (error) {
         console.error('Error fetching user balance:', error);
@@ -570,7 +546,7 @@ function updateUI() {
     }
     
     // Баланс
-    const userBalance = document.getElementById('userBalance');
+   const userBalance = document.getElementById('userBalance');
     if (userBalance) {
         userBalance.textContent = `${state.balance} ⭐`;
     }
@@ -692,25 +668,31 @@ function updateSellerStats() {
 }
 
 function createBeatCard(beat) {
-  const isFavorite = state.favorites.includes(beat._id || beat.id);
-  const isPurchased = state.purchases.includes(beat._id || beat.id);
-  const isOwner = beat.ownerTelegramId === tg.initDataUnsafe.user?.id;
-  
-  const beatCard = document.createElement('div');
-  beatCard.className = 'beat-card';
-  beatCard.innerHTML = `
-    <div class="beat-cover">
-      ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
-      ${isOwner ? `<button class="delete-beat-btn" data-beatid="${beat._id || beat.id}">×</button>` : ''}
-    </div>
-    <div class="beat-info">
-      <div class="beat-title">${beat.title}</div>
-      <div class="beat-meta">
-        <span class="producer-link" data-producer="${getProducerIdByBeat(beat._id || beat.id)}">${beat.artist}</span>
-        <span>${beat.price} ⭐</span>
-      </div>
-    </div>
-  `;
+    const isFavorite = state.favorites.includes(beat._id || beat.id);
+    const isPurchased = state.purchases.includes(beat._id || beat.id);
+    const isOwner = beat.ownerTelegramId === tg.initDataUnsafe.user?.id;
+    
+    // Находим продюсера для этого бита
+    const producer = state.producers.find(p => p.id === beat.ownerTelegramId) || 
+                    state.producers.find(p => p.beats.includes(beat._id || beat.id));
+    
+    const beatCard = document.createElement('div');
+    beatCard.className = 'beat-card';
+    beatCard.innerHTML = `
+        <div class="beat-cover">
+            ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
+            ${isOwner ? `<button class="delete-beat-btn" data-beatid="${beat._id || beat.id}">×</button>` : ''}
+        </div>
+        <div class="beat-info">
+            <div class="beat-title">${beat.title}</div>
+            <div class="beat-meta">
+                <span class="producer-link" data-producer="${beat.ownerTelegramId || getProducerIdByBeat(beat._id || beat.id)}">
+                    ${producer?.name || beat.artist}
+                </span>
+                <span>${beat.price} ⭐</span>
+            </div>
+        </div>
+    `;
   
   beatCard.querySelector('.beat-cover').addEventListener('click', () => openPlayer(beat));
   
@@ -734,57 +716,43 @@ function createBeatCard(beat) {
 }
 
 async function deleteBeat(beatId) {
-  if (!beatId) return;
+    if (!beatId) return;
 
-  // Сначала показываем мини-подтверждение
-  tg.showPopup({
-    title: 'Подтвердите удаление',
-    message: 'Вы действительно хотите удалить этот бит?',
-    buttons: [
-      { id: 'confirm', type: 'default', text: 'Да, удалить' },
-      { id: 'cancel', type: 'cancel', text: 'Отмена' }
-    ]
-  }, async (buttonId) => {
-    if (buttonId === 'confirm') {
-      // Затем показываем более серьезное предупреждение
-      tg.showPopup({
-        title: 'Окончательное подтверждение',
-        message: 'Это действие нельзя отменить. Бит будет полностью удален со всеми данными.',
+    tg.showPopup({
+        title: 'Подтвердите удаление',
+        message: 'Вы действительно хотите удалить этот бит?',
         buttons: [
-          { id: 'really_confirm', type: 'destructive', text: 'УДАЛИТЬ' },
-          { id: 'cancel', type: 'cancel', text: 'Передумал' }
+            { id: 'confirm', type: 'default', text: 'Да, удалить' },
+            { id: 'cancel', type: 'cancel', text: 'Отмена' }
         ]
-      }, async (finalButtonId) => {
-        if (finalButtonId === 'really_confirm') {
-          // Реализация удаления...
-          try {
-            const response = await fetch(`https://beatmarketserver.onrender.com/beat/${beatId}`, {
-              method: 'DELETE',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: tg.initDataUnsafe.user?.id
-              })
-            });
+    }, async (buttonId) => {
+        if (buttonId === 'confirm') {
+            try {
+                const response = await fetch(`https://beatmarketserver.onrender.com/beat/${beatId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        userId: tg.initDataUnsafe.user?.id
+                    })
+                });
 
-            if (response.ok) {
-              state.beats = state.beats.filter(b => (b._id || b.id) !== beatId);
-              state.myBeats = state.myBeats.filter(b => (b._id || b.id) !== beatId);
-              updateUI();
-              tg.showAlert('Бит успешно удален');
-            } else {
-              const error = await response.json();
-              tg.showAlert(`Ошибка: ${error.message || 'Не удалось удалить бит'}`);
+                if (response.ok) {
+                    state.beats = state.beats.filter(b => (b._id || b.id) !== beatId);
+                    state.myBeats = state.myBeats.filter(b => (b._id || b.id) !== beatId);
+                    updateUI();
+                    tg.showAlert('Бит успешно удален');
+                } else {
+                    const error = await response.json();
+                    tg.showAlert(`Ошибка: ${error.message || 'Не удалось удалить бит'}`);
+                }
+            } catch (error) {
+                console.error('Ошибка при удалении бита:', error);
+                tg.showAlert('Произошла ошибка при удалении бита');
             }
-          } catch (error) {
-            console.error('Ошибка при удалении бита:', error);
-            tg.showAlert('Произошла ошибка при удалении бита');
-          }
         }
-      });
-    }
-  });
+    });
 }
 
 // Вспомогательная функция для поиска битмейкера по ID бита
@@ -803,34 +771,31 @@ function getProducerIdByBeat(beatId) {
 }
 
 async function followProducer(producerId) {
-  try {
-    const response = await fetch('https://beatmarketserver.onrender.com/follow', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: tg.initDataUnsafe.user?.id,
-        producerId
-      })
-    });
-    
-    if (response.ok) {
-      tg.showAlert('Вы успешно подписались на битмейкера');
-      // Обновляем информацию о продюсере
-      if (state.currentProducer?.id === producerId) {
-        const producerResponse = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
-        if (producerResponse.ok) {
-          state.currentProducer = await producerResponse.json();
-          updateUI();
+    try {
+        const response = await fetch('https://beatmarketserver.onrender.com/follow', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: tg.initDataUnsafe.user?.id,
+                producerId
+            })
+        });
+        
+        if (response.ok) {
+            tg.showAlert('Вы успешно подписались на битмейкера');
+            const producerResponse = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
+            if (producerResponse.ok) {
+                state.currentProducer = await producerResponse.json();
+                updateUI();
+            }
+        } else {
+            const error = await response.json();
+            tg.showAlert(error.message || 'Ошибка подписки');
         }
-      }
-    } else {
-      const error = await response.json();
-      tg.showAlert(error.message || 'Ошибка подписки');
+    } catch (error) {
+        console.error('Follow error:', error);
+        tg.showAlert('Ошибка соединения');
     }
-  } catch (error) {
-    console.error('Follow error:', error);
-    tg.showAlert('Ошибка соединения');
-  }
 }
 
 function setupSearch() {
