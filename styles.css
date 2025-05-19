@@ -240,6 +240,7 @@ body {
     background-color: var(--tg-theme-secondary-bg-color);
     padding: 8px 0;
     border-top: 1px solid #333;
+    z-index: 100;
 }
 
 .nav-btn {
@@ -651,6 +652,7 @@ body {
     left: 0;
     right: 0;
     display: flex;
+    z-index: 100;
 }
 
 .searching .main-content {
