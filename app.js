@@ -717,40 +717,57 @@ function createBeatCard(beat) {
 }
 
 async function deleteBeat(beatId) {
-    if (!beatId) return;
+    if (!beatId) {
+        tg.showAlert('Не указан ID бита для удаления');
+        return;
+    }
 
     tg.showPopup({
         title: 'Подтвердите удаление',
         message: 'Вы действительно хотите удалить этот бит?',
         buttons: [
-            { id: 'confirm', type: 'default', text: 'Да, удалить' },
+            { id: 'confirm', type: 'destructive', text: 'Да, удалить' },
             { id: 'cancel', type: 'cancel', text: 'Отмена' }
         ]
     }, async (buttonId) => {
         if (buttonId === 'confirm') {
             try {
+                const userId = tg.initDataUnsafe.user?.id;
+                if (!userId) {
+                    tg.showAlert('Ошибка: пользователь не идентифицирован');
+                    return;
+                }
+
+                console.log('Deleting beat:', { beatId, userId }); // Логирование для отладки
+
                 const response = await fetch(`https://beatmarketserver.onrender.com/beat/${beatId}`, {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        userId: tg.initDataUnsafe.user?.id
+                        userId: userId.toString() // Явное преобразование в строку
                     })
                 });
 
+                const result = await response.json();
+                console.log('Delete response:', result); // Логирование ответа
+
                 if (response.ok) {
+                    // Обновляем состояние
                     state.beats = state.beats.filter(b => (b._id || b.id) !== beatId);
                     state.myBeats = state.myBeats.filter(b => (b._id || b.id) !== beatId);
+                    
                     updateUI();
                     tg.showAlert('Бит успешно удален');
                 } else {
-                    const error = await response.json();
-                    tg.showAlert(`Ошибка: ${error.message || 'Не удалось удалить бит'}`);
+                    const error = result.message || 'Не удалось удалить бит';
+                    console.error('Delete error:', error);
+                    tg.showAlert(`Ошибка: ${error}`);
                 }
             } catch (error) {
                 console.error('Ошибка при удалении бита:', error);
-                tg.showAlert('Произошла ошибка при удалении бита');
+                tg.showAlert('Произошла ошибка при удалении бита. Проверьте соединение.');
             }
         }
     });
