@@ -67,28 +67,31 @@ async function init() {
 }
 
 async function loadBeatsFromServer() {
-    try {
-        const response = await fetch('https://beatmarketserver.onrender.com/beats');
-        if (response.ok) {
-            const serverBeats = await response.json();
-            
-            // Полностью заменяем state.beats на данные с сервера
-            state.beats = serverBeats;
-            
-            // Обновляем myBeats, фильтруя по ownerTelegramId
-            state.myBeats = serverBeats.filter(
-                beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
-            );
-            
-            // Обновляем связи с продюсерами
-            updateProducersBeats();
-        }
-    } catch (error) {
-        console.error('Ошибка загрузки битов:', error);
-        // Если сервер недоступен, используем мок данные
-        loadMockData();
+  try {
+    const response = await fetch('https://beatmarketserver.onrender.com/beats');
+    if (response.ok) {
+      const serverBeats = await response.json();
+      
+      // Преобразуем _id в id для совместимости
+      state.beats = serverBeats.map(beat => ({
+        ...beat,
+        id: beat._id || beat.id
+      }));
+      
+      // Фильтруем биты текущего пользователя
+      state.myBeats = state.beats.filter(
+        beat => beat.ownerTelegramId === tg.initDataUnsafe.user?.id
+      );
+      
+      // Обновляем связи с продюсерами
+      updateProducersBeats();
     }
+  } catch (error) {
+    console.error('Ошибка загрузки битов:', error);
+    loadMockData();
+  }
 }
+
 
 // Функция для получения баланса пользователя из Telegram
 async function fetchUserBalance() {
@@ -188,49 +191,51 @@ function createAdditionalSections() {
 
 // Функция для открытия карточки битмейкера
 function openProducer(producerId) {
-    state.currentSectionBeforeProducer = state.currentSection;
-    const producer = state.producers.find(p => p.id === producerId);
-    if (!producer) return;
+  state.currentSectionBeforeProducer = state.currentSection;
+  const producer = state.producers.find(p => p.id === producerId);
+  if (!producer) return;
 
-    state.currentProducer = producer;
-    state.currentSection = 'producer';
-    
-    // Заполняем информацию
-    document.getElementById('producerName').textContent = producer.name;
-    
-    const producerInfo = document.getElementById('producerInfo');
-    producerInfo.innerHTML = `
-        <div class="producer-card">
-            <img src="${producer.avatar}" alt="${producer.name}" class="producer-avatar">
-            <div class="producer-stats">
-                <div class="stat-item">
-                    <span>${producer.beats.length}</span>
-                    <span>Битов</span>
-                </div>
-                <div class="stat-item">
-                    <span>${producer.followers}</span>
-                    <span>Подписчиков</span>
-                </div>
-            </div>
-            <button class="follow-btn" id="followBtn">Подписаться</button>
+  state.currentProducer = producer;
+  state.currentSection = 'producer';
+  
+  document.getElementById('producerName').textContent = producer.name;
+  
+  const producerInfo = document.getElementById('producerInfo');
+  producerInfo.innerHTML = `
+    <div class="producer-card">
+      <img src="${producer.avatar}" alt="${producer.name}" class="producer-avatar">
+      <div class="producer-stats">
+        <div class="stat-item">
+          <span>${producer.beats.length}</span>
+          <span>Битов</span>
         </div>
-    `;
-    
-    // Отображаем биты битмейкера
-    renderProducerBeats(producer.beats);
-    
-    // Обновляем UI
-    updateUI();
-    
-    // Обработчик кнопки "Назад"
-    document.getElementById('backToBeats').addEventListener('click', () => {
-        backToBeats();
-    });
-    
-    // Обработчик подписки
-    document.getElementById('followBtn').addEventListener('click', () => {
-        tg.showAlert(`Вы подписались на ${producer.name}`);
-    });
+        <div class="stat-item">
+          <span>${producer.followers}</span>
+          <span>Подписчиков</span>
+        </div>
+      </div>
+      <button class="follow-btn" id="followBtn">Подписаться</button>
+    </div>
+  `;
+  
+  // Получаем все биты этого продюсера
+  const producerBeats = state.beats.filter(beat => 
+    producer.beats.includes(beat._id || beat.id)
+  );
+  
+  // Отображаем биты
+  const grid = document.getElementById('producerBeatsGrid');
+  grid.innerHTML = '';
+  producerBeats.forEach(beat => {
+    grid.appendChild(createBeatCard(beat));
+  });
+  
+  updateUI();
+  
+  document.getElementById('backToBeats').addEventListener('click', backToBeats);
+  document.getElementById('followBtn').addEventListener('click', () => {
+    tg.showAlert(`Вы подписались на ${producer.name}`);
+  });
 }
 
 // В функции backToBeats (при клике на кнопку "Назад")
@@ -327,17 +332,22 @@ function loadMockData() {
 async function loadUserData() {
   if (tg.initDataUnsafe?.user) {
     const userId = tg.initDataUnsafe.user.id;
-    const res = await fetch(`https://beatmarketserver.onrender.com/user/${userId}`);
-    const userData = await res.json();
+    try {
+      const res = await fetch(`https://beatmarketserver.onrender.com/user/${userId}`);
+      const userData = await res.json();
 
-    // Сохраняем ID
-    state.purchases = userData.purchases?.map(b => b._id.toString()) || [];
-    state.favorites = userData.favorites?.map(b => b._id.toString()) || [];
-
-    updateProfileSection(userData);
+      // Преобразуем ObjectId в строки
+      state.purchases = userData.purchases?.map(b => b._id?.toString() || b.toString()) || [];
+      state.favorites = userData.favorites?.map(b => b._id?.toString() || b.toString()) || [];
+      
+      updateProfileSection(userData);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      state.purchases = [];
+      state.favorites = [];
+    }
   }
 }
-
 // Обновленная функция updateProfileSection
 function updateProfileSection(user) {
     const profileInfo = document.getElementById('profileInfo');
@@ -641,41 +651,50 @@ function updateSellerStats() {
 }
 
 function createBeatCard(beat) {
-    const isFavorite = state.favorites.includes(beat.id);
-    const isPurchased = state.purchases.includes(beat.id);
-    
-const beatCard = document.createElement('div');
-    beatCard.className = 'beat-card';
-    beatCard.innerHTML = `
-        <div class="beat-cover">
-            ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
-        </div>
-        <div class="beat-info">
-            <div class="beat-title">${beat.title}</div>
-            <div class="beat-meta">
-                <span class="producer-link" data-producer="${getProducerIdByBeat(beat.id)}">${beat.artist}</span>
-                <span>${beat.price} ⭐</span>
-            </div>
-        </div>
-    `;
-    
-    // Клик по карточке - открываем плеер
-    beatCard.querySelector('.beat-cover').addEventListener('click', () => openPlayer(beat));
-    
-    // Клик по имени битмейкера - открываем его профиль
-    beatCard.querySelector('.producer-link').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const producerId = e.target.getAttribute('data-producer');
-        openProducer(producerId);
-    });
-    
-    return beatCard;
+  const isFavorite = state.favorites.includes(beat._id || beat.id);
+  const isPurchased = state.purchases.includes(beat._id || beat.id);
+  
+  const beatCard = document.createElement('div');
+  beatCard.className = 'beat-card';
+  beatCard.innerHTML = `
+    <div class="beat-cover">
+      ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
+    </div>
+    <div class="beat-info">
+      <div class="beat-title">${beat.title}</div>
+      <div class="beat-meta">
+        <span class="producer-link" data-producer="${getProducerIdByBeat(beat._id || beat.id)}">${beat.artist}</span>
+        <span>${beat.price} ⭐</span>
+      </div>
+    </div>
+  `;
+  
+  beatCard.querySelector('.beat-cover').addEventListener('click', () => openPlayer(beat));
+  
+  beatCard.querySelector('.producer-link').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const producerId = e.target.getAttribute('data-producer');
+    if (producerId) {
+      openProducer(producerId);
+    }
+  });
+  
+  return beatCard;
 }
 
 // Вспомогательная функция для поиска битмейкера по ID бита
 function getProducerIdByBeat(beatId) {
-    const producer = state.producers.find(p => p.beats.includes(beatId));
-    return producer ? producer.id : '';
+  const beat = state.beats.find(b => (b._id || b.id) === beatId);
+  if (!beat) return '';
+  
+  // Ищем продюсера по ownerTelegramId
+  if (beat.ownerTelegramId) {
+    return `prod_${beat.ownerTelegramId}`;
+  }
+  
+  // Для старых битов (если нет ownerTelegramId)
+  const producer = state.producers.find(p => p.beats.includes(beatId));
+  return producer ? producer.id : '';
 }
 
 // Добавляем поиск битмейкеров
@@ -1105,33 +1124,36 @@ async function uploadNewBeat() {
 
 // 5. Новая функция для обновления связей продюсеров
 function updateProducersBeats() {
-    const currentUserId = tg.initDataUnsafe.user?.id;
-    if (!currentUserId) return;
+  const currentUserId = tg.initDataUnsafe.user?.id;
+  if (!currentUserId) return;
 
-    // Находим все биты текущего пользователя
-    const userBeats = state.beats.filter(beat => beat.ownerTelegramId === currentUserId);
-    
-    // Находим или создаем продюсера
-    let producer = state.producers.find(p => p.id === `prod_${currentUserId}`);
-    const username = tg.initDataUnsafe.user?.username || 'Unknown';
-    
-    if (!producer) {
-        producer = {
-            id: `prod_${currentUserId}`,
-            name: username,
-            avatar: tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150',
-            beats: [],
-            followers: 0
-        };
-        state.producers.push(producer);
-    }
-    
-    // Обновляем аватар и имя на случай, если они изменились
-    producer.avatar = tg.initDataUnsafe.user?.photo_url || producer.avatar;
-    producer.name = username;
-    
-    // Обновляем список битов продюсера
-    producer.beats = userBeats.map(beat => beat._id || beat.id);
+  // Находим все биты текущего пользователя
+  const userBeats = state.beats.filter(beat => beat.ownerTelegramId === currentUserId);
+  
+  // Создаем ID продюсера на основе Telegram ID
+  const producerId = `prod_${currentUserId}`;
+  
+  // Находим или создаем продюсера
+  let producer = state.producers.find(p => p.id === producerId);
+  const username = tg.initDataUnsafe.user?.username || 'Unknown';
+  
+  if (!producer) {
+    producer = {
+      id: producerId,
+      name: username,
+      avatar: tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150',
+      beats: [],
+      followers: 0
+    };
+    state.producers.push(producer);
+  }
+  
+  // Обновляем информацию продюсера
+  producer.avatar = tg.initDataUnsafe.user?.photo_url || producer.avatar;
+  producer.name = username;
+  
+  // Обновляем список битов продюсера
+  producer.beats = userBeats.map(beat => beat._id || beat.id);
 }
 
 function getGenreName(genreKey) {
