@@ -650,6 +650,7 @@ function renderMyBeats() {
         beatItem.innerHTML = `
             <div class="beat-cover">
                 ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
+                <button class="delete-beat-btn" data-beatid="${beat._id || beat.id}">×</button>
             </div>
             <div class="beat-info">
                 <div class="beat-title">${beat.title}</div>
@@ -659,6 +660,13 @@ function renderMyBeats() {
                 </div>
             </div>
         `;
+        
+        // Добавляем обработчик удаления
+        beatItem.querySelector('.delete-beat-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteBeat(beat._id || beat.id);
+        });
+        
         myBeatsList.appendChild(beatItem);
     });
 }
@@ -677,12 +685,14 @@ function updateSellerStats() {
 function createBeatCard(beat) {
   const isFavorite = state.favorites.includes(beat._id || beat.id);
   const isPurchased = state.purchases.includes(beat._id || beat.id);
+  const isOwner = beat.ownerTelegramId === tg.initDataUnsafe.user?.id;
   
   const beatCard = document.createElement('div');
   beatCard.className = 'beat-card';
   beatCard.innerHTML = `
     <div class="beat-cover">
       ${beat.cover ? `<img src="${beat.cover}" alt="${beat.title}">` : ''}
+      ${isOwner ? `<button class="delete-beat-btn" data-beatid="${beat._id || beat.id}">×</button>` : ''}
     </div>
     <div class="beat-info">
       <div class="beat-title">${beat.title}</div>
@@ -705,7 +715,67 @@ function createBeatCard(beat) {
     }
   });
   
+ if (isOwner) {
+    beatCard.querySelector('.delete-beat-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteBeat(beat._id || beat.id);
+    });
+  }
   return beatCard;
+}
+
+async function deleteBeat(beatId) {
+  if (!beatId) return;
+
+  // Сначала показываем мини-подтверждение
+  tg.showPopup({
+    title: 'Подтвердите удаление',
+    message: 'Вы действительно хотите удалить этот бит?',
+    buttons: [
+      { id: 'confirm', type: 'default', text: 'Да, удалить' },
+      { id: 'cancel', type: 'cancel', text: 'Отмена' }
+    ]
+  }, async (buttonId) => {
+    if (buttonId === 'confirm') {
+      // Затем показываем более серьезное предупреждение
+      tg.showPopup({
+        title: 'Окончательное подтверждение',
+        message: 'Это действие нельзя отменить. Бит будет полностью удален со всеми данными.',
+        buttons: [
+          { id: 'really_confirm', type: 'destructive', text: 'УДАЛИТЬ' },
+          { id: 'cancel', type: 'cancel', text: 'Передумал' }
+        ]
+      }, async (finalButtonId) => {
+        if (finalButtonId === 'really_confirm') {
+          // Реализация удаления...
+          try {
+            const response = await fetch(`https://beatmarketserver.onrender.com/beat/${beatId}`, {
+              method: 'DELETE',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                userId: tg.initDataUnsafe.user?.id
+              })
+            });
+
+            if (response.ok) {
+              state.beats = state.beats.filter(b => (b._id || b.id) !== beatId);
+              state.myBeats = state.myBeats.filter(b => (b._id || b.id) !== beatId);
+              updateUI();
+              tg.showAlert('Бит успешно удален');
+            } else {
+              const error = await response.json();
+              tg.showAlert(`Ошибка: ${error.message || 'Не удалось удалить бит'}`);
+            }
+          } catch (error) {
+            console.error('Ошибка при удалении бита:', error);
+            tg.showAlert('Произошла ошибка при удалении бита');
+          }
+        }
+      });
+    }
+  });
 }
 
 // Вспомогательная функция для поиска битмейкера по ID бита
