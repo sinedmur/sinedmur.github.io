@@ -1,12 +1,16 @@
+/* === GLOBAL VARIABLES === */
 :root {
-    --tg-theme-bg-color: #1a1a1a;
+    --tg-theme-bg-color: #121212;
+    --tg-theme-secondary-bg-color: #1e1e1e;
     --tg-theme-text-color: #ffffff;
-    --tg-theme-hint-color: #aaaaaa;
-    --tg-theme-link-color: #30A3E6;
-    --tg-theme-button-color: #30A3E6;
-    --tg-theme-button-text-color: #ffffff;
-    --tg-theme-secondary-bg-color: #252525;
-    --accent-color: #30A3E6;
+    --tg-theme-hint-color: #b0b0b0;
+    --tg-theme-link-color: #f5c16c;
+    --tg-theme-button-color: #f5c16c;
+    --tg-theme-button-text-color: #1a1a1a;
+    --accent-color: linear-gradient(135deg, #f5c16c, #fff8e1);
+    --accent-solid: #f5c16c;
+    --glass-bg: rgba(255, 255, 255, 0.05);
+    --glass-border: rgba(255, 255, 255, 0.15);
     --success-color: #4caf50;
     --danger-color: #f44336;
 }
@@ -16,6 +20,7 @@
     padding: 0;
     box-sizing: border-box;
     font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    transition: all 0.2s ease-in-out;
 }
 
 body {
@@ -38,46 +43,54 @@ body {
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background: var(--glass-bg);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
     z-index: 100;
 }
 
 .logo {
-    font-size: 20px;
+    font-size: 22px;
     font-weight: bold;
-    color: var(--accent-color);
+    background: var(--accent-color);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .user-balance {
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
-    padding: 4px 8px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 16px;
     font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(245, 193, 108, 0.4);
 }
 
 .role-selector {
     display: flex;
     margin: 16px;
-    background-color: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
+    background: var(--glass-bg);
+    border-radius: 16px;
     overflow: hidden;
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
 }
 
 .role-btn {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
     border: none;
     background: none;
     color: var(--tg-theme-text-color);
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
 }
 
 .role-btn.active {
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
 }
 
@@ -98,16 +111,16 @@ body {
 .search-bar input {
     flex: 1;
     padding: 10px 12px;
-    border: 1px solid var(--tg-theme-secondary-bg-color);
+    border: 1px solid var(--glass-border);
     border-radius: 12px 0 0 12px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background-color: var(--glass-bg);
     color: var(--tg-theme-text-color);
     outline: none;
 }
 
 .search-btn {
     padding: 10px 16px;
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
     border: none;
     border-radius: 0 12px 12px 0;
@@ -123,9 +136,9 @@ body {
 .filters select {
     flex: 1;
     padding: 10px;
-    border: 1px solid var(--tg-theme-secondary-bg-color);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background-color: var(--glass-bg);
     color: var(--tg-theme-text-color);
     outline: none;
 }
@@ -138,25 +151,28 @@ body {
 }
 
 .beat-card {
-    background-color: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     overflow: hidden;
     cursor: pointer;
-    transition: transform 0.2s;
+    transition: all 0.3s ease;
 }
 
 .beat-card:hover {
-    transform: scale(1.02);
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(245, 193, 108, 0.4);
 }
 
 .beat-cover {
     width: 100%;
     aspect-ratio: 1;
-    background-color: #333;
+    background-color: #2a2a2a;
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
 }
 
 .beat-cover img {
@@ -170,7 +186,7 @@ body {
 }
 
 .beat-title {
-    font-weight: 500;
+    font-weight: 600;
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -184,26 +200,36 @@ body {
     justify-content: space-between;
 }
 
-.upload-btn {
-    width: 100%;
-    padding: 12px;
-    background-color: var(--accent-color);
+.upload-btn, .submit-btn, .buy {
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
     border: none;
-    border-radius: 12px;
-    font-weight: 500;
-    margin-bottom: 16px;
+    border-radius: 16px;
+    padding: 12px;
+    font-weight: 600;
     cursor: pointer;
+    box-shadow: 0 2px 8px rgba(245, 193, 108, 0.3);
+    transition: all 0.3s ease;
 }
+
+.upload-btn:hover, .submit-btn:hover, .buy:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(245, 193, 108, 0.5);
+}
+
+/* === CONTINUES THROUGHOUT ENTIRE FILE === */
+/* Продолжение глобальной стилизации — ДОБАВЛЯЕМ ПОЛНЫЙ КОНТРОЛЬ */
 
 .my-beats {
     margin-bottom: 16px;
+    padding: 0 16px;
 }
 
 .empty-state {
     text-align: center;
     padding: 40px 20px;
     color: var(--tg-theme-hint-color);
+    font-size: 14px;
 }
 
 .stats {
@@ -213,15 +239,16 @@ body {
 }
 
 .stat-card {
-    background-color: var(--tg-theme-secondary-bg-color);
-    border-radius: 12px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
     padding: 16px;
     text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
 .stat-card h3 {
     font-size: 14px;
-    font-weight: normal;
     color: var(--tg-theme-hint-color);
     margin-bottom: 8px;
 }
@@ -229,6 +256,7 @@ body {
 .stat-card p {
     font-size: 18px;
     font-weight: bold;
+    color: var(--tg-theme-text-color);
 }
 
 .bottom-nav {
@@ -237,9 +265,10 @@ body {
     left: 0;
     right: 0;
     display: flex;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--glass-border);
     padding: 8px 0;
-    border-top: 1px solid #333;
     z-index: 100;
 }
 
@@ -249,15 +278,15 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    background: none;
     border: none;
+    background: none;
     color: var(--tg-theme-hint-color);
     font-size: 12px;
     cursor: pointer;
 }
 
 .nav-btn.active {
-    color: var(--accent-color);
+    color: var(--accent-solid);
 }
 
 .nav-btn i {
@@ -283,10 +312,12 @@ body {
 }
 
 .modal-content {
-    background-color: var(--tg-theme-bg-color);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px);
     width: 90%;
     max-width: 400px;
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 20px;
     max-height: 90vh;
     overflow-y: auto;
@@ -295,6 +326,7 @@ body {
 .modal-content h2 {
     margin-bottom: 20px;
     text-align: center;
+    color: var(--tg-theme-text-color);
 }
 
 .form-group {
@@ -310,9 +342,9 @@ body {
 .form-group input, .form-group select {
     width: 100%;
     padding: 10px 12px;
-    border: 1px solid var(--tg-theme-secondary-bg-color);
+    border: 1px solid var(--glass-border);
     border-radius: 12px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background-color: var(--glass-bg);
     color: var(--tg-theme-text-color);
     outline: none;
 }
@@ -326,21 +358,22 @@ body {
 .cancel-btn {
     flex: 1;
     padding: 12px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background: transparent;
+    border: 1px solid var(--glass-border);
     color: var(--tg-theme-text-color);
-    border: none;
     border-radius: 12px;
     cursor: pointer;
 }
 
 .submit-btn {
     flex: 1;
-    padding: 12px;
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
     border: none;
     border-radius: 12px;
+    padding: 12px;
     cursor: pointer;
+    font-weight: 600;
 }
 
 .player-content {
@@ -356,18 +389,6 @@ body {
     color: var(--tg-theme-text-color);
     font-size: 24px;
     cursor: pointer;
-}
-
-.beat-cover {
-    width: 200px;
-    height: 200px;
-    margin: 0 auto 20px;
-    border-radius: 12px;
-    background-color: var(--tg-theme-secondary-bg-color);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
 }
 
 .audio-player {
@@ -386,7 +407,7 @@ body {
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
     border: none;
     display: flex;
@@ -398,7 +419,7 @@ body {
 .progress-bar {
     flex: 1;
     height: 4px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background-color: var(--glass-border);
     border-radius: 2px;
     cursor: pointer;
 }
@@ -428,63 +449,47 @@ body {
     gap: 8px;
 }
 
-.action-btn i {
-    font-size: 18px;
-}
-
 .favorite {
-    background-color: var(--tg-theme-secondary-bg-color);
+    background: var(--glass-bg);
     color: var(--tg-theme-text-color);
 }
 
 .buy {
-    background-color: var(--accent-color);
+    background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
 }
 
-.icon-search img{
+/* Продолжу по остальным секциям, если скажешь «дальше» */
+/* === ПРОДОЛЖЕНИЕ: ИКОНКИ, СЕКЦИИ, ПРОФИЛЬ === */
+
+.icon-search img,
+.icon-heart img,
+.icon-bag img,
+.icon-user img {
     margin-bottom: -30%;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-.icon-heart img{
-    margin-bottom: -30%;
-    width: 30px;
-    height: 30px;
+.icon-play::before {
+    content: '▶️';
 }
 
-.icon-bag img{
-    margin-bottom: -30%;
-    width: 30px;
-    height: 30px;
-}
-
-.icon-user img{
-    margin-bottom: -30%;
-    width: 30px;
-    height: 30px;
-}
-
-/* Иконки (можно заменить на реальные иконки) */
-.icon-play::before { content: "▶️"; }
-
-/* Добавляем новые стили для дополнительных секций */
-
-.favorites-section, 
-.purchases-section, 
+.favorites-section,
+.purchases-section,
 .profile-section {
     display: none;
     padding: 16px;
 }
 
-.favorites-section.active, 
-.purchases-section.active, 
+.favorites-section.active,
+.purchases-section.active,
 .profile-section.active {
     display: block;
 }
 
-.favorites-grid, 
+.favorites-grid,
 .purchases-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -496,6 +501,7 @@ body {
     text-align: center;
     color: var(--tg-theme-hint-color);
     padding: 40px 0;
+    font-size: 14px;
 }
 
 .profile-card {
@@ -509,18 +515,20 @@ body {
     width: 60px;
     height: 60px;
     border-radius: 50%;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background-color: var(--glass-bg);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px;
     overflow: hidden;
+    border: 1px solid var(--glass-border);
 }
 
 .profile-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    border-radius: 50%;
 }
 
 .profile-stats {
@@ -538,6 +546,7 @@ body {
 .stat-item span:first-child {
     font-size: 18px;
     font-weight: bold;
+    color: var(--tg-theme-text-color);
 }
 
 .stat-item span:last-child {
@@ -556,19 +565,21 @@ body {
     margin-top: 24px;
     cursor: pointer;
 }
-/* Добавьте в ваш CSS */
+
 .file-preview {
     margin-top: 10px;
     min-height: 100px;
-    border: 1px dashed #ccc;
+    border: 1px dashed var(--glass-border);
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 12px;
 }
 
 .file-preview img {
     max-width: 100%;
     max-height: 200px;
+    border-radius: 12px;
 }
 
 #uploadForm .form-group {
@@ -579,13 +590,18 @@ body {
     display: block;
     margin-bottom: 5px;
     font-weight: bold;
+    color: var(--tg-theme-hint-color);
 }
 
 #uploadForm input[type="file"] {
     width: 100%;
+    background-color: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    padding: 10px;
+    border-radius: 12px;
+    color: var(--tg-theme-text-color);
 }
 
-/* Стили для карточки битмейкера */
 .producer-section {
     display: none;
     padding: 20px;
@@ -603,7 +619,7 @@ body {
     font-size: 20px;
     margin-right: 15px;
     cursor: pointer;
-    color: white;
+    color: var(--tg-theme-text-color);
 }
 
 .producer-card {
@@ -619,6 +635,7 @@ body {
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: 15px;
+    border: 2px solid var(--glass-border);
 }
 
 .producer-stats {
@@ -628,46 +645,25 @@ body {
     margin: 15px 0;
 }
 
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
 .follow-btn {
-    background-color: #007bff;
-    color: white;
+    background: var(--accent-color);
+    color: var(--tg-theme-button-text-color);
     border: none;
     padding: 10px 20px;
     border-radius: 20px;
     cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 6px rgba(245, 193, 108, 0.3);
 }
 
-/* Стили для поиска битмейкеров */
-
-/* Фиксируем навигацию при поиске */
-.searching .bottom-nav {
-    position: fixed; /* Или fixed, если нужно оставить внизу */
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    z-index: 100;
-}
-
-.searching .main-content {
-    padding-bottom: 60px; /* Компенсируем отсутствие фиксированного меню */
-}
-
-/* Карточка битмейкера в поиске */
 .producer-search-card {
     display: flex;
     align-items: center;
     padding: 12px;
-    background-color: var(--tg-theme-secondary-bg-color);
+    background: var(--glass-bg);
     border-radius: 12px;
-    width: 100%;
-    box-sizing: border-box;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     margin-bottom: 8px;
 }
 
@@ -687,6 +683,7 @@ body {
 .producer-search-info h3 {
     margin: 0 0 4px 0;
     font-size: 16px;
+    color: var(--tg-theme-text-color);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -698,43 +695,127 @@ body {
     color: var(--tg-theme-hint-color);
 }
 
-/* Фикс для шапки при поиске */
-.searching .app-header {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-/* Фикс для контейнера при поиске */
-.searching .app-container {
-    padding-bottom: 0;
-}
-
 .producer-link {
-    color: #007bff;
+    color: var(--tg-theme-link-color);
     cursor: pointer;
     text-decoration: underline;
 }
 
 .delete-beat-btn {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  width: 25px;
-  height: 25px;
-  border-radius: 50%;
-  background-color: #ff3b30;
-  color: white;
-  border: none;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .delete-beat-btn:hover {
-  background-color: #ff5e54;
+    background-color: #ff5e54;
+}
+
+.searching .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+}
+
+.searching .main-content {
+    padding-bottom: 60px;
+}
+
+.searching .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--glass-bg);
+    border-bottom: 1px solid var(--glass-border);
+    backdrop-filter: blur(8px);
+}
+
+.searching .app-container {
+    padding-bottom: 0;
+}
+
+/* === АНИМАЦИИ И ПЕРЕХОДЫ === */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* === ПРИМЕНЕНИЕ АНИМАЦИЙ === */
+
+.beat-card,
+.stat-card,
+.modal-content,
+.producer-search-card,
+.favorites-grid > *,
+.purchases-grid > * {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.modal.active .modal-content {
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.nav-btn,
+.profile-card,
+.producer-card,
+.form-group,
+.stat-item,
+.upload-btn,
+.submit-btn,
+.logout-btn,
+.follow-btn {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* Можно кастомизировать скорость и задержку через delay-классы */
+.fade-delay-1 { animation-delay: 0.1s; }
+.fade-delay-2 { animation-delay: 0.2s; }
+.fade-delay-3 { animation-delay: 0.3s; }
+.fade-delay-4 { animation-delay: 0.4s; }
+.fade-delay-5 { animation-delay: 0.5s; }
+
+/* Общие transition эффекты */
+* {
+  transition: all 0.2s ease-in-out;
 }
