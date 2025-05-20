@@ -86,7 +86,7 @@ body {
     background: none;
     color: var(--tg-theme-text-color);
     font-weight: 600;
-    cursor: pointer;
+     
 }
 
 .role-btn.active {
@@ -124,7 +124,7 @@ body {
     color: var(--tg-theme-button-text-color);
     border: none;
     border-radius: 0 12px 12px 0;
-    cursor: pointer;
+     
 }
 
 .filters {
@@ -157,7 +157,7 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-    cursor: pointer;
+     
     transition: all 0.3s ease;
 }
 
@@ -208,10 +208,9 @@ body {
     border-radius: 16px;
     padding: 12px;
     font-weight: 600;
-    cursor: pointer;
+     
     box-shadow: 0 2px 8px rgba(245, 193, 108, 0.3);
     transition: all 0.3s ease;
-    margin-bottom: 16px;
 }
 
 .upload-btn:hover, .submit-btn:hover, .buy:hover {
@@ -284,7 +283,7 @@ body {
     background: none;
     color: var(--tg-theme-hint-color);
     font-size: 12px;
-    cursor: pointer;
+     
 }
 
 .nav-btn.active {
@@ -364,7 +363,7 @@ body {
     border: 1px solid var(--glass-border);
     color: var(--tg-theme-text-color);
     border-radius: 12px;
-    cursor: pointer;
+     
 }
 
 .submit-btn {
@@ -374,7 +373,7 @@ body {
     border: none;
     border-radius: 12px;
     padding: 12px;
-    cursor: pointer;
+     
     font-weight: 600;
 }
 
@@ -390,7 +389,7 @@ body {
     border: none;
     color: var(--tg-theme-text-color);
     font-size: 24px;
-    cursor: pointer;
+     
 }
 
 .audio-player {
@@ -415,7 +414,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
+     
 }
 
 .progress-bar {
@@ -423,7 +422,7 @@ body {
     height: 4px;
     background-color: var(--glass-border);
     border-radius: 2px;
-    cursor: pointer;
+     
 }
 
 .time {
@@ -444,7 +443,7 @@ body {
     border-radius: 12px;
     border: none;
     font-weight: 500;
-    cursor: pointer;
+     
     display: flex;
     align-items: center;
     justify-content: center;
@@ -565,7 +564,7 @@ body {
     border-radius: 12px;
     font-weight: 500;
     margin-top: 24px;
-    cursor: pointer;
+     
 }
 
 .file-preview {
@@ -620,7 +619,7 @@ body {
     border: none;
     font-size: 20px;
     margin-right: 15px;
-    cursor: pointer;
+     
     color: var(--tg-theme-text-color);
 }
 
@@ -653,7 +652,7 @@ body {
     border: none;
     padding: 10px 20px;
     border-radius: 20px;
-    cursor: pointer;
+     
     font-weight: 500;
     box-shadow: 0 2px 6px rgba(245, 193, 108, 0.3);
 }
@@ -699,7 +698,7 @@ body {
 
 .producer-link {
     color: var(--tg-theme-link-color);
-    cursor: pointer;
+     
     text-decoration: underline;
 }
 
@@ -715,7 +714,7 @@ body {
     border: none;
     font-size: 16px;
     font-weight: bold;
-    cursor: pointer;
+     
     z-index: 2;
     display: flex;
     align-items: center;
