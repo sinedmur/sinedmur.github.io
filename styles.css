@@ -211,6 +211,7 @@ body {
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(245, 193, 108, 0.3);
     transition: all 0.3s ease;
+    margin-bottom: 16px;
 }
 
 .upload-btn:hover, .submit-btn:hover, .buy:hover {
@@ -753,31 +754,53 @@ body {
 /* === АНИМАЦИИ И ПЕРЕХОДЫ === */
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
+@keyframes fadeInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
-.fade-in-up {
-  animation: fadeInUp 0.4s ease-out forwards;
+@keyframes fadeInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  80% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.fade-in         { animation: fadeIn 0.3s ease-out forwards; }
+.fade-in-up      { animation: fadeInUp 0.4s ease-out forwards; }
+.fade-in-down    { animation: fadeInDown 0.4s ease-out forwards; }
+.fade-in-left    { animation: fadeInLeft 0.4s ease-out forwards; }
+.fade-in-right   { animation: fadeInRight 0.4s ease-out forwards; }
+.scale-in        { animation: scaleIn 0.3s ease-out forwards; }
+.pop-in          { animation: popIn 0.4s ease-out forwards; }
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
 }
 
 /* === ПРИМЕНЕНИЕ АНИМАЦИЙ === */
@@ -794,7 +817,7 @@ body {
 }
 
 .modal.active .modal-content {
-  animation: fadeIn 0.3s ease-in forwards;
+  animation: scaleIn 0.3s ease-in forwards;
 }
 
 .nav-btn,
@@ -809,7 +832,7 @@ body {
   animation: fadeInUp 0.4s ease-out forwards;
 }
 
-/* Можно кастомизировать скорость и задержку через delay-классы */
+/* Кастомная задержка для появления */
 .fade-delay-1 { animation-delay: 0.1s; }
 .fade-delay-2 { animation-delay: 0.2s; }
 .fade-delay-3 { animation-delay: 0.3s; }
@@ -820,3 +843,19 @@ body {
 * {
   transition: all 0.2s ease-in-out;
 }
+
+/* Добавим немного pop-интерактивности при hover */
+button:hover,
+.nav-btn:hover,
+.role-btn:hover,
+.action-btn:hover,
+.follow-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(245, 193, 108, 0.3);
+}
+
+.beat-card:hover {
+  transform: scale(1.02) translateY(-2px);
+  box-shadow: 0 6px 18px rgba(245, 193, 108, 0.2);
+}
+
