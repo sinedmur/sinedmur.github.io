@@ -201,6 +201,7 @@ body {
 }
 
 .upload-btn, .submit-btn, .buy {
+    width: 100%;
     background: var(--accent-color);
     color: var(--tg-theme-button-text-color);
     border: none;
