@@ -208,7 +208,6 @@ async function openProducer(producerId) {
         `<button class="follow-btn" id="followBtn">
             ${producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString()) ? 'Отписаться' : 'Подписаться'}
         </button>` : ''}
-
       </div>
     `;
     
@@ -234,8 +233,8 @@ async function openProducer(producerId) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                userId: tg.initDataUnsafe.user?.id,
-                producerId
+                userId: tg.initDataUnsafe.user?.id.toString(),
+                producerId: producerId.toString()
             })
         });
         if (response.ok) {
