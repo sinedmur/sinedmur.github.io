@@ -305,6 +305,34 @@ body {
 .nav-btn i {
     font-size: 20px;
     margin-bottom: 4px;
+    position: relative;
+    width: 24px;
+    height: 24px;
+}
+
+.nav-btn img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.2s ease;
+}
+
+.nav-btn .active-icon {
+    opacity: 0;
+}
+
+.nav-btn .inactive-icon {
+    opacity: 1;
+}
+
+.nav-btn.active .active-icon {
+    opacity: 1;
+}
+
+.nav-btn.active .inactive-icon {
+    opacity: 0;
 }
 
 .modal {
