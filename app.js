@@ -26,17 +26,6 @@ async function init() {
     setupEventListeners();
     await loadBeatsFromServer();
     await loadProducers();
-    
-    // Проверяем роль пользователя при инициализации
-    if (tg.initDataUnsafe?.user?.id) {
-        const userId = tg.initDataUnsafe.user.id.toString();
-        const response = await fetch(`https://beatmarketserver.onrender.com/user/${userId}`);
-        if (response.ok) {
-            const userData = await response.json();
-            state.role = userData.role || 'buyer'; // Устанавливаем роль из профиля
-        }
-    }
-    
     updateUI();
     await loadUserData();
     setupSearch();
@@ -48,7 +37,7 @@ async function init() {
             if (payload.beatId) {
                 state.purchases.push(payload.beatId);
                 updateUI();
-                tg.showAlert('Покупка подтверждена! Теперь вы можете слувать бит полностью.');
+                tg.showAlert('Покупка подтверждена! Теперь вы можете слушать бит полностью.');
             }
         }
     });
@@ -183,97 +172,6 @@ function createAdditionalSections() {
         <div class="producer-beats-grid" id="producerBeatsGrid"></div>
     `;
     mainContent.appendChild(producerSection);
-    // Секции для битмейкера
-    const sellerContent = document.querySelector('.seller-section');
-    
-    // Секция "Мои биты"
-    const myBeatsSection = document.createElement('section');
-    myBeatsSection.className = 'my-beats-section';
-    myBeatsSection.innerHTML = `
-        <h2>Мои биты</h2>
-        <div class="my-beats-list" id="myBeatsList"></div>
-    `;
-    sellerContent.appendChild(myBeatsSection);
-    
-    // Секция "Загрузить"
-    const uploadSection = document.createElement('section');
-    uploadSection.className = 'upload-section';
-    uploadSection.innerHTML = `
-        <h2>Загрузить новый бит</h2>
-        <div class="upload-form">
-            <!-- Форма загрузки будет здесь -->
-        </div>
-    `;
-    sellerContent.appendChild(uploadSection);
-    
-    // Секция "Статистика"
-    const statsSection = document.createElement('section');
-    statsSection.className = 'stats-section';
-    statsSection.innerHTML = `
-        <h2>Статистика</h2>
-        <div class="stats-cards">
-            <div class="stat-card">
-                <h3>Всего продаж</h3>
-                <p id="totalSales">0</p>
-            </div>
-            <div class="stat-card">
-                <h3>Заработано</h3>
-                <p id="totalEarned">0 ⭐</p>
-            </div>
-            <div class="stat-card">
-                <h3>Просмотры</h3>
-                <p id="totalViews">0</p>
-            </div>
-            <div class="stat-card">
-                <h3>Лайки</h3>
-                <p id="totalLikes">0</p>
-            </div>
-        </div>
-        <div class="chart-container">
-            <canvas id="salesChart"></canvas>
-        </div>
-    `;
-    sellerContent.appendChild(statsSection);
-    
-    // Секция "Профиль битмейкера"
-    const sellerProfileSection = document.createElement('section');
-    sellerProfileSection.className = 'seller-profile-section';
-    sellerProfileSection.innerHTML = `
-        <h2>Мой профиль</h2>
-        <div class="producer-profile">
-            <div class="profile-header">
-                <div class="avatar-container">
-                    <img src="${tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150'}" 
-                         alt="Avatar" class="profile-avatar">
-                    <button class="edit-avatar-btn">✏️</button>
-                </div>
-                <h3 class="profile-name">${tg.initDataUnsafe.user?.first_name || 'Пользователь'}</h3>
-                <p class="profile-username">@${tg.initDataUnsafe.user?.username || 'username'}</p>
-            </div>
-            
-            <div class="profile-stats">
-                <div class="stat-item">
-                    <span class="stat-value" id="producerBeatsCount">0</span>
-                    <span class="stat-label">Битов</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="producerFollowers">0</span>
-                    <span class="stat-label">Подписчиков</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value" id="producerSales">0</span>
-                    <span class="stat-label">Продаж</span>
-                </div>
-            </div>
-            
-            <div class="profile-actions">
-                <button class="action-btn" id="editProfileBtn">Редактировать профиль</button>
-                <button class="action-btn" id="withdrawBtn">Вывести средства</button>
-                <button class="action-btn logout-btn" id="sellerLogoutBtn">Выйти</button>
-            </div>
-        </div>
-    `;
-    sellerContent.appendChild(sellerProfileSection);
 }
 
 // Функция для открытия карточки битмейкера
@@ -535,32 +433,14 @@ async function topUpBalance() {
 function setupEventListeners() {
     // Роли
     document.querySelectorAll('.role-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-            state.role = btn.dataset.role;
-            
-            // Обновляем роль на сервере
-            if (tg.initDataUnsafe?.user?.id) {
-                await fetch(`https://beatmarketserver.onrender.com/user/${tg.initDataUnsafe.user.id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role: state.role })
-                });
-            }
-            
-            updateUI();
-        });
-    });
-    
-    // Навигация для покупателей
-    document.querySelectorAll('.buyer-nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            state.currentSection = btn.dataset.section;
+            state.role = btn.dataset.role;
             updateUI();
         });
     });
     
-    // Навигация для битмейкеров
-    document.querySelectorAll('.seller-nav-btn').forEach(btn => {
+    // Навигация
+    document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             state.currentSection = btn.dataset.section;
             updateUI();
@@ -616,7 +496,7 @@ function setupEventListeners() {
 }
 
 function updateUI() {
-// Роли
+    // Роли
     document.querySelector('.buyer-section').classList.toggle('active', state.role === 'buyer');
     document.querySelector('.seller-section').classList.toggle('active', state.role === 'seller');
     
@@ -624,18 +504,13 @@ function updateUI() {
         btn.classList.toggle('active', btn.dataset.role === state.role);
     });
     
-    // Навигация для покупателей
-    document.querySelectorAll('.buyer-nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.section === state.currentSection && state.role === 'buyer');
+    // Навигация
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.section === state.currentSection);
     });
     
-    // Навигация для битмейкеров
-    document.querySelectorAll('.seller-nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.section === state.currentSection && state.role === 'seller');
-    });
-    
-    // Секции покупателя
-    document.querySelector('.discover-section').style.display = 
+    // Секции
+    document.querySelector('.buyer-section').style.display = 
         state.currentSection === 'discover' && state.role === 'buyer' ? 'block' : 'none';
     document.querySelector('.favorites-section').style.display = 
         state.currentSection === 'favorites' && state.role === 'buyer' ? 'block' : 'none';
@@ -643,16 +518,10 @@ function updateUI() {
         state.currentSection === 'purchases' && state.role === 'buyer' ? 'block' : 'none';
     document.querySelector('.profile-section').style.display = 
         state.currentSection === 'profile' && state.role === 'buyer' ? 'block' : 'none';
-    
-    // Секции битмейкера
-    document.querySelector('.my-beats-section').style.display = 
-        state.currentSection === 'my-beats' && state.role === 'seller' ? 'block' : 'none';
-    document.querySelector('.upload-section').style.display = 
-        state.currentSection === 'upload' && state.role === 'seller' ? 'block' : 'none';
-    document.querySelector('.stats-section').style.display = 
-        state.currentSection === 'stats' && state.role === 'seller' ? 'block' : 'none';
-    document.querySelector('.seller-profile-section').style.display = 
-        state.currentSection === 'seller-profile' && state.role === 'seller' ? 'block' : 'none';
+    document.querySelector('.seller-section').style.display = 
+        state.role === 'seller' ? 'block' : 'none';
+    document.querySelector('.producer-section').style.display = 
+        state.currentSection === 'producer' ? 'block' : 'none';
 
     // Контент
     if (state.role === 'buyer') {
