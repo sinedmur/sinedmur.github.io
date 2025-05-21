@@ -205,7 +205,10 @@ async function openProducer(producerId) {
           </div>
         </div>
         ${producer.id !== tg.initDataUnsafe.user?.id ? 
-          `<button class="follow-btn" id="followBtn">Подписаться</button>` : ''}
+        `<button class="follow-btn" id="followBtn">
+            ${producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString()) ? 'Отписаться' : 'Подписаться'}
+        </button>` : ''}
+
       </div>
     `;
     
@@ -223,8 +226,25 @@ async function openProducer(producerId) {
     updateUI();
     
     document.getElementById('backToBeats').addEventListener('click', backToBeats);
-    document.getElementById('followBtn')?.addEventListener('click', () => {
-        followProducer(producerId);
+    document.getElementById('followBtn')?.addEventListener('click', async () => {
+        const isFollowing = producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString());
+        const endpoint = isFollowing ? 'unfollow' : 'follow';
+
+        const response = await fetch(`https://beatmarketserver.onrender.com/${endpoint}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: tg.initDataUnsafe.user?.id,
+                producerId
+            })
+        });
+        if (response.ok) {
+            tg.showAlert(isFollowing ? 'Вы отписались от битмейкера' : 'Вы подписались на битмейкера');
+            await openProducer(producerId); // перезагружаем данные
+        } else {
+            const error = await response.json();
+            tg.showAlert(error.message || 'Ошибка');
+        }
     });
   } catch (error) {
     console.error('Error opening producer:', error);
