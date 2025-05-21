@@ -285,7 +285,7 @@ body {
     z-index: 100;
 }
 
-.buyer-nav-btn {
+.nav-btn {
     flex: 1;
     display: flex;
     flex-direction: column;
@@ -298,11 +298,11 @@ body {
     text-align: center;
 }
 
-.buyer-nav-btn.active {
+.nav-btn.active {
     color: var(--accent-solid);
 }
 
-.buyer-nav-btn i {
+.nav-btn i {
     width: 24px;
     height: 24px;
     display: flex;
@@ -312,7 +312,7 @@ body {
     margin-bottom: 4px;
 }
 
-.buyer-nav-btn img {
+.nav-btn img {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -322,19 +322,19 @@ body {
     transition: opacity 0.2s ease;
 }
 
-.buyer-nav-btn .active-icon {
+.nav-btn .active-icon {
     opacity: 0;
 }
 
-.buyer-nav-btn .inactive-icon {
+.nav-btn .inactive-icon {
     opacity: 1;
 }
 
-.buyer-nav-btn.active .active-icon {
+.nav-btn.active .active-icon {
     opacity: 1;
 }
 
-.buyer-nav-btn.active .inactive-icon {
+.nav-btn.active .inactive-icon {
     opacity: 0;
 }
 
@@ -862,7 +862,7 @@ body {
   animation: scaleIn 0.3s ease-in forwards;
 }
 
-.buyer-nav-btn,
+.nav-btn,
 .profile-card,
 .producer-card,
 .form-group,
@@ -888,7 +888,7 @@ body {
 
 /* Добавим немного pop-интерактивности при hover */
 button:hover,
-.buyer-nav-btn:hover,
+.nav-btn:hover,
 .role-btn:hover,
 .action-btn:hover,
 .follow-btn:hover {
@@ -900,34 +900,3 @@ button:hover,
   box-shadow: 0 6px 18px rgba(245, 193, 108, 0.2);
 }
 
-/* Стили для иконок битмейкера */
-.seller-nav-btn i {
-    position: relative;
-    width: 24px;
-    height: 24px;
-}
-
-.seller-nav-btn img {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    transition: opacity 0.2s ease;
-}
-
-.seller-nav-btn .active-icon {
-    opacity: 0;
-}
-
-.seller-nav-btn .inactive-icon {
-    opacity: 1;
-}
-
-.seller-nav-btn.active .active-icon {
-    opacity: 1;
-}
-
-.seller-nav-btn.active .inactive-icon {
-    opacity: 0;
-}
