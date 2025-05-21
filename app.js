@@ -225,26 +225,7 @@ async function openProducer(producerId) {
     updateUI();
     
     document.getElementById('backToBeats').addEventListener('click', backToBeats);
-    document.getElementById('followBtn')?.addEventListener('click', async () => {
-        const isFollowing = producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString());
-        const endpoint = isFollowing ? 'unfollow' : 'follow';
-
-        const response = await fetch(`https://beatmarketserver.onrender.com/${endpoint}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: tg.initDataUnsafe.user?.id.toString(),
-                producerId: producerId.toString()
-            })
-        });
-        if (response.ok) {
-            tg.showAlert(isFollowing ? 'Вы отписались от битмейкера' : 'Вы подписались на битмейкера');
-            await openProducer(producerId); // перезагружаем данные
-        } else {
-            const error = await response.json();
-            tg.showAlert(error.message || 'Ошибка');
-        }
-    });
+    document.getElementById('followBtn')?.addEventListener('click', toggleFollow);
   } catch (error) {
     console.error('Error opening producer:', error);
     tg.showAlert('Не удалось загрузить информацию о битмейкере');
@@ -1113,6 +1094,69 @@ async function toggleFavorite() {
     console.error('Ошибка toggleFavorite:', err);
     tg.showAlert('Сервер недоступен');
   }
+}
+
+async function toggleFollow() {
+    try {
+        if (!state.currentProducer) return;
+        
+        const producerId = state.currentProducer.id;
+        const userId = tg.initDataUnsafe.user?.id?.toString();
+        
+        if (!producerId || !userId) {
+            tg.showAlert('Ошибка: пользователь не идентифицирован');
+            return;
+        }
+
+        // Проверяем текущее состояние подписки
+        const isFollowing = state.currentProducer.followersList?.includes(userId);
+        const endpoint = isFollowing ? 'unfollow' : 'follow';
+
+        // Показываем loader
+        const followBtn = document.getElementById('followBtn');
+        if (followBtn) {
+            followBtn.disabled = true;
+            followBtn.textContent = 'Загрузка...';
+        }
+
+        const response = await fetch(`https://beatmarketserver.onrender.com/${endpoint}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: userId,
+                producerId: producerId
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.json().catch(() => ({ message: 'Неизвестная ошибка сервера' }));
+            throw new Error(error.message || `Ошибка HTTP: ${response.status}`);
+        }
+
+        // Обновляем данные продюсера
+        const producerResponse = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
+        if (producerResponse.ok) {
+            state.currentProducer = await producerResponse.json();
+            updateUI();
+            tg.showAlert(isFollowing ? 'Вы отписались от битмейкера' : 'Вы подписались на битмейкера');
+        } else {
+            throw new Error('Не удалось обновить данные продюсера');
+        }
+    } catch (error) {
+        console.error('Follow error:', error);
+        tg.showAlert(error.message || 'Произошла ошибка при подписке');
+    } finally {
+        const followBtn = document.getElementById('followBtn');
+        if (followBtn) {
+            followBtn.disabled = false;
+            followBtn.textContent = state.currentProducer?.followersList?.includes(tg.initDataUnsafe.user?.id?.toString()) 
+                ? 'Отписаться' 
+                : 'Подписаться';
+        }
+    }
 }
 
 function updatePurchaseButton() {
