@@ -1108,6 +1108,12 @@ async function toggleFollow() {
             return;
         }
 
+        // Проверяем, не пытается ли пользователь подписаться сам на себя
+        if (producerId === userId) {
+            tg.showAlert('Вы не можете подписаться на самого себя');
+            return;
+        }
+
         // Проверяем текущее состояние подписки
         const isFollowing = state.currentProducer.followersList?.includes(userId);
         const endpoint = isFollowing ? 'unfollow' : 'follow';
