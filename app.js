@@ -362,7 +362,9 @@ async function loadUserData() {
 function updateProfileSection(user) {
     const profileInfo = document.getElementById('profileInfo');
     if (!profileInfo) return;
-    
+
+    const totalEarned = state.myBeats.reduce((sum, beat) => sum + (beat.earned || 0), 0);
+
     profileInfo.innerHTML = `
         <div class="profile-card">
             <div class="profile-avatar">
@@ -383,12 +385,39 @@ function updateProfileSection(user) {
                 <span>${state.purchases.length}</span>
                 <span>Покупок</span>
             </div>
+            ${state.role === 'seller' ? `
+            <div class="stat-item">
+                <span>${totalEarned}</span>
+                <span>Заработано Stars</span>
+            </div>` : ''}
         </div>
+
+        ${state.role === 'seller' ? `
+        <button class="withdraw-btn" id="withdrawBtn">💸 Вывести</button>
+        ` : ''}
+
+        <button class="logout-btn" id="logoutBtn">Выйти</button>
     `;
 
-    // Добавляем обработчик для кнопки пополнения баланса
     document.getElementById('topupBtn')?.addEventListener('click', topUpBalance);
+    document.getElementById('logoutBtn')?.addEventListener('click', () => tg.close());
+    document.getElementById('withdrawBtn')?.addEventListener('click', () => {
+        tg.showPopup({
+            title: 'Вывод средств',
+            message: 'Вывести Stars на внешний кошелек?',
+            buttons: [
+                { id: 'yes', type: 'default', text: 'Да' },
+                { id: 'cancel', type: 'cancel', text: 'Отмена' }
+            ]
+        }, async (btnId) => {
+            if (btnId === 'yes') {
+                tg.showAlert('Запрос на вывод отправлен. Ожидайте подтверждения.');
+                // TODO: отправить запрос на backend
+            }
+        });
+    });
 }
+
 
 async function topUpBalance() {
     tg.showPopup({
@@ -431,6 +460,30 @@ async function topUpBalance() {
 }
 
 function setupEventListeners() {
+
+    document.getElementById('withdrawBtn')?.addEventListener('click', () => {
+    tg.showPopup({
+        title: 'Вывод средств',
+        message: 'Вывести Stars на внешний кошелек?',
+        buttons: [
+            { id: 'yes', type: 'default', text: 'Да' },
+            { id: 'cancel', type: 'cancel', text: 'Отмена' }
+        ]
+    }, async (btnId) => {
+        if (btnId === 'yes') {
+            // тут будет API вызов на сервер
+            tg.showAlert('Запрос на вывод отправлен. Ожидайте подтверждения.');
+        }
+        });
+    });
+
+    document.querySelectorAll('#sellerNav .nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        state.currentSection = btn.dataset.section;
+        updateUI();
+        });
+    });
+
     // Роли
     document.querySelectorAll('.role-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -499,6 +552,11 @@ function updateUI() {
     // Роли
     document.querySelector('.buyer-section').classList.toggle('active', state.role === 'buyer');
     document.querySelector('.seller-section').classList.toggle('active', state.role === 'seller');
+    document.querySelector('.bottom-nav').style.display = state.role === 'buyer' ? 'flex' : 'none';
+    document.getElementById('sellerNav').style.display = state.role === 'seller' ? 'flex' : 'none';
+    document.querySelectorAll('#sellerNav .nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.section === state.currentSection);
+    });
     
     document.querySelectorAll('.role-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.role === state.role);
@@ -546,6 +604,22 @@ function updateUI() {
         updateSellerStats();
     }
     
+if (state.role === 'seller') {
+    switch (state.currentSection) {
+        case 'upload':
+            document.getElementById('uploadModal')?.classList.add('active');
+            break;
+        case 'stats':
+            // Ничего не делаем — статистика отображается в .seller-section
+            break;
+        case 'profile':
+            if (tg.initDataUnsafe?.user) {
+                updateProfileSection(tg.initDataUnsafe.user);
+            }
+            break;
+    }
+}
+
     // Баланс
    const userBalance = document.getElementById('userBalance');
     if (userBalance) {
@@ -564,6 +638,9 @@ function updateUI() {
             showProducerSearchResults(foundProducers);
         }
     }
+    if (state.currentSection !== 'upload') {
+    document.getElementById('uploadModal')?.classList.remove('active');
+}
 }
 
 function renderBeatsGrid() {
