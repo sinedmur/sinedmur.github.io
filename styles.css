@@ -900,3 +900,43 @@ button:hover,
   box-shadow: 0 6px 18px rgba(245, 193, 108, 0.2);
 }
 
+.seller-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: none;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--glass-border);
+    padding: 8px 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-around;
+}
+
+.seller-nav .nav-btn {
+    flex: 1;
+    font-size: 14px;
+    color: var(--hint-color);
+    background: none;
+    border: none;
+    padding: 8px 0;
+}
+
+.seller-nav .nav-btn.active {
+    color: var(--accent-solid);
+}
+
+
+.withdraw-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent-solid);
+    color: var(--button-text-color);
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-top: 12px;
+    box-shadow: 0 2px 8px rgba(245, 193, 108, 0.4);
+}
