@@ -376,6 +376,7 @@ function updateProfileSection(user) {
                 <p>Баланс: ${state.balance} <span class="stars-icon">⭐</span></p>
             </div>
         </div>
+
         <div class="profile-stats">
             <div class="stat-item">
                 <span>${state.favorites.length}</span>
@@ -385,10 +386,11 @@ function updateProfileSection(user) {
                 <span>${state.purchases.length}</span>
                 <span>Покупок</span>
             </div>
+
             ${state.role === 'seller' ? `
             <div class="stat-item">
                 <span>${totalEarned}</span>
-                <span>Заработано Stars</span>
+                <span>Заработано</span>
             </div>` : ''}
         </div>
 
@@ -412,7 +414,6 @@ function updateProfileSection(user) {
         }, async (btnId) => {
             if (btnId === 'yes') {
                 tg.showAlert('Запрос на вывод отправлен. Ожидайте подтверждения.');
-                // TODO: отправить запрос на backend
             }
         });
     });
@@ -575,7 +576,7 @@ function updateUI() {
     document.querySelector('.purchases-section').style.display = 
         state.currentSection === 'purchases' && state.role === 'buyer' ? 'block' : 'none';
     document.querySelector('.profile-section').style.display = 
-        state.currentSection === 'profile' && state.role === 'buyer' ? 'block' : 'none';
+        state.currentSection === 'profile' ? 'block' : 'none';
     document.querySelector('.seller-section').style.display = 
         state.role === 'seller' ? 'block' : 'none';
     document.querySelector('.producer-section').style.display = 
@@ -610,7 +611,6 @@ if (state.role === 'seller') {
             document.getElementById('uploadModal')?.classList.add('active');
             break;
         case 'stats':
-            // Ничего не делаем — статистика отображается в .seller-section
             break;
         case 'profile':
             if (tg.initDataUnsafe?.user) {
@@ -815,8 +815,6 @@ async function deleteBeat(beatId) {
                     return;
                 }
 
-                console.log('Deleting beat:', { beatId, userId }); // Логирование для отладки
-
                 const response = await fetch(`https://beatmarketserver.onrender.com/beat/${beatId}`, {
                     method: 'DELETE',
                     headers: {
@@ -828,7 +826,6 @@ async function deleteBeat(beatId) {
                 });
 
                 const result = await response.json();
-                console.log('Delete response:', result); // Логирование ответа
 
                 if (response.ok) {
                     // Обновляем состояние
