@@ -886,7 +886,7 @@ function getProducerIdByBeat(beatId) {
   
   // Для старых битов (если нет ownerTelegramId)
   const producer = state.producers.find(p => p.beats.includes(beatId));
-  return producer ? producer.id : '';
+  return producer ? producer._id : '';
 }
 
 async function followProducer(producerId) {
@@ -970,7 +970,7 @@ function showProducerSearchResults(producers) {
             </div>
         `;
         card.addEventListener('click', () => {
-            openProducer(producer.id);
+            openProducer(producer._id);
             // Сохраняем состояние поиска
             state.currentSectionBeforeProducer = 'discover';
         });
@@ -1447,7 +1447,7 @@ function updateProducersBeats() {
     producer = {
       id: producerId,
       name: username,
-      avatar: tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150',
+      avatar: tg.initDataUnsafe.user?.photo_url,
       beats: userBeats.map(beat => beat._id || beat.id),
       followers: 0
     };
