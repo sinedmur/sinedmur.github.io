@@ -1392,7 +1392,7 @@ async function uploadNewBeat() {
     formData.append('audio', audioFile);
     formData.append('cover', coverFile);
     formData.append('ownerTelegramId', tg.initDataUnsafe.user?.id.toString());
-
+    formData.append('photo_url', tg.initDataUnsafe.user?.photo_url || '');
 try {
     const response = await fetch('https://beatmarketserver.onrender.com/upload', {
         method: 'POST',
