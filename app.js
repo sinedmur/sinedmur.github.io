@@ -1430,26 +1430,26 @@ try {
 
 // 5. Новая функция для обновления связей продюсеров
 function updateProducersBeats() {
-  const currentUserId = tg.initDataUnsafe.user?.id;
+  const currentUserId = tg.initDataUnsafe.user?.id?.toString();
   if (!currentUserId) return;
 
   // Находим все биты текущего пользователя
-  const userBeats = state.beats.filter(beat => beat.ownerTelegramId === currentUserId);
-  
-  // Создаем ID продюсера на основе Telegram ID
-  const producerId = `prod_${currentUserId}`;
+  const userBeats = state.beats.filter(beat => 
+    beat.ownerTelegramId?.toString() === currentUserId
+  );
   
   // Находим или создаем продюсера
-  let producer = state.producers.find(p => p.id === producerId);
+  let producer = state.producers.find(p => p.id === currentUserId);
   const username = tg.initDataUnsafe.user?.username || 'Unknown';
   
   if (!producer) {
     producer = {
-      id: producerId,
+      id: currentUserId,
       name: username,
-      avatar: tg.initDataUnsafe.user?.photo_url,
+      avatar: tg.initDataUnsafe.user?.photo_url || 'https://via.placeholder.com/150',
       beats: userBeats.map(beat => beat._id || beat.id),
-      followers: 0
+      followers: 0,
+      followersList: []
     };
     state.producers.push(producer);
   } else {
