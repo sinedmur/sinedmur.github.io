@@ -174,7 +174,8 @@ async function updateTelegramBalance(newBalance) {
 
 function createAdditionalSections() {
     const mainContent = document.querySelector('.main-content');
-    
+    if (!mainContent) return;
+
     // Секция избранного
     const favoritesSection = document.createElement('section');
     favoritesSection.className = 'favorites-section';
@@ -222,6 +223,10 @@ function createAdditionalSections() {
         }
     });
 
+    // Удаляем старую секцию если существует
+    const oldSection = document.querySelector('.producer-section');
+    if (oldSection) oldSection.remove();
+
     // Секция битмейкера
     const producerSection = document.createElement('section');
     producerSection.className = 'producer-section';
@@ -239,78 +244,105 @@ function createAdditionalSections() {
 
 // Функция для открытия карточки битмейкера
 async function openProducer(producerId) {
-  try {
-    state.currentSectionBeforeProducer = state.currentSection;
-    
-    // Загружаем информацию о продюсере с сервера
-    const response = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
-    if (!response.ok) throw new Error('Producer not found');
-    
-    const producer = await response.json();
-    state.currentProducer = producer;
-    state.currentSection = 'producer';
-    
-    document.getElementById('producerName').textContent = producer.name;
-    
-    const producerInfo = document.getElementById('producerInfo');
-    producerInfo.innerHTML = `
-      <div class="producer-card">
-        <img src="${producer.avatar || 'https://via.placeholder.com/150'}" 
-             alt="${producer.name}" class="producer-avatar">
-        <div class="producer-stats">
-          <div class="stat-item">
-            <span>${producer.beats?.length || 0}</span>
-            <span>Битов</span>
-          </div>
-          <div class="stat-item">
-            <span>${producer.followers || 0}</span>
-            <span>Подписчиков</span>
-          </div>
-        </div>
-        ${producer.id !== tg.initDataUnsafe.user?.id ? 
-        `<button class="follow-btn" id="followBtn">
-            ${producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString()) ? 'Отписаться' : 'Подписаться'}
-        </button>` : ''}
-      </div>
-    `;
-    
-    // Загружаем биты продюсера
-    const beatsResponse = await fetch(`https://beatmarketserver.onrender.com/beats?producer=${producerId}`);
-    const producerBeats = beatsResponse.ok ? await beatsResponse.json() : [];
-    
-    // Отображаем биты
-    const grid = document.getElementById('producerBeatsGrid');
-    grid.innerHTML = '';
-    producerBeats.forEach(beat => {
-        grid.appendChild(createBeatCard(beat));
-    });
-    
-    updateUI();
-    
-    document.getElementById('backToBeats').addEventListener('click', backToBeats);
-    document.getElementById('followBtn')?.addEventListener('click', toggleFollow);
-  } catch (error) {
-    console.error('Error opening producer:', error);
-    tg.showAlert('Не удалось загрузить информацию о битмейкере');
-    backToBeats();
-  }
+    try {
+        // Сначала создаем/проверяем секцию
+        if (!document.querySelector('.producer-section')) {
+            createAdditionalSections();
+        }
+
+        state.currentSectionBeforeProducer = state.currentSection;
+        state.currentSection = 'producer';
+        
+        // Показываем loader
+        const producerSection = document.querySelector('.producer-section');
+        producerSection.innerHTML = '<div class="loader">Загрузка...</div>';
+        producerSection.style.display = 'block';
+
+        // Загружаем данные
+        const response = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
+        if (!response.ok) throw new Error('Producer not found');
+        
+        const producer = await response.json();
+        state.currentProducer = producer;
+
+        // Заполняем данные
+        document.getElementById('producerName').textContent = producer.name || 'Битмейкер';
+        
+        const producerInfo = document.getElementById('producerInfo');
+        producerInfo.innerHTML = `
+            <div class="producer-card">
+                <img src="${producer.avatar || 'default-avatar.jpg'}" 
+                     alt="${producer.name}" class="producer-avatar">
+                <div class="producer-stats">
+                    <div class="stat-item">
+                        <span>${producer.beatsCount || 0}</span>
+                        <span>Битов</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>${producer.followers || 0}</span>
+                        <span>Подписчиков</span>
+                    </div>
+                </div>
+                ${!producer.isCurrentUser ? 
+                    `<button class="follow-btn" id="followBtn">
+                        ${producer.isFollowing ? 'Отписаться' : 'Подписаться'}
+                    </button>` : ''}
+            </div>
+        `;
+
+        // Загружаем биты
+        const beatsResponse = await fetch(`https://beatmarketserver.onrender.com/beats?producer=${producerId}`);
+        const beats = beatsResponse.ok ? await beatsResponse.json() : [];
+        
+        const beatsGrid = document.getElementById('producerBeatsGrid');
+        beatsGrid.innerHTML = beats.length ? 
+            beats.map(beat => createBeatCard(beat)).join('') : 
+            '<p class="empty">Нет доступных битов</p>';
+
+        // Обновляем UI
+        document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+        producerSection.style.display = 'block';
+
+    } catch (error) {
+        console.error('Error opening producer:', error);
+        const producerSection = document.querySelector('.producer-section');
+        if (producerSection) {
+            producerSection.innerHTML = `
+                <div class="error">
+                    Ошибка загрузки данных
+                    <button id="backBtn">Назад</button>
+                </div>
+            `;
+            document.getElementById('backBtn').onclick = backToBeats;
+        }
+    }
 }
 
 // В функции backToBeats (при клике на кнопку "Назад")
 function backToBeats() {
-    if (state.currentSectionBeforeProducer === 'discover' && state.isSearchingProducers) {
+    // Сбрасываем состояние поиска, если нужно
+    if (state.isSearchingProducers) {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.value = state.lastSearchQuery;
-            const producerName = state.lastSearchQuery.substring(1);
-            const foundProducers = state.producers.filter(p => 
-                p.name.toLowerCase().includes(producerName)
-            );
-            showProducerSearchResults(foundProducers);
         }
     }
+    
+    // Возвращаемся к предыдущей секции
     state.currentSection = state.currentSectionBeforeProducer || 'discover';
+    state.currentProducer = null;
+    
+    // Обновляем UI
     updateUI();
+    
+    // Если был поиск, показываем результаты снова
+    if (state.isSearchingProducers && state.lastSearchQuery) {
+        const producerName = state.lastSearchQuery.substring(1);
+        const foundProducers = state.producers.filter(p => 
+            p.name.toLowerCase().includes(producerName)
+        );
+        showProducerSearchResults(foundProducers);
+    }
 }
 
 // Функция для отображения битов битмейкера
@@ -642,6 +674,13 @@ function updateUI() {
             );
             showProducerSearchResults(foundProducers);
         }
+    }
+        
+    if (state.currentSection === 'producer') {
+        const producerSection = document.querySelector('.producer-section');
+        if (!producerSection) createAdditionalSections();
+        document.querySelectorAll('section').forEach(s => s.style.display = 'none');
+        producerSection.style.display = 'block';
     }
 }
 
