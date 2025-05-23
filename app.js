@@ -23,6 +23,7 @@ const state = {
 async function init() {
     createAdditionalSections();
     await fetchUserBalance();
+    setupNavigation();
     setupEventListeners();
     await loadBeatsFromServer();
     await loadProducers();
@@ -40,6 +41,68 @@ async function init() {
                 tg.showAlert('Покупка подтверждена! Теперь вы можете слушать бит полностью.');
             }
         }
+    });
+}
+
+// Новая функция для настройки навигации
+function setupNavigation() {
+    const navContainer = document.querySelector('.bottom-nav');
+    const buyerNavTemplate = document.getElementById('buyerNav');
+    const sellerNavTemplate = document.getElementById('sellerNav');
+    
+    // Проверяем, что шаблоны существуют
+    if (!buyerNavTemplate || !sellerNavTemplate) {
+        console.error('Navigation templates not found');
+        return;
+    }
+    
+    // Определяем текущую активную секцию
+    const currentActiveBtn = navContainer.querySelector('.nav-btn.active');
+    let currentSection = currentActiveBtn ? currentActiveBtn.dataset.section : 
+                       (state.role === 'buyer' ? 'discover' : 'myBeats');
+    
+    // Очищаем навигацию
+    navContainer.innerHTML = '';
+    
+    // Клонируем и добавляем соответствующий шаблон
+    let newNav;
+    if (state.role === 'buyer') {
+        newNav = buyerNavTemplate.content.cloneNode(true);
+    } else {
+        newNav = sellerNavTemplate.content.cloneNode(true);
+    }
+    
+    navContainer.appendChild(newNav);
+    
+    // Устанавливаем активную кнопку
+    const newActiveBtn = navContainer.querySelector(`.nav-btn[data-section="${currentSection}"]`);
+    if (newActiveBtn) {
+        newActiveBtn.classList.add('active');
+        state.currentSection = currentSection;
+    } else {
+        // Если не нашли кнопку для текущей секции, устанавливаем первую доступную
+        const firstNavBtn = navContainer.querySelector('.nav-btn');
+        if (firstNavBtn) {
+            firstNavBtn.classList.add('active');
+            state.currentSection = firstNavBtn.dataset.section;
+        }
+    }
+    
+    // Обновляем обработчики событий
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = btn.dataset.section;
+            state.currentSection = section;
+            
+            if (section === 'upload') {
+                document.getElementById('uploadModal').classList.add('active');
+            } else {
+                document.getElementById('uploadModal').classList.remove('active');
+            }
+            
+            updateUI();
+        });
     });
 }
 
@@ -362,9 +425,7 @@ async function loadUserData() {
 function updateProfileSection(user) {
     const profileInfo = document.getElementById('profileInfo');
     if (!profileInfo) return;
-
-    const totalEarned = state.myBeats.reduce((sum, beat) => sum + (beat.earned || 0), 0);
-
+    
     profileInfo.innerHTML = `
         <div class="profile-card">
             <div class="profile-avatar">
@@ -376,7 +437,6 @@ function updateProfileSection(user) {
                 <p>Баланс: ${state.balance} <span class="stars-icon">⭐</span></p>
             </div>
         </div>
-
         <div class="profile-stats">
             <div class="stat-item">
                 <span>${state.favorites.length}</span>
@@ -386,39 +446,12 @@ function updateProfileSection(user) {
                 <span>${state.purchases.length}</span>
                 <span>Покупок</span>
             </div>
-
-            ${state.role === 'seller' ? `
-            <div class="stat-item">
-                <span>${totalEarned}</span>
-                <span>Заработано</span>
-            </div>` : ''}
         </div>
-
-        ${state.role === 'seller' ? `
-        <button class="withdraw-btn" id="withdrawBtn">💸 Вывести</button>
-        ` : ''}
-
-        <button class="logout-btn" id="logoutBtn">Выйти</button>
     `;
 
+    // Добавляем обработчик для кнопки пополнения баланса
     document.getElementById('topupBtn')?.addEventListener('click', topUpBalance);
-    document.getElementById('logoutBtn')?.addEventListener('click', () => tg.close());
-    document.getElementById('withdrawBtn')?.addEventListener('click', () => {
-        tg.showPopup({
-            title: 'Вывод средств',
-            message: 'Вывести Stars на внешний кошелек?',
-            buttons: [
-                { id: 'yes', type: 'default', text: 'Да' },
-                { id: 'cancel', type: 'cancel', text: 'Отмена' }
-            ]
-        }, async (btnId) => {
-            if (btnId === 'yes') {
-                tg.showAlert('Запрос на вывод отправлен. Ожидайте подтверждения.');
-            }
-        });
-    });
 }
-
 
 async function topUpBalance() {
     tg.showPopup({
@@ -461,34 +494,11 @@ async function topUpBalance() {
 }
 
 function setupEventListeners() {
-
-    document.getElementById('withdrawBtn')?.addEventListener('click', () => {
-    tg.showPopup({
-        title: 'Вывод средств',
-        message: 'Вывести Stars на внешний кошелек?',
-        buttons: [
-            { id: 'yes', type: 'default', text: 'Да' },
-            { id: 'cancel', type: 'cancel', text: 'Отмена' }
-        ]
-    }, async (btnId) => {
-        if (btnId === 'yes') {
-            // тут будет API вызов на сервер
-            tg.showAlert('Запрос на вывод отправлен. Ожидайте подтверждения.');
-        }
-        });
-    });
-
-    document.querySelectorAll('#sellerNav .nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        state.currentSection = btn.dataset.section;
-        updateUI();
-        });
-    });
-
     // Роли
     document.querySelectorAll('.role-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             state.role = btn.dataset.role;
+            setupNavigation(); // Обновляем навигацию при смене роли
             updateUI();
         });
     });
@@ -501,6 +511,13 @@ function setupEventListeners() {
         });
     });
     
+    // Навигация для битмейкера
+    document.querySelectorAll('.nav-btn[data-section="upload"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.getElementById('uploadModal').classList.add('active');
+        });
+    });
+
     // Загрузка битов
     document.getElementById('uploadBeatBtn')?.addEventListener('click', () => {
         document.getElementById('uploadModal').classList.add('active');
@@ -553,11 +570,6 @@ function updateUI() {
     // Роли
     document.querySelector('.buyer-section').classList.toggle('active', state.role === 'buyer');
     document.querySelector('.seller-section').classList.toggle('active', state.role === 'seller');
-    document.querySelector('.bottom-nav').style.display = state.role === 'buyer' ? 'flex' : 'none';
-    document.getElementById('sellerNav').style.display = state.role === 'seller' ? 'flex' : 'none';
-    document.querySelectorAll('#sellerNav .nav-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.section === state.currentSection);
-    });
     
     document.querySelectorAll('.role-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.role === state.role);
@@ -568,58 +580,51 @@ function updateUI() {
         btn.classList.toggle('active', btn.dataset.section === state.currentSection);
     });
     
-    // Секции
-    document.querySelector('.buyer-section').style.display = 
-        state.currentSection === 'discover' && state.role === 'buyer' ? 'block' : 'none';
-    document.querySelector('.favorites-section').style.display = 
-        state.currentSection === 'favorites' && state.role === 'buyer' ? 'block' : 'none';
-    document.querySelector('.purchases-section').style.display = 
-        state.currentSection === 'purchases' && state.role === 'buyer' ? 'block' : 'none';
-    document.querySelector('.profile-section').style.display = 
-        state.currentSection === 'profile' ? 'block' : 'none';
-    document.querySelector('.seller-section').style.display = 
-        state.role === 'seller' ? 'block' : 'none';
-    document.querySelector('.producer-section').style.display = 
-        state.currentSection === 'producer' ? 'block' : 'none';
-
-    // Контент
+    // Скрываем все секции сначала
+    document.querySelectorAll('.buyer-section, .seller-section, .favorites-section, .purchases-section, .profile-section, .producer-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    
     if (state.role === 'buyer') {
+        // Показываем соответствующие секции для покупателя
         switch(state.currentSection) {
             case 'discover':
+                document.querySelector('.buyer-section').style.display = 'block';
                 renderBeatsGrid();
                 break;
             case 'favorites':
+                document.querySelector('.favorites-section').style.display = 'block';
                 renderFavorites();
                 break;
             case 'purchases':
+                document.querySelector('.purchases-section').style.display = 'block';
                 renderPurchases();
                 break;
             case 'profile':
-                if (tg.initDataUnsafe?.user) {
-                    updateProfileSection(tg.initDataUnsafe.user);
-                }
+                document.querySelector('.profile-section').style.display = 'block';
+                if (tg.initDataUnsafe?.user) updateProfileSection(tg.initDataUnsafe.user);
                 break;
         }
     } else {
-        renderMyBeats();
-        updateSellerStats();
+        // Показываем соответствующие секции для битмейкера
+        document.querySelector('.seller-section').style.display = 'block';
+        
+        switch(state.currentSection) {
+            case 'myBeats':
+                renderMyBeats();
+                break;
+            case 'upload':
+                document.getElementById('uploadModal').classList.add('active');
+                break;
+            case 'stats':
+                updateSellerStats();
+                break;
+            case 'profile':
+                if (tg.initDataUnsafe?.user) updateProfileSection(tg.initDataUnsafe.user);
+                break;
+        }
     }
     
-if (state.role === 'seller') {
-    switch (state.currentSection) {
-        case 'upload':
-            document.getElementById('uploadModal')?.classList.add('active');
-            break;
-        case 'stats':
-            break;
-        case 'profile':
-            if (tg.initDataUnsafe?.user) {
-                updateProfileSection(tg.initDataUnsafe.user);
-            }
-            break;
-    }
-}
-
     // Баланс
    const userBalance = document.getElementById('userBalance');
     if (userBalance) {
@@ -638,9 +643,6 @@ if (state.role === 'seller') {
             showProducerSearchResults(foundProducers);
         }
     }
-    if (state.currentSection !== 'upload') {
-    document.getElementById('uploadModal')?.classList.remove('active');
-}
 }
 
 function renderBeatsGrid() {
@@ -815,6 +817,8 @@ async function deleteBeat(beatId) {
                     return;
                 }
 
+                console.log('Deleting beat:', { beatId, userId }); // Логирование для отладки
+
                 const response = await fetch(`https://beatmarketserver.onrender.com/beat/${beatId}`, {
                     method: 'DELETE',
                     headers: {
@@ -826,6 +830,7 @@ async function deleteBeat(beatId) {
                 });
 
                 const result = await response.json();
+                console.log('Delete response:', result); // Логирование ответа
 
                 if (response.ok) {
                     // Обновляем состояние
