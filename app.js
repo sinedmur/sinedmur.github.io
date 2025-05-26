@@ -16,7 +16,9 @@ const state = {
     lastSearchQuery: '',
     currentSection: 'discover',
     currentProducer: null,
-    producers: []
+    producers: [],
+    gangs: [],
+    currentGang: null
 };
 
 // Инициализация приложения
@@ -27,6 +29,7 @@ async function init() {
     setupEventListeners();
     await loadBeatsFromServer();
     await loadProducers();
+    await loadGangs();
     updateUI();
     await loadUserData();
     setupSearch();
@@ -117,6 +120,17 @@ async function loadProducers() {
     }
 }
 
+async function loadGangs() {
+    try {
+        const response = await fetch('https://beatmarketserver.onrender.com/gangs');
+        if (response.ok) {
+            state.gangs = await response.json();
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки гэнгов:', error);
+    }
+}
+
 async function loadBeatsFromServer() {
     try {
         const response = await fetch('https://beatmarketserver.onrender.com/beats');
@@ -159,19 +173,6 @@ async function fetchUserBalance() {
     }
 }
 
-// Функция для обновления баланса через Telegram Mini Apps
-async function updateTelegramBalance(newBalance) {
-    try {
-        if (tg?.CloudStorage?.setItem) {
-            await tg.CloudStorage.setItem('userBalance', newBalance.toString());
-        }
-        // В реальном приложении здесь должен быть вызов вашего backend API
-        // для синхронизации баланса с сервером
-    } catch (error) {
-        console.error('Error updating balance:', error);
-    }
-}
-
 function createAdditionalSections() {
     const mainContent = document.querySelector('.main-content');
     if (!mainContent) return;
@@ -200,14 +201,90 @@ function createAdditionalSections() {
     profileSection.innerHTML = `
         <h2>Мой профиль</h2>
         <div class="profile-info" id="profileInfo"></div>
+        <div class="gang-info" id="gangInfo"></div>
         <button class="logout-btn" id="logoutBtn">Выйти</button>
     `;
     mainContent.appendChild(profileSection);
+    
+    // Секция статистики битмейкера
+    const statsSection = document.createElement('section');
+    statsSection.className = 'stats-section';
+    statsSection.innerHTML = `
+        <h2>Статистика</h2>
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Всего продаж</h3>
+                <p id="totalSales">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Заработано</h3>
+                <p id="totalEarned">0 ⭐</p>
+            </div>
+            <div class="stat-card">
+                <h3>Битов</h3>
+                <p id="totalBeats">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Подписчиков</h3>
+                <p id="totalFollowers">0</p>
+            </div>
+        </div>
+    `;
+    mainContent.appendChild(statsSection);
+    
+    // Секция загрузки
+    const uploadSection = document.createElement('section');
+    uploadSection.className = 'upload-section';
+    uploadSection.innerHTML = `
+        <h2>Загрузить новый контент</h2>
+        <div class="upload-options">
+            <button class="upload-option-btn" data-type="beat">
+                <i class="icon-music"></i>
+                <span>Бит</span>
+            </button>
+            <button class="upload-option-btn" data-type="beatpack">
+                <i class="icon-folder"></i>
+                <span>Битпак</span>
+            </button>
+            <button class="upload-option-btn" data-type="kit">
+                <i class="icon-drum"></i>
+                <span>Кит</span>
+            </button>
+            <button class="upload-option-btn" data-type="service">
+                <i class="icon-service"></i>
+                <span>Услуга</span>
+            </button>
+        </div>
+    `;
+    mainContent.appendChild(uploadSection);
+    
+    // Секция моих битов
+    const myBeatsSection = document.createElement('section');
+    myBeatsSection.className = 'my-beats-section';
+    myBeatsSection.innerHTML = `
+        <h2>Мои биты</h2>
+        <div class="my-beats-list" id="myBeatsList"></div>
+    `;
+    mainContent.appendChild(myBeatsSection);
+    
+    // Секция продюсера
+    const producerSection = document.createElement('section');
+    producerSection.className = 'producer-section';
+    producerSection.innerHTML = `
+        <div class="producer-header" id="producerHeader">
+            <button class="back-btn" id="backToBeats">← Назад</button>
+            <h2 id="producerName"></h2>
+        </div>
+        <div class="producer-info" id="producerInfo"></div>
+        <h3>Биты этого автора</h3>
+        <div class="producer-beats-grid" id="producerBeatsGrid"></div>
+    `;
+    mainContent.appendChild(producerSection);
+    
     // Добавляем превью обложки
     document.getElementById('beatCoverFile')?.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (file) {
-            // Проверяем тип файла
             if (!file.type.match('image.*')) {
                 tg.showAlert('Пожалуйста, выберите файл изображения');
                 e.target.value = '';
@@ -222,88 +299,77 @@ function createAdditionalSections() {
             reader.readAsDataURL(file);
         }
     });
-
-    // Удаляем старую секцию если существует
-    const oldSection = document.querySelector('.producer-section');
-    if (oldSection) oldSection.remove();
-
-    // Секция битмейкера
-    const producerSection = document.createElement('section');
-    producerSection.className = 'producer-section';
-    producerSection.innerHTML = `
-        <div class="producer-header" id="producerHeader">
-            <button class="back-btn" id="backToBeats">← Назад</button>
-            <h2 id="producerName"></h2>
-        </div>
-        <div class="producer-info" id="producerInfo"></div>
-        <h3>Биты этого автора</h3>
-        <div class="producer-beats-grid" id="producerBeatsGrid"></div>
-    `;
-    mainContent.appendChild(producerSection);
 }
 
 // Функция для открытия карточки битмейкера
 async function openProducer(producerId) {
-  try {
-    state.currentSectionBeforeProducer = state.currentSection;
-    
-    // Загружаем информацию о продюсере с сервера
-    const response = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
-    if (!response.ok) throw new Error('Producer not found');
-    
-    const producer = await response.json();
-    state.currentProducer = producer;
-    state.currentSection = 'producer';
-    
-    document.getElementById('producerName').textContent = producer.name;
-    
-    const producerInfo = document.getElementById('producerInfo');
-    producerInfo.innerHTML = `
-      <div class="producer-card">
-        <img src="${producer.avatar || 'https://via.placeholder.com/150'}" 
-             alt="${producer.name}" class="producer-avatar">
-        <div class="producer-stats">
-          <div class="stat-item">
-            <span>${producer.beats?.length || 0}</span>
-            <span>Битов</span>
-          </div>
-          <div class="stat-item">
-            <span>${producer.followers || 0}</span>
-            <span>Подписчиков</span>
-          </div>
-        </div>
-        ${producer.id !== tg.initDataUnsafe.user?.id ? 
-        `<button class="follow-btn" id="followBtn">
-            ${producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString()) ? 'Отписаться' : 'Подписаться'}
-        </button>` : ''}
-      </div>
-    `;
-    
-    // Загружаем биты продюсера
-    const beatsResponse = await fetch(`https://beatmarketserver.onrender.com/beats?producer=${producerId}`);
-    const producerBeats = beatsResponse.ok ? await beatsResponse.json() : [];
-    
-    // Отображаем биты
-    const grid = document.getElementById('producerBeatsGrid');
-    grid.innerHTML = '';
-    producerBeats.forEach(beat => {
-        grid.appendChild(createBeatCard(beat));
-    });
-    
-    updateUI();
-    
-    document.getElementById('backToBeats').addEventListener('click', backToBeats);
-    document.getElementById('followBtn')?.addEventListener('click', toggleFollow);
-  } catch (error) {
-    console.error('Error opening producer:', error);
-    tg.showAlert('Не удалось загрузить информацию о битмейкере');
-    backToBeats();
-  }
+    try {
+        state.currentSectionBeforeProducer = state.currentSection;
+        
+        const response = await fetch(`https://beatmarketserver.onrender.com/producer/${producerId}`);
+        if (!response.ok) throw new Error('Producer not found');
+        
+        const producer = await response.json();
+        state.currentProducer = producer;
+        state.currentSection = 'producer';
+        
+        document.getElementById('producerName').textContent = producer.name;
+        
+        const producerInfo = document.getElementById('producerInfo');
+        producerInfo.innerHTML = `
+            <div class="producer-card">
+                <img src="${producer.avatar || 'https://via.placeholder.com/150'}" 
+                     alt="${producer.name}" class="producer-avatar">
+                <div class="producer-stats">
+                    <div class="stat-item">
+                        <span>${producer.beats?.length || 0}</span>
+                        <span>Битов</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>${producer.followers || 0}</span>
+                        <span>Подписчиков</span>
+                    </div>
+                </div>
+                ${producer.id !== tg.initDataUnsafe.user?.id ? 
+                `<button class="follow-btn" id="followBtn">
+                    ${producer.followersList?.includes(tg.initDataUnsafe.user?.id.toString()) ? 'Отписаться' : 'Подписаться'}
+                </button>` : ''}
+            </div>
+            ${producer.gang ? `
+            <div class="producer-gang">
+                <h4>Гэнг: ${producer.gang.name}</h4>
+                <div class="gang-members">
+                    ${producer.gang.members.map(member => `
+                        <div class="gang-member">
+                            <img src="${member.avatar || 'https://via.placeholder.com/50'}" alt="${member.name}">
+                            <span>${member.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>` : ''}
+        `;
+        
+        const beatsResponse = await fetch(`https://beatmarketserver.onrender.com/beats?producer=${producerId}`);
+        const producerBeats = beatsResponse.ok ? await beatsResponse.json() : [];
+        
+        const grid = document.getElementById('producerBeatsGrid');
+        grid.innerHTML = '';
+        producerBeats.forEach(beat => {
+            grid.appendChild(createBeatCard(beat));
+        });
+        
+        updateUI();
+        
+        document.getElementById('backToBeats').addEventListener('click', backToBeats);
+        document.getElementById('followBtn')?.addEventListener('click', toggleFollow);
+    } catch (error) {
+        console.error('Error opening producer:', error);
+        tg.showAlert('Не удалось загрузить информацию о битмейкере');
+        backToBeats();
+    }
 }
 
-// В функции backToBeats (при клике на кнопку "Назад")
 function backToBeats() {
-    // Сбрасываем состояние поиска, если нужно
     if (state.isSearchingProducers) {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
@@ -311,14 +377,11 @@ function backToBeats() {
         }
     }
     
-    // Возвращаемся к предыдущей секции
     state.currentSection = state.currentSectionBeforeProducer || 'discover';
     state.currentProducer = null;
     
-    // Обновляем UI
     updateUI();
     
-    // Если был поиск, показываем результаты снова
     if (state.isSearchingProducers && state.lastSearchQuery) {
         const producerName = state.lastSearchQuery.substring(1);
         const foundProducers = state.producers.filter(p => 
@@ -328,115 +391,37 @@ function backToBeats() {
     }
 }
 
-// Функция для отображения битов битмейкера
-function renderProducerBeats(beatIds) {
-    const grid = document.getElementById('producerBeatsGrid');
-    grid.innerHTML = '';
-    
-    beatIds.forEach(beatId => {
-        const beat = state.beats.find(b => b.id === beatId);
-        if (beat) {
-            grid.appendChild(createBeatCard(beat));
-        }
-    });
-}
-
-function loadMockData() {
-     if (state.beats.length === 0) {
-    state.beats = [
-        {
-            id: '1',
-            title: 'Dark Trap Beat',
-            genre: 'trap',
-            bpm: 140,
-            price: 50,
-            cover: 'https://cdn-images.dzcdn.net/images/cover/9b727c3451bd7ef32f18bff6711e4794/0x1900-000000-80-0-0.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-            artist: 'prod.by.night',
-            duration: 180,
-            uploadDate: '2025-05-10'
-        },
-        {
-            id: '2',
-            title: 'Melodic Drill',
-            genre: 'drill',
-            bpm: 150,
-            price: 75,
-            cover: 'https://i1.sndcdn.com/artworks-RW1l8QJFfKfDCT6e-GRzRVg-t500x500.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
-            artist: 'icybeats',
-            duration: 210,
-            uploadDate: '2025-05-08'
-        },
-        {
-            id: '3',
-            title: 'R&B Vibes',
-            genre: 'rnb',
-            bpm: 90,
-            price: 40,
-            cover: 'https://i1.sndcdn.com/artworks-ajILrkHGlLnAOcCN-o3uaKg-t500x500.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3',
-            artist: 'soulfulprod',
-            duration: 195,
-            uploadDate: '2025-05-05'
-        }
-    ];
-    }
-    if (state.myBeats.length === 0) {
-    state.myBeats = [
-        {
-            id: '5',
-            title: 'My First Beat',
-            genre: 'trap',
-            bpm: 140,
-            price: 40,
-            cover: 'https://i1.sndcdn.com/artworks-000606959152-f623qa-t500x500.jpg',
-            audio: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3',
-            artist: tg.initDataUnsafe.user?.username || 'You',
-            duration: 185,
-            uploadDate: '2025-04-28',
-            sales: 3,
-            earned: 120
-        }
-    ];
-    }
-}
-
 async function loadUserData() {
-  if (tg.initDataUnsafe?.user) {
-    const userId = tg.initDataUnsafe.user.id;
-    try {
-      const res = await fetch(`https://beatmarketserver.onrender.com/user/${userId}`);
-      const userData = await res.json();
+    if (tg.initDataUnsafe?.user) {
+        const userId = tg.initDataUnsafe.user.id;
+        try {
+            const res = await fetch(`https://beatmarketserver.onrender.com/user/${userId}`);
+            const userData = await res.json();
 
-      // Сохраняем в локальное хранилище
-      if (tg?.CloudStorage?.setItem) {
-        await tg.CloudStorage.setItem('favorites', JSON.stringify(userData.favorites || []));
-        await tg.CloudStorage.setItem('purchases', JSON.stringify(userData.purchases || []));
-      }
+            if (tg?.CloudStorage?.setItem) {
+                await tg.CloudStorage.setItem('favorites', JSON.stringify(userData.favorites || []));
+                await tg.CloudStorage.setItem('purchases', JSON.stringify(userData.purchases || []));
+            }
 
-      // Обновляем состояние
-      state.favorites = userData.favorites?.map(b => b._id?.toString() || b.toString()) || [];
-      state.purchases = userData.purchases?.map(b => b._id?.toString() || b.toString()) || [];
-      
-      updateProfileSection(userData);
-    } catch (error) {
-      console.error('Error loading user data:', error);
-      // Пробуем загрузить из локального хранилища
-      if (tg?.CloudStorage?.getItem) {
-        const favs = await tg.CloudStorage.getItem('favorites');
-        const purchases = await tg.CloudStorage.getItem('purchases');
-        state.favorites = favs ? JSON.parse(favs) : [];
-        state.purchases = purchases ? JSON.parse(purchases) : [];
-      } else {
-        state.favorites = [];
-        state.purchases = [];
-      }
+            state.favorites = userData.favorites?.map(b => b._id?.toString() || b.toString()) || [];
+            state.purchases = userData.purchases?.map(b => b._id?.toString() || b.toString()) || [];
+            
+            updateProfileSection(userData);
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            if (tg?.CloudStorage?.getItem) {
+                const favs = await tg.CloudStorage.getItem('favorites');
+                const purchases = await tg.CloudStorage.getItem('purchases');
+                state.favorites = favs ? JSON.parse(favs) : [];
+                state.purchases = purchases ? JSON.parse(purchases) : [];
+            } else {
+                state.favorites = [];
+                state.purchases = [];
+            }
+        }
     }
-  }
 }
 
-// Обновленная функция updateProfileSection
 function updateProfileSection(user) {
     const profileInfo = document.getElementById('profileInfo');
     if (!profileInfo) return;
@@ -461,48 +446,197 @@ function updateProfileSection(user) {
                 <span>${state.purchases.length}</span>
                 <span>Покупок</span>
             </div>
+            <div class="stat-item">
+                <span>${state.myBeats.length}</span>
+                <span>Битов</span>
+            </div>
         </div>
     `;
 
-    // Добавляем обработчик для кнопки пополнения баланса
+    // Обновляем информацию о гэнге
+    const gangInfo = document.getElementById('gangInfo');
+    if (gangInfo) {
+        const userGang = state.gangs.find(g => 
+            g.members.some(m => m.id === tg.initDataUnsafe.user?.id)
+        );
+        
+        if (userGang) {
+            gangInfo.innerHTML = `
+                <div class="gang-card">
+                    <h3>Гэнг: ${userGang.name}</h3>
+                    <div class="gang-members">
+                        ${userGang.members.map(member => `
+                            <div class="gang-member">
+                                <img src="${member.avatar || 'https://via.placeholder.com/50'}" alt="${member.name}">
+                                <span>${member.name}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <button class="leave-gang-btn" id="leaveGangBtn">Покинуть гэнг</button>
+                </div>
+            `;
+            
+            document.getElementById('leaveGangBtn')?.addEventListener('click', leaveGang);
+        } else {
+            gangInfo.innerHTML = `
+                <button class="create-gang-btn" id="createGangBtn">Создать гэнг</button>
+                <button class="join-gang-btn" id="joinGangBtn">Присоединиться к гэнгу</button>
+            `;
+            
+            document.getElementById('createGangBtn')?.addEventListener('click', showCreateGangModal);
+            document.getElementById('joinGangBtn')?.addEventListener('click', showJoinGangModal);
+        }
+    }
+
     document.getElementById('topupBtn')?.addEventListener('click', topUpBalance);
 }
 
-async function topUpBalance() {
+function showCreateGangModal() {
     tg.showPopup({
-        title: 'Пополнение баланса',
-        message: 'Выберите сумму для пополнения:',
+        title: 'Создать гэнг',
+        message: 'Введите название вашего гэнга:',
         buttons: [
-            { id: '100', type: 'default', text: '100 Stars' },
-            { id: '500', type: 'default', text: '500 Stars' },
-            { id: '1000', type: 'default', text: '1000 Stars' },
+            { id: 'create', type: 'default', text: 'Создать' },
             { id: 'cancel', type: 'cancel', text: 'Отмена' }
         ]
     }, async (buttonId) => {
+        if (buttonId === 'create') {
+            const gangName = prompt('Введите название гэнга:');
+            if (gangName && gangName.trim()) {
+                try {
+                    const response = await fetch('https://beatmarketserver.onrender.com/gangs', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: gangName.trim(),
+                            creatorId: tg.initDataUnsafe.user?.id,
+                            members: [{
+                                id: tg.initDataUnsafe.user?.id,
+                                name: tg.initDataUnsafe.user?.first_name || 'User',
+                                avatar: tg.initDataUnsafe.user?.photo_url
+                            }]
+                        })
+                    });
+                    
+                    if (response.ok) {
+                        const newGang = await response.json();
+                        state.gangs.push(newGang);
+                        updateUI();
+                        tg.showAlert(`Гэнг "${newGang.name}" успешно создан!`);
+                    } else {
+                        const error = await response.json();
+                        tg.showAlert(error.message || 'Ошибка создания гэнга');
+                    }
+                } catch (error) {
+                    console.error('Error creating gang:', error);
+                    tg.showAlert('Ошибка соединения');
+                }
+            }
+        }
+    });
+}
+
+function showJoinGangModal() {
+    const availableGangs = state.gangs.filter(gang => 
+        !gang.members.some(m => m.id === tg.initDataUnsafe.user?.id)
+    );
+    
+    if (availableGangs.length === 0) {
+        tg.showAlert('Нет доступных гэнгов для присоединения');
+        return;
+    }
+    
+    const buttons = availableGangs.map(gang => ({
+        id: gang.id,
+        type: 'default',
+        text: gang.name
+    }));
+    
+    buttons.push({ id: 'cancel', type: 'cancel', text: 'Отмена' });
+    
+    tg.showPopup({
+        title: 'Выберите гэнг',
+        message: 'К какому гэнгу вы хотите присоединиться?',
+        buttons: buttons
+    }, async (buttonId) => {
         if (buttonId !== 'cancel') {
-            const amount = parseInt(buttonId);
-            
             try {
-                const result = await tg.openInvoice({
-                    currency: 'XTR',
-                    amount: amount * 100,
-                    description: 'Пополнение баланса Stars',
-                    payload: JSON.stringify({
-                        topUp: amount,
-                        userId: tg.initDataUnsafe.user?.id
+                const response = await fetch(`https://beatmarketserver.onrender.com/gangs/${buttonId}/join`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: tg.initDataUnsafe.user?.id,
+                        userName: tg.initDataUnsafe.user?.first_name || 'User',
+                        userAvatar: tg.initDataUnsafe.user?.photo_url
                     })
                 });
                 
-                if (result.status === 'paid') {
-                    // Обновляем баланс после пополнения
-                    state.balance += amount;
-                    await updateTelegramBalance(state.balance);
+                if (response.ok) {
+                    const updatedGang = await response.json();
+                    const index = state.gangs.findIndex(g => g.id === updatedGang.id);
+                    if (index !== -1) {
+                        state.gangs[index] = updatedGang;
+                    }
                     updateUI();
-                    tg.showAlert(`Баланс успешно пополнен на ${amount} Stars!`);
+                    tg.showAlert(`Вы присоединились к гэнгу "${updatedGang.name}"!`);
+                } else {
+                    const error = await response.json();
+                    tg.showAlert(error.message || 'Ошибка присоединения к гэнгу');
                 }
             } catch (error) {
-                console.error('Ошибка при пополнении баланса:', error);
-                tg.showAlert('Произошла ошибка при пополнении баланса.');
+                console.error('Error joining gang:', error);
+                tg.showAlert('Ошибка соединения');
+            }
+        }
+    });
+}
+
+async function leaveGang() {
+    tg.showPopup({
+        title: 'Покинуть гэнг',
+        message: 'Вы уверены, что хотите покинуть гэнг?',
+        buttons: [
+            { id: 'leave', type: 'destructive', text: 'Покинуть' },
+            { id: 'cancel', type: 'cancel', text: 'Отмена' }
+        ]
+    }, async (buttonId) => {
+        if (buttonId === 'leave') {
+            try {
+                const userId = tg.initDataUnsafe.user?.id;
+                const gang = state.gangs.find(g => 
+                    g.members.some(m => m.id === userId)
+                );
+                
+                if (!gang) {
+                    tg.showAlert('Ошибка: гэнг не найден');
+                    return;
+                }
+                
+                const response = await fetch(`https://beatmarketserver.onrender.com/gangs/${gang.id}/leave`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId })
+                });
+                
+                if (response.ok) {
+                    const updatedGang = await response.json();
+                    const index = state.gangs.findIndex(g => g.id === updatedGang.id);
+                    if (index !== -1) {
+                        if (updatedGang.members.length === 0) {
+                            state.gangs.splice(index, 1);
+                        } else {
+                            state.gangs[index] = updatedGang;
+                        }
+                    }
+                    updateUI();
+                    tg.showAlert('Вы покинули гэнг');
+                } else {
+                    const error = await response.json();
+                    tg.showAlert(error.message || 'Ошибка выхода из гэнга');
+                }
+            } catch (error) {
+                console.error('Error leaving gang:', error);
+                tg.showAlert('Ошибка соединения');
             }
         }
     });
@@ -513,7 +647,7 @@ function setupEventListeners() {
     document.querySelectorAll('.role-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             state.role = btn.dataset.role;
-            setupNavigation(); // Обновляем навигацию при смене роли
+            setupNavigation();
             updateUI();
         });
     });
@@ -526,13 +660,6 @@ function setupEventListeners() {
         });
     });
     
-    // Навигация для битмейкера
-    document.querySelectorAll('.nav-btn[data-section="upload"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.getElementById('uploadModal').classList.add('active');
-        });
-    });
-
     // Загрузка битов
     document.getElementById('uploadBeatBtn')?.addEventListener('click', () => {
         document.getElementById('uploadModal').classList.add('active');
@@ -545,6 +672,14 @@ function setupEventListeners() {
     document.getElementById('uploadForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
         uploadNewBeat();
+    });
+    
+    // Опции загрузки
+    document.querySelectorAll('.upload-option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const type = btn.dataset.type;
+            showUploadModalForType(type);
+        });
     });
     
     // Аудио плеер
@@ -581,6 +716,19 @@ function setupEventListeners() {
     document.getElementById('closePlayer')?.addEventListener('click', closePlayer);
 }
 
+function showUploadModalForType(type) {
+    const modalTitle = {
+        beat: 'Загрузить бит',
+        beatpack: 'Загрузить битпак',
+        kit: 'Загрузить кит',
+        service: 'Добавить услугу'
+    }[type];
+    
+    document.getElementById('uploadModal').classList.add('active');
+    document.getElementById('uploadModal').querySelector('h2').textContent = modalTitle;
+    document.getElementById('uploadForm').dataset.type = type;
+}
+
 function updateUI() {
     // Роли
     document.querySelector('.buyer-section').classList.toggle('active', state.role === 'buyer');
@@ -596,7 +744,7 @@ function updateUI() {
     });
     
     // Скрываем все секции сначала
-    document.querySelectorAll('.buyer-section, .seller-section, .favorites-section, .purchases-section, .profile-section, .producer-section').forEach(section => {
+    document.querySelectorAll('section').forEach(section => {
         section.style.display = 'none';
     });
     
@@ -626,94 +774,32 @@ function updateUI() {
         
         switch(state.currentSection) {
             case 'myBeats':
+                document.querySelector('.my-beats-section').style.display = 'block';
                 renderMyBeats();
                 break;
             case 'upload':
-                document.getElementById('uploadModal').classList.add('active');
+                document.querySelector('.upload-section').style.display = 'block';
                 break;
             case 'stats':
+                document.querySelector('.stats-section').style.display = 'block';
                 updateSellerStats();
                 break;
             case 'profile':
+                document.querySelector('.profile-section').style.display = 'block';
                 if (tg.initDataUnsafe?.user) updateProfileSection(tg.initDataUnsafe.user);
                 break;
         }
     }
     
     // Баланс
-   const userBalance = document.getElementById('userBalance');
+    const userBalance = document.getElementById('userBalance');
     if (userBalance) {
         userBalance.textContent = `${state.balance} ⭐`;
     }
 
-     // При возврате в раздел поиска проверяем состояние
-    if (state.currentSection === 'discover' && state.isSearchingProducers) {
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) {
-            searchInput.value = state.lastSearchQuery;
-            const producerName = state.lastSearchQuery.substring(1);
-            const foundProducers = state.producers.filter(p => 
-                p.name.toLowerCase().includes(producerName)
-            );
-            showProducerSearchResults(foundProducers);
-        }
-    }
-        
     if (state.currentSection === 'producer') {
-        const producerSection = document.querySelector('.producer-section');
-        if (!producerSection) createAdditionalSections();
-        document.querySelectorAll('section').forEach(s => s.style.display = 'none');
-        producerSection.style.display = 'block';
+        document.querySelector('.producer-section').style.display = 'block';
     }
-}
-
-function renderBeatsGrid() {
-    const beatsGrid = document.getElementById('beatsGrid');
-    if (!beatsGrid) return;
-    
-    beatsGrid.innerHTML = '';
-    
-    state.beats.forEach(beat => {
-        beatsGrid.appendChild(createBeatCard(beat));
-    });
-}
-
-function renderFavorites() {
-    const favoritesGrid = document.getElementById('favoritesGrid');
-    if (!favoritesGrid) return;
-    
-    favoritesGrid.innerHTML = '';
-    
-    if (state.favorites.length === 0) {
-        favoritesGrid.innerHTML = '<p class="empty-message">У вас пока нет избранных битов</p>';
-        return;
-    }
-    
-    state.favorites.forEach(beatId => {
-        const beat = state.beats.find(b => b.id === beatId);
-        if (beat) {
-            favoritesGrid.appendChild(createBeatCard(beat));
-        }
-    });
-}
-
-function renderPurchases() {
-    const purchasesGrid = document.getElementById('purchasesGrid');
-    if (!purchasesGrid) return;
-    
-    purchasesGrid.innerHTML = '';
-    
-    if (state.purchases.length === 0) {
-        purchasesGrid.innerHTML = '<p class="empty-message">У вас пока нет покупок</p>';
-        return;
-    }
-    
-    state.purchases.forEach(beatId => {
-        const beat = state.beats.find(b => b.id === beatId);
-        if (beat) {
-            purchasesGrid.appendChild(createBeatCard(beat));
-        }
-    });
 }
 
 function renderMyBeats() {
@@ -748,7 +834,6 @@ function renderMyBeats() {
             </div>
         `;
         
-        // Добавляем обработчик удаления
         beatItem.querySelector('.delete-beat-btn').addEventListener('click', (e) => {
             e.stopPropagation();
             deleteBeat(beat._id || beat.id);
@@ -761,12 +846,16 @@ function renderMyBeats() {
 function updateSellerStats() {
     const totalSales = state.myBeats.reduce((sum, beat) => sum + (beat.sales || 0), 0);
     const totalEarned = state.myBeats.reduce((sum, beat) => sum + (beat.earned || 0), 0);
+    const totalBeats = state.myBeats.length;
     
-    const totalSalesEl = document.getElementById('totalSales');
-    const totalEarnedEl = document.getElementById('totalEarned');
+    // Находим текущего пользователя среди продюсеров
+    const currentProducer = state.producers.find(p => p.id === tg.initDataUnsafe.user?.id?.toString());
+    const totalFollowers = currentProducer?.followers || 0;
     
-    if (totalSalesEl) totalSalesEl.textContent = totalSales;
-    if (totalEarnedEl) totalEarnedEl.textContent = `${totalEarned} ⭐`;
+    document.getElementById('totalSales').textContent = totalSales;
+    document.getElementById('totalEarned').textContent = `${totalEarned} ⭐`;
+    document.getElementById('totalBeats').textContent = totalBeats;
+    document.getElementById('totalFollowers').textContent = totalFollowers;
 }
 
 function createBeatCard(beat) {
