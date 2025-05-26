@@ -909,3 +909,176 @@ button:hover,
     height: 28px;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
+
+.loader {
+    padding: 20px;
+    text-align: center;
+    font-size: 18px;
+}
+
+.error-message {
+    padding: 20px;
+    text-align: center;
+    color: #ff3333;
+}
+
+.error-message button {
+    margin-top: 15px;
+    padding: 8px 16px;
+    background: #333;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+/* Стили для секции загрузки */
+.upload-section {
+    padding: 16px;
+}
+
+.upload-options {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.upload-option-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-color);
+    text-align: center;
+    height: 100px;
+}
+
+.upload-option-btn i {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.upload-option-btn span {
+    font-size: 14px;
+}
+
+/* Стили для гэнгов */
+.gang-info {
+    margin-top: 20px;
+}
+
+.gang-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.gang-card h3 {
+    margin-bottom: 12px;
+    color: var(--accent-solid);
+}
+
+.gang-members {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.gang-member {
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 20px;
+}
+
+.gang-member img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.gang-member span {
+    font-size: 14px;
+}
+
+.create-gang-btn,
+.join-gang-btn,
+.leave-gang-btn {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.create-gang-btn {
+    background: var(--accent-color);
+    color: var(--button-text-color);
+}
+
+.join-gang-btn {
+    background: var(--glass-bg);
+    color: var(--text-color);
+    border: 1px solid var(--glass-border);
+}
+
+.leave-gang-btn {
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Стили для статистики */
+.stats-section {
+    padding: 16px;
+}
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.stat-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+}
+
+.stat-card h3 {
+    font-size: 14px;
+    color: var(--hint-color);
+    margin-bottom: 8px;
+}
+
+.stat-card p {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--text-color);
+}
+
+/* Стили для моих битов */
+.my-beats-section {
+    padding: 16px;
+}
+
+.my-beats-list {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
