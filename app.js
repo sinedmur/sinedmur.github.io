@@ -23,7 +23,17 @@ const state = {
 
 // Инициализация приложения
 async function init() {
+    // Инициализация Telegram WebApp
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    // Определяем роль пользователя (добавьте эту проверку)
+    state.role = tg.initDataUnsafe?.user?.id ? 
+        (await checkUserRole(tg.initDataUnsafe.user.id)) : 'buyer';
+
+    // Теперь создаем секции, зная роль пользователя
     createAdditionalSections();
+    
     await fetchUserBalance();
     setupNavigation();
     setupEventListeners();
@@ -45,6 +55,20 @@ async function init() {
             }
         }
     });
+}
+
+// Добавьте эту функцию для проверки роли пользователя
+async function checkUserRole(userId) {
+    try {
+        const response = await fetch(`https://beatmarketserver.onrender.com/user-role/${userId}`);
+        if (response.ok) {
+            const data = await response.json();
+            return data.role || 'buyer';
+        }
+    } catch (error) {
+        console.error('Error checking user role:', error);
+    }
+    return 'buyer';
 }
 
 // Новая функция для настройки навигации
@@ -173,11 +197,12 @@ async function fetchUserBalance() {
     }
 }
 
+// Модифицируйте функцию createAdditionalSections
 function createAdditionalSections() {
     const mainContent = document.querySelector('.main-content');
     if (!mainContent) return;
 
-    // Секция избранного
+    // Общие секции для всех пользователей
     const favoritesSection = document.createElement('section');
     favoritesSection.className = 'favorites-section';
     favoritesSection.innerHTML = `
@@ -186,7 +211,6 @@ function createAdditionalSections() {
     `;
     mainContent.appendChild(favoritesSection);
     
-    // Секция покупок
     const purchasesSection = document.createElement('section');
     purchasesSection.className = 'purchases-section';
     purchasesSection.innerHTML = `
@@ -195,7 +219,6 @@ function createAdditionalSections() {
     `;
     mainContent.appendChild(purchasesSection);
     
-    // Секция профиля
     const profileSection = document.createElement('section');
     profileSection.className = 'profile-section';
     profileSection.innerHTML = `
@@ -205,69 +228,69 @@ function createAdditionalSections() {
         <button class="logout-btn" id="logoutBtn">Выйти</button>
     `;
     mainContent.appendChild(profileSection);
-    
-    // Секция статистики битмейкера
-    const statsSection = document.createElement('section');
-    statsSection.className = 'stats-section';
-    statsSection.innerHTML = `
-        <h2>Статистика</h2>
-        <div class="stats">
-            <div class="stat-card">
-                <h3>Всего продаж</h3>
-                <p id="totalSales">0</p>
+
+    // Секции только для продавцов
+    if (state.role === 'seller') {
+        const statsSection = document.createElement('section');
+        statsSection.className = 'stats-section';
+        statsSection.innerHTML = `
+            <h2>Статистика</h2>
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>Всего продаж</h3>
+                    <p id="totalSales">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Заработано</h3>
+                    <p id="totalEarned">0 ⭐</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Битов</h3>
+                    <p id="totalBeats">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Подписчиков</h3>
+                    <p id="totalFollowers">0</p>
+                </div>
             </div>
-            <div class="stat-card">
-                <h3>Заработано</h3>
-                <p id="totalEarned">0 ⭐</p>
+        `;
+        mainContent.appendChild(statsSection);
+        
+        const uploadSection = document.createElement('section');
+        uploadSection.className = 'upload-section';
+        uploadSection.innerHTML = `
+            <h2>Загрузить новый контент</h2>
+            <div class="upload-options">
+                <button class="upload-option-btn" data-type="beat">
+                    <i class="icon-music"></i>
+                    <span>Бит</span>
+                </button>
+                <button class="upload-option-btn" data-type="beatpack">
+                    <i class="icon-folder"></i>
+                    <span>Битпак</span>
+                </button>
+                <button class="upload-option-btn" data-type="kit">
+                    <i class="icon-drum"></i>
+                    <span>Кит</span>
+                </button>
+                <button class="upload-option-btn" data-type="service">
+                    <i class="icon-service"></i>
+                    <span>Услуга</span>
+                </button>
             </div>
-            <div class="stat-card">
-                <h3>Битов</h3>
-                <p id="totalBeats">0</p>
-            </div>
-            <div class="stat-card">
-                <h3>Подписчиков</h3>
-                <p id="totalFollowers">0</p>
-            </div>
-        </div>
-    `;
-    mainContent.appendChild(statsSection);
-    
-    // Секция загрузки
-    const uploadSection = document.createElement('section');
-    uploadSection.className = 'upload-section';
-    uploadSection.innerHTML = `
-        <h2>Загрузить новый контент</h2>
-        <div class="upload-options">
-            <button class="upload-option-btn" data-type="beat">
-                <i class="icon-music"></i>
-                <span>Бит</span>
-            </button>
-            <button class="upload-option-btn" data-type="beatpack">
-                <i class="icon-folder"></i>
-                <span>Битпак</span>
-            </button>
-            <button class="upload-option-btn" data-type="kit">
-                <i class="icon-drum"></i>
-                <span>Кит</span>
-            </button>
-            <button class="upload-option-btn" data-type="service">
-                <i class="icon-service"></i>
-                <span>Услуга</span>
-            </button>
-        </div>
-    `;
-    mainContent.appendChild(uploadSection);
-    
-    // Секция моих битов
-    const myBeatsSection = document.createElement('section');
-    myBeatsSection.className = 'my-beats-section';
-    myBeatsSection.innerHTML = `
-        <h2>Мои биты</h2>
-        <div class="my-beats-list" id="myBeatsList"></div>
-    `;
-    mainContent.appendChild(myBeatsSection);
-    
-    // Секция продюсера
+        `;
+        mainContent.appendChild(uploadSection);
+        
+        const myBeatsSection = document.createElement('section');
+        myBeatsSection.className = 'my-beats-section';
+        myBeatsSection.innerHTML = `
+            <h2>Мои биты</h2>
+            <div class="my-beats-list" id="myBeatsList"></div>
+        `;
+        mainContent.appendChild(myBeatsSection);
+    }
+
+    // Общие секции (если есть)
     const producerSection = document.createElement('section');
     producerSection.className = 'producer-section';
     producerSection.innerHTML = `
@@ -730,6 +753,7 @@ function showUploadModalForType(type) {
 }
 
 function updateUI() {
+    
     // Роли
     document.querySelector('.buyer-section').classList.toggle('active', state.role === 'buyer');
     document.querySelector('.seller-section').classList.toggle('active', state.role === 'seller');
@@ -768,9 +792,10 @@ function updateUI() {
                 if (tg.initDataUnsafe?.user) updateProfileSection(tg.initDataUnsafe.user);
                 break;
         }
-    } else {
+    } 
+    if (state.role === 'seller') {
         // Показываем соответствующие секции для битмейкера
-        document.querySelector('.seller-section').style.display = 'block';
+        // document.querySelector('.seller-section').style.display = 'block';
         
         switch(state.currentSection) {
             case 'myBeats':
@@ -800,6 +825,17 @@ function updateUI() {
     if (state.currentSection === 'producer') {
         document.querySelector('.producer-section').style.display = 'block';
     }
+}
+
+function renderBeatsGrid() {
+    const beatsGrid = document.getElementById('beatsGrid');
+    if (!beatsGrid) return;
+    
+    beatsGrid.innerHTML = '';
+    
+    state.beats.forEach(beat => {
+        beatsGrid.appendChild(createBeatCard(beat));
+    });
 }
 
 function renderMyBeats() {
