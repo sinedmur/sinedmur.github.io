@@ -235,10 +235,10 @@ body {
 /* === CONTINUES THROUGHOUT ENTIRE FILE === */
 /* Продолжение глобальной стилизации — ДОБАВЛЯЕМ ПОЛНЫЙ КОНТРОЛЬ */
 
-.my-beats {
+/* .my-beats {
     margin-bottom: 16px;
     padding: 0 16px;
-}
+} */
 
 .empty-state {
     text-align: center;
@@ -1072,15 +1072,59 @@ button:hover,
     color: var(--text-color);
 }
 
-/* Стили для моих битов */
 .my-beats-section {
     padding: 16px;
 }
 
-.my-beats-list {
+.my-beats {
     margin-top: 16px;
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
 }
+
+.my-beats .beat-card {
+    max-width: 100%;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: all 0.2s ease-in-out;
+}
+
+.my-beats .beat-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 18px rgba(245, 193, 108, 0.25);
+}
+
+.my-beats .beat-cover {
+    width: 100%;
+    aspect-ratio: 1;
+    background-color: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.my-beats .beat-info {
+    padding: 8px;
+}
+
+.my-beats .beat-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.my-beats .beat-meta {
+    font-size: 11px;
+    color: var(--hint-color);
+    display: flex;
+    justify-content: space-between;
+}
+
 
