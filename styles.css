@@ -145,8 +145,8 @@ body {
 
 .beats-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 8px;
     margin-bottom: 16px;
 }
 
@@ -157,7 +157,8 @@ body {
     border-radius: 16px;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
     overflow: hidden;
-     
+    max-width: 160px;
+    margin: 0 auto;
     transition: all 0.3s ease;
 }
 
@@ -182,11 +183,12 @@ body {
 }
 
 .beat-info {
-    padding: 10px;
+    padding: 6px;
 }
 
 .beat-title {
     font-weight: 600;
+    font-size: 14px;
     margin-bottom: 4px;
     white-space: nowrap;
     overflow: hidden;
@@ -194,7 +196,7 @@ body {
 }
 
 .beat-meta {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--hint-color);
     display: flex;
     justify-content: space-between;
@@ -544,7 +546,7 @@ body {
 .empty-message {
     text-align: center;
     color: var(--hint-color);
-    padding: 40px 0;
+    padding: 40px;
     font-size: 14px;
 }
 
