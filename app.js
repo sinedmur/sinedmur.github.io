@@ -259,7 +259,12 @@ function createAdditionalSections() {
         myBeatsSection.className = 'my-beats-section';
         myBeatsSection.innerHTML = `
             <h2>Мои биты</h2>
-            <div class="my-beats-list" id="myBeatsList"></div>
+            <div class="my-beats" id="myBeatsList">
+                    <!-- Список загруженных битов -->
+                    <div class="empty-state">
+                        <p>У вас пока нет загруженных битов</p>
+                    </div>
+                </div>
         `;
         mainContent.appendChild(myBeatsSection);
     
