@@ -23,23 +23,13 @@ const state = {
 
 // Инициализация приложения
 async function init() {
-    // Инициализация Telegram WebApp
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-
-    // Определяем роль пользователя (добавьте эту проверку)
-    state.role = tg.initDataUnsafe?.user?.id ? 
-        (await checkUserRole(tg.initDataUnsafe.user.id)) : 'buyer';
-
-    // Теперь создаем секции, зная роль пользователя
-    createAdditionalSections();
-    
     await fetchUserBalance();
     setupNavigation();
     setupEventListeners();
     await loadBeatsFromServer();
     await loadProducers();
     await loadGangs();
+    createAdditionalSections();
     updateUI();
     await loadUserData();
     setupSearch();
@@ -55,20 +45,6 @@ async function init() {
             }
         }
     });
-}
-
-// Добавьте эту функцию для проверки роли пользователя
-async function checkUserRole(userId) {
-    try {
-        const response = await fetch(`https://beatmarketserver.onrender.com/user-role/${userId}`);
-        if (response.ok) {
-            const data = await response.json();
-            return data.role || 'buyer';
-        }
-    } catch (error) {
-        console.error('Error checking user role:', error);
-    }
-    return 'buyer';
 }
 
 // Новая функция для настройки навигации
@@ -229,8 +205,6 @@ function createAdditionalSections() {
     `;
     mainContent.appendChild(profileSection);
 
-    // Секции только для продавцов
-    if (state.role === 'seller') {
         const statsSection = document.createElement('section');
         statsSection.className = 'stats-section';
         statsSection.innerHTML = `
@@ -288,7 +262,7 @@ function createAdditionalSections() {
             <div class="my-beats-list" id="myBeatsList"></div>
         `;
         mainContent.appendChild(myBeatsSection);
-    }
+    
 
     // Общие секции (если есть)
     const producerSection = document.createElement('section');
@@ -825,6 +799,44 @@ function updateUI() {
     if (state.currentSection === 'producer') {
         document.querySelector('.producer-section').style.display = 'block';
     }
+}
+
+function renderFavorites() {
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    if (!favoritesGrid) return;
+    
+    favoritesGrid.innerHTML = '';
+    
+    if (state.favorites.length === 0) {
+        favoritesGrid.innerHTML = '<p class="empty-message">У вас пока нет избранных битов</p>';
+        return;
+    }
+    
+    state.favorites.forEach(beatId => {
+        const beat = state.beats.find(b => b.id === beatId);
+        if (beat) {
+            favoritesGrid.appendChild(createBeatCard(beat));
+        }
+    });
+}
+
+function renderPurchases() {
+    const purchasesGrid = document.getElementById('purchasesGrid');
+    if (!purchasesGrid) return;
+    
+    purchasesGrid.innerHTML = '';
+    
+    if (state.purchases.length === 0) {
+        purchasesGrid.innerHTML = '<p class="empty-message">У вас пока нет покупок</p>';
+        return;
+    }
+    
+    state.purchases.forEach(beatId => {
+        const beat = state.beats.find(b => b.id === beatId);
+        if (beat) {
+            purchasesGrid.appendChild(createBeatCard(beat));
+        }
+    });
 }
 
 function renderBeatsGrid() {
