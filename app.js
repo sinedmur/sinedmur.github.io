@@ -60,7 +60,7 @@ function initUser() {
         // Создаем тестового администратора
     const adminUser = {
         id: 999,
-        telegramId: 999999999,
+        telegramId: 1019928513,
         username: 'admin',
         firstName: 'Администратор',
         lastName: 'Системы',
@@ -1938,3 +1938,4 @@ function moderateAd(adId, approve) {
     showNotification(approve ? 'Объявление одобрено' : 'Объявление отклонено');
     loadModerationList();
 }
+
