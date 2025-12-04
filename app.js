@@ -57,6 +57,24 @@ function initUser() {
         }];
         saveUsers();
     }
+        // Создаем тестового администратора
+    const adminUser = {
+        id: 999,
+        telegramId: 999999999,
+        username: 'admin',
+        firstName: 'Администратор',
+        lastName: 'Системы',
+        balance: 10000,
+        role: 'admin', // Новая роль
+        subscriptionUntil: null,
+        createdAt: new Date().toISOString()
+    };
+    
+    // Добавляем админа, если его нет
+    if (!users.find(u => u.role === 'admin')) {
+        users.push(adminUser);
+        saveUsers();
+    }
 }
 
 // Инициализация данных приложения
@@ -118,7 +136,57 @@ function initAppData() {
         transactions = [];
         saveTransactions();
     }
+        const savedChats = localStorage.getItem('telegramJobChats');
+    const savedReviews = localStorage.getItem('telegramJobReviews');
+    const savedNotifications = localStorage.getItem('telegramJobNotifications');
+    
+    if (savedChats) {
+        chats = JSON.parse(savedChats);
+    } else {
+        chats = [];
+        saveChats();
+    }
+    
+    if (savedReviews) {
+        reviews = JSON.parse(savedReviews);
+    } else {
+        reviews = [];
+        saveReviews();
+    }
+    
+    if (savedNotifications) {
+        notifications = JSON.parse(savedNotifications);
+    } else {
+        // Создаем тестовые уведомления
+        notifications = [
+            {
+                id: 1,
+                userId: 1,
+                type: 'system',
+                title: 'Добро пожаловать!',
+                message: 'Спасибо за регистрацию в JobFinder. Начните использовать все возможности приложения.',
+                read: true,
+                createdAt: new Date(Date.now() - 86400000).toISOString(),
+                data: {}
+            },
+            {
+                id: 2,
+                userId: 1,
+                type: 'message',
+                title: 'Новое сообщение',
+                message: 'Работодатель ответил на ваше предложение',
+                read: false,
+                createdAt: new Date(Date.now() - 3600000).toISOString(),
+                data: { chatId: 1, adId: 1 }
+            }
+        ];
+        saveNotifications();
+    }
 }
+
+let chats = [];
+let reviews = [];
+let notifications = [];
 
 // Сохранение данных
 function saveUsers() {
@@ -349,6 +417,62 @@ function setupEventListeners() {
     // Фильтры на экране работника
     document.getElementById('categoryFilter').addEventListener('change', loadWorkerAds);
     document.getElementById('priceFilter').addEventListener('change', loadWorkerAds);
+
+        // Кнопка уведомлений в шапке
+    const notificationsBtn = document.createElement('button');
+    notificationsBtn.id = 'notificationsBtn';
+    notificationsBtn.className = 'btn-icon';
+    notificationsBtn.innerHTML = '<i class="fas fa-bell"></i>';
+    notificationsBtn.addEventListener('click', toggleNotificationsDropdown);
+    document.querySelector('.user-info').appendChild(notificationsBtn);
+    
+    // Кнопка открытия чата
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.open-chat-btn')) {
+            const adId = parseInt(e.target.closest('.open-chat-btn').getAttribute('data-ad-id'));
+            const userId = parseInt(e.target.closest('.open-chat-btn').getAttribute('data-user-id'));
+            openChat(adId, userId);
+        }
+    });
+    
+    // Кнопка отправки сообщения
+    document.getElementById('sendMessageBtn').addEventListener('click', sendMessage);
+    
+    // Enter для отправки сообщения
+    document.getElementById('chatInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+    
+    // Кнопка назад из чата
+    document.getElementById('backFromChatBtn').addEventListener('click', function() {
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+    
+    // Кнопка открытия уведомлений
+    document.getElementById('viewAllNotificationsBtn')?.addEventListener('click', function() {
+        showNotificationsScreen();
+        hideNotificationsDropdown();
+    });
+    
+    // Очистка уведомлений
+    document.getElementById('clearNotificationsBtn')?.addEventListener('click', clearAllNotifications);
+    
+    // Закрытие выпадающих меню при клике вне их
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#notificationsDropdown') && !e.target.closest('#notificationsBtn')) {
+            hideNotificationsDropdown();
+        }
+        if (!e.target.closest('#chatMenu') && !e.target.closest('#chatMenuBtn')) {
+            hideChatMenu();
+        }
+    });
 }
 
 // Установка роли пользователя
@@ -738,10 +862,11 @@ function publishAd() {
         category,
         price,
         location,
-        status: 'active',
+        status: user.role === 'admin' ? 'active' : 'moderation', // Админы публикуют сразу
+        moderated: user.role === 'admin', // Админы не требуют модерации
         takenBy: null,
         createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 7 * 86400000).toISOString() // через 7 дней
+        expiresAt: new Date(Date.now() + 7 * 86400000).toISOString()
     };
     
     ads.push(newAd);
@@ -761,6 +886,20 @@ function publishAd() {
     loadEmployerAds();
     updateEmployerStats();
     updateHeaderInfo();
+
+        if (user.role !== 'admin') {
+        // В реальном приложении находим всех админов
+        const adminUsers = users.filter(u => u.role === 'admin');
+        adminUsers.forEach(admin => {
+            sendNotification(
+                admin.id,
+                'moderation',
+                'Новое объявление на модерацию',
+                `Пользователь ${user.firstName} ${user.lastName} создал новое объявление`,
+                { adId: newAd.id }
+            );
+        });
+    }
 }
 
 // Проверка подписки пользователя
@@ -815,6 +954,19 @@ function loadProfileScreen() {
         `Активна до ${new Date(user.subscriptionUntil).toLocaleDateString('ru-RU')}` : 
         'Не активна';
     document.getElementById('profileSubscriptionStatus').textContent = subscriptionStatus;
+
+        // Добавляем кнопку модерации для админов
+    if (user.role === 'admin') {
+        document.querySelector('.profile-actions').innerHTML += `
+            <button class="profile-action-btn" id="moderationBtn">
+                <i class="fas fa-shield-alt"></i>
+                <span>Модерация</span>
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+        
+        document.getElementById('moderationBtn')?.addEventListener('click', showModerationScreen);
+    }
 }
 
 // Показать экран оплаты
@@ -1043,4 +1195,746 @@ function showModal(title, message, confirmCallback) {
             closeModal();
         }
     };
+}
+
+// Функции сохранения новых данных
+function saveChats() {
+    localStorage.setItem('telegramJobChats', JSON.stringify(chats));
+}
+
+function saveReviews() {
+    localStorage.setItem('telegramJobReviews', JSON.stringify(reviews));
+}
+
+function saveNotifications() {
+    localStorage.setItem('telegramJobNotifications', JSON.stringify(notifications));
+}
+
+// Функции для чата
+function openChat(adId, otherUserId) {
+    const user = getUser();
+    const ad = ads.find(a => a.id === adId);
+    const otherUser = getOtherUser(otherUserId);
+    
+    if (!ad || !otherUser) return;
+    
+    // Сохраняем информацию о текущем чате
+    currentChat = {
+        adId,
+        otherUserId,
+        ad,
+        otherUser
+    };
+    
+    // Обновляем UI
+    document.getElementById('chatUserName').textContent = `${otherUser.firstName} ${otherUser.lastName}`;
+    document.getElementById('chatUserStatus').textContent = 'online';
+    document.getElementById('chatUserStatus').className = 'status-online';
+    
+    // Показываем информацию об объявлении
+    const adInfo = document.getElementById('chatAdInfo');
+    adInfo.innerHTML = `
+        <div class="ad-info-header">
+            <div class="ad-info-title">${ad.title}</div>
+            <div class="ad-info-price">${ad.price} ₽</div>
+        </div>
+        <div>
+            <span class="ad-info-status status-${ad.status}">${getStatusText(ad.status)}</span>
+            <span style="margin-left: 10px; font-size: 0.9rem;">ID: ${ad.id}</span>
+        </div>
+    `;
+    
+    // Загружаем сообщения
+    loadChatMessages(adId, user.id, otherUserId);
+    
+    // Показываем экран чата
+    showScreen('chatScreen');
+    
+    // Прокручиваем вниз
+    setTimeout(() => {
+        const chatMessages = document.getElementById('chatMessages');
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 100);
+}
+
+function getOtherUser(userId) {
+    // В реальном приложении здесь был бы запрос к серверу
+    // Для демо возвращаем тестового пользователя
+    return {
+        id: userId,
+        firstName: userId === 2 ? 'Иван' : 'Мария',
+        lastName: userId === 2 ? 'Петров' : 'Сидорова',
+        role: userId === 2 ? 'employer' : 'worker',
+        rating: 4.5
+    };
+}
+
+function getStatusText(status) {
+    const statusMap = {
+        'active': 'Активно',
+        'taken': 'В работе',
+        'completed': 'Завершено',
+        'moderation': 'На модерации'
+    };
+    return statusMap[status] || status;
+}
+
+function loadChatMessages(adId, userId1, userId2) {
+    const chatMessages = document.getElementById('chatMessages');
+    
+    // Находим или создаем чат
+    let chat = chats.find(c => 
+        c.adId === adId && 
+        ((c.userId1 === userId1 && c.userId2 === userId2) || 
+         (c.userId1 === userId2 && c.userId2 === userId1))
+    );
+    
+    if (!chat) {
+        chat = {
+            id: chats.length + 1,
+            adId,
+            userId1,
+            userId2,
+            messages: [],
+            createdAt: new Date().toISOString(),
+            lastMessageAt: new Date().toISOString()
+        };
+        chats.push(chat);
+        saveChats();
+    }
+    
+    // Очищаем контейнер
+    chatMessages.innerHTML = '';
+    
+    // Добавляем приветственное сообщение
+    if (chat.messages.length === 0) {
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.className = 'message message-incoming';
+        welcomeMessage.innerHTML = `
+            <p>Здравствуйте! Это начало вашего чата по объявлению.</p>
+            <div class="message-time">${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+        `;
+        chatMessages.appendChild(welcomeMessage);
+    } else {
+        // Отображаем все сообщения
+        chat.messages.forEach(message => {
+            const messageElement = createMessageElement(message, userId1);
+            chatMessages.appendChild(messageElement);
+        });
+    }
+}
+
+function createMessageElement(message, currentUserId) {
+    const messageElement = document.createElement('div');
+    const isOutgoing = message.senderId === currentUserId;
+    
+    messageElement.className = `message ${isOutgoing ? 'message-outgoing' : 'message-incoming'}`;
+    messageElement.innerHTML = `
+        <p>${message.text}</p>
+        <div class="message-time">
+            ${new Date(message.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+            ${isOutgoing ? `<span class="message-status ${message.read ? 'status-read' : 'status-unread'}">
+                ${message.read ? '✓✓' : '✓'}
+            </span>` : ''}
+        </div>
+    `;
+    
+    return messageElement;
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    
+    if (!text || !currentChat) return;
+    
+    const user = getUser();
+    const chat = chats.find(c => 
+        c.adId === currentChat.adId && 
+        ((c.userId1 === user.id && c.userId2 === currentChat.otherUserId) || 
+         (c.userId1 === currentChat.otherUserId && c.userId2 === user.id))
+    );
+    
+    if (!chat) return;
+    
+    // Создаем сообщение
+    const message = {
+        id: chat.messages.length + 1,
+        senderId: user.id,
+        text,
+        createdAt: new Date().toISOString(),
+        read: false
+    };
+    
+    // Добавляем в чат
+    chat.messages.push(message);
+    chat.lastMessageAt = new Date().toISOString();
+    saveChats();
+    
+    // Добавляем в UI
+    const chatMessages = document.getElementById('chatMessages');
+    const messageElement = createMessageElement(message, user.id);
+    chatMessages.appendChild(messageElement);
+    
+    // Очищаем поле ввода
+    input.value = '';
+    
+    // Прокручиваем вниз
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Отправляем уведомление другому пользователю
+    sendNotification(
+        currentChat.otherUserId,
+        'message',
+        'Новое сообщение',
+        `${user.firstName}: ${text.substring(0, 50)}...`,
+        { chatId: chat.id, adId: currentChat.adId }
+    );
+}
+
+// Функции для уведомлений
+function toggleNotificationsDropdown() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    if (dropdown.classList.contains('active')) {
+        hideNotificationsDropdown();
+    } else {
+        showNotificationsDropdown();
+    }
+}
+
+function showNotificationsDropdown() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    loadNotificationsDropdown();
+    dropdown.classList.add('active');
+}
+
+function hideNotificationsDropdown() {
+    const dropdown = document.getElementById('notificationsDropdown');
+    dropdown.classList.remove('active');
+}
+
+function loadNotificationsDropdown() {
+    const user = getUser();
+    const userNotifications = notifications
+        .filter(n => n.userId === user.id)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5);
+    
+    const list = document.getElementById('notificationsDropdownList');
+    const unreadCount = userNotifications.filter(n => !n.read).length;
+    
+    document.getElementById('unreadCount').textContent = unreadCount;
+    
+    if (userNotifications.length === 0) {
+        list.innerHTML = `
+            <div class="notification-dropdown-item">
+                <div class="notification-dropdown-content">
+                    <div class="notification-dropdown-text">Нет уведомлений</div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = '';
+    userNotifications.forEach(notification => {
+        const item = document.createElement('div');
+        item.className = `notification-dropdown-item ${notification.read ? '' : 'unread'}`;
+        item.addEventListener('click', () => handleNotificationClick(notification));
+        
+        const icon = getNotificationIcon(notification.type);
+        
+        item.innerHTML = `
+            ${!notification.read ? '<div class="notification-dropdot"></div>' : ''}
+            <div class="notification-icon ${notification.type}">
+                <i class="fas fa-${icon}"></i>
+            </div>
+            <div class="notification-dropdown-content">
+                <div class="notification-dropdown-title">${notification.title}</div>
+                <div class="notification-dropdown-text">${notification.message}</div>
+                <div class="notification-dropdown-time">
+                    ${timeAgo(new Date(notification.createdAt))}
+                </div>
+            </div>
+        `;
+        
+        list.appendChild(item);
+    });
+}
+
+function getNotificationIcon(type) {
+    const icons = {
+        'message': 'comments',
+        'rating': 'star',
+        'system': 'info-circle',
+        'warning': 'exclamation-triangle',
+        'moderation': 'shield-alt'
+    };
+    return icons[type] || 'bell';
+}
+
+function timeAgo(date) {
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    const intervals = {
+        год: 31536000,
+        месяц: 2592000,
+        неделя: 604800,
+        день: 86400,
+        час: 3600,
+        минута: 60
+    };
+    
+    for (const [name, secondsInUnit] of Object.entries(intervals)) {
+        const interval = Math.floor(seconds / secondsInUnit);
+        if (interval >= 1) {
+            return `${interval} ${name}${interval >= 2 && interval <= 4 ? 'а' : interval >= 5 ? 'ов' : ''} назад`;
+        }
+    }
+    
+    return 'только что';
+}
+
+function sendNotification(userId, type, title, message, data = {}) {
+    const notification = {
+        id: notifications.length + 1,
+        userId,
+        type,
+        title,
+        message,
+        read: false,
+        createdAt: new Date().toISOString(),
+        data
+    };
+    
+    notifications.push(notification);
+    saveNotifications();
+    
+    // Обновляем счетчик уведомлений
+    updateNotificationBadge();
+    
+    // Показываем всплывающее уведомление
+    if (type !== 'system') {
+        showNotification(message);
+    }
+    
+    // В реальном приложении здесь был бы вызов API для отправки push-уведомления через бота
+    sendTelegramNotification(userId, title, message);
+}
+
+function sendTelegramNotification(userId, title, message) {
+    // В реальном приложении:
+    // 1. Сохраняем уведомление в базе данных
+    // 2. Используем Telegram Bot API для отправки сообщения пользователю
+    // 3. Если пользователь онлайн в мини-приложении, можно использовать WebSocket
+    
+    console.log(`Отправка уведомления пользователю ${userId}: ${title} - ${message}`);
+    
+    // Пример запроса к Telegram Bot API:
+    // fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //         chat_id: userId,
+    //         text: `${title}\n\n${message}`,
+    //         parse_mode: 'HTML'
+    //     })
+    // });
+}
+
+function updateNotificationBadge() {
+    const user = getUser();
+    const unreadCount = notifications.filter(n => n.userId === user.id && !n.read).length;
+    const badge = document.getElementById('unreadCount');
+    if (badge) {
+        badge.textContent = unreadCount;
+        badge.style.display = unreadCount > 0 ? 'block' : 'none';
+    }
+}
+
+function showNotificationsScreen() {
+    const user = getUser();
+    const userNotifications = notifications
+        .filter(n => n.userId === user.id)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    const list = document.getElementById('notificationsList');
+    
+    if (userNotifications.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <h3>Нет уведомлений</h3>
+                <p>Здесь будут появляться важные уведомления</p>
+            </div>
+        `;
+    } else {
+        list.innerHTML = '';
+        userNotifications.forEach(notification => {
+            const item = createNotificationElement(notification);
+            list.appendChild(item);
+        });
+    }
+    
+    showScreen('notificationsScreen');
+}
+
+function createNotificationElement(notification) {
+    const item = document.createElement('div');
+    item.className = `notification-item ${notification.read ? '' : 'unread'}`;
+    item.addEventListener('click', () => handleNotificationClick(notification));
+    
+    const icon = getNotificationIcon(notification.type);
+    
+    item.innerHTML = `
+        <div class="notification-icon ${notification.type}">
+            <i class="fas fa-${icon}"></i>
+        </div>
+        <div class="notification-content">
+            <div class="notification-title">${notification.title}</div>
+            <div class="notification-text">${notification.message}</div>
+            <div class="notification-time">
+                ${new Date(notification.createdAt).toLocaleDateString('ru-RU')} в 
+                ${new Date(notification.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
+            </div>
+            ${notification.data.adId ? `
+                <div class="notification-actions">
+                    <button class="btn-secondary btn-small" data-action="view-ad" data-ad-id="${notification.data.adId}">
+                        Посмотреть объявление
+                    </button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    return item;
+}
+
+function handleNotificationClick(notification) {
+    // Помечаем как прочитанное
+    notification.read = true;
+    saveNotifications();
+    updateNotificationBadge();
+    
+    // Обрабатываем клик в зависимости от типа уведомления
+    switch (notification.type) {
+        case 'message':
+            if (notification.data.adId && notification.data.chatId) {
+                openChat(notification.data.adId, getOtherUserId(notification.data.chatId));
+            }
+            break;
+        case 'rating':
+            showRatingScreen(notification.data.reviewId);
+            break;
+        case 'moderation':
+            if (notification.data.adId) {
+                showAdDetail(notification.data.adId);
+            }
+            break;
+    }
+}
+
+function getOtherUserId(chatId) {
+    const chat = chats.find(c => c.id === chatId);
+    const user = getUser();
+    return chat.userId1 === user.id ? chat.userId2 : chat.userId1;
+}
+
+function clearAllNotifications() {
+    const user = getUser();
+    notifications = notifications.filter(n => n.userId !== user.id);
+    saveNotifications();
+    updateNotificationBadge();
+    showNotificationsScreen();
+    showNotification('Все уведомления удалены');
+}
+
+// Функции для рейтингов и отзывов
+function showRatingScreen(reviewId = null) {
+    const user = getUser();
+    const container = document.getElementById('ratingContainer');
+    
+    if (reviewId) {
+        // Просмотр существующего отзыва
+        const review = reviews.find(r => r.id === reviewId);
+        if (!review) return;
+        
+        const targetUser = getOtherUser(review.revieweeId);
+        
+        container.innerHTML = `
+            <div class="rating-header">
+                <div class="rating-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h3 class="rating-user-name">${targetUser.firstName} ${targetUser.lastName}</h3>
+                <p class="rating-role">${targetUser.role === 'employer' ? 'Работодатель' : 'Работник'}</p>
+            </div>
+            
+            <div class="review-detail">
+                <div class="review-header">
+                    <div class="review-user">
+                        <div class="review-user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="review-user-info">
+                            <h4>${review.reviewerName}</h4>
+                            <p>${new Date(review.createdAt).toLocaleDateString('ru-RU')}</p>
+                        </div>
+                    </div>
+                    <div class="review-rating">
+                        ${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                    </div>
+                </div>
+                <div class="review-text">
+                    ${review.comment}
+                </div>
+                <div class="review-meta">
+                    <span class="review-ad-title">${review.adTitle}</span>
+                </div>
+            </div>
+        `;
+    } else {
+        // Создание нового отзыва
+        container.innerHTML = `
+            <div class="rating-header">
+                <div class="rating-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h3 class="rating-user-name">Иван Петров</h3>
+                <p class="rating-role">Работодатель</p>
+            </div>
+            
+            <div class="rating-stars" id="ratingStars">
+                ${[1, 2, 3, 4, 5].map(i => `
+                    <button class="star-btn" data-rating="${i}">
+                        <i class="far fa-star"></i>
+                    </button>
+                `).join('')}
+            </div>
+            
+            <div class="rating-form">
+                <textarea id="ratingComment" placeholder="Опишите ваш опыт работы..."></textarea>
+                <button id="submitRatingBtn" class="btn-primary btn-large">
+                    <i class="fas fa-paper-plane"></i> Опубликовать отзыв
+                </button>
+            </div>
+            
+            <div class="rating-tips">
+                <h4>Советы по написанию отзыва:</h4>
+                <ul>
+                    <li>Опишите конкретные задачи, которые были выполнены</li>
+                    <li>Укажите сильные стороны исполнителя/работодателя</li>
+                    <li>Будьте объективны и честны</li>
+                    <li>Избегайте личных оскорблений</li>
+                </ul>
+            </div>
+        `;
+        
+        // Настройка звезд рейтинга
+        let selectedRating = 0;
+        document.querySelectorAll('.star-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const rating = parseInt(this.getAttribute('data-rating'));
+                selectedRating = rating;
+                
+                document.querySelectorAll('.star-btn').forEach((star, index) => {
+                    if (index < rating) {
+                        star.innerHTML = '<i class="fas fa-star"></i>';
+                        star.classList.add('active');
+                    } else {
+                        star.innerHTML = '<i class="far fa-star"></i>';
+                        star.classList.remove('active');
+                    }
+                });
+            });
+        });
+        
+        // Отправка отзыва
+        document.getElementById('submitRatingBtn').addEventListener('click', function() {
+            const comment = document.getElementById('ratingComment').value.trim();
+            
+            if (selectedRating === 0) {
+                showNotification('Пожалуйста, выберите рейтинг');
+                return;
+            }
+            
+            if (comment.length < 10) {
+                showNotification('Отзыв должен содержать минимум 10 символов');
+                return;
+            }
+            
+            const review = {
+                id: reviews.length + 1,
+                reviewerId: user.id,
+                reviewerName: `${user.firstName} ${user.lastName}`,
+                revieweeId: 2, // ID пользователя, которому оставляем отзыв
+                adId: currentChat?.adId || 1,
+                adTitle: currentChat?.ad?.title || 'Тестовое объявление',
+                rating: selectedRating,
+                comment,
+                createdAt: new Date().toISOString(),
+                moderated: false
+            };
+            
+            reviews.push(review);
+            saveReviews();
+            
+            // Отправляем уведомление пользователю
+            sendNotification(
+                2,
+                'rating',
+                'Новый отзыв',
+                `${user.firstName} ${user.lastName} оставил вам отзыв`,
+                { reviewId: review.id }
+            );
+            
+            showNotification('Спасибо за ваш отзыв!');
+            
+            const userRole = user.role;
+            if (userRole === 'employer') {
+                showScreen('employerScreen');
+            } else {
+                showScreen('workerScreen');
+            }
+        });
+    }
+    
+    showScreen('ratingScreen');
+}
+
+// Функции для модерации
+function showModerationScreen() {
+    const user = getUser();
+    
+    // Проверяем, является ли пользователь администратором
+    if (user.role !== 'admin') {
+        showNotification('У вас нет доступа к модерации');
+        return;
+    }
+    
+    loadModerationList();
+    showScreen('moderationScreen');
+}
+
+function loadModerationList() {
+    const user = getUser();
+    if (user.role !== 'admin') return;
+    
+    const tab = document.querySelector('.moderation-tabs .tab-btn.active')?.getAttribute('data-tab') || 'pending';
+    const list = document.getElementById('moderationList');
+    
+    let filteredAds = ads.filter(ad => {
+        if (tab === 'pending') return ad.status === 'moderation';
+        if (tab === 'approved') return ad.moderated === true;
+        if (tab === 'rejected') return ad.moderated === false && ad.status === 'rejected';
+        return false;
+    });
+    
+    if (filteredAds.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-clipboard-check"></i>
+                <h3>Нет объявлений</h3>
+                <p>Все объявления обработаны</p>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = '';
+    filteredAds.forEach(ad => {
+        const adElement = createModerationItem(ad);
+        list.appendChild(adElement);
+    });
+}
+
+function createModerationItem(ad) {
+    const item = document.createElement('div');
+    item.className = `moderation-item ${ad.moderated === true ? 'approved' : ad.moderated === false ? 'rejected' : ''}`;
+    
+    const employer = getOtherUser(ad.employerId);
+    
+    item.innerHTML = `
+        <div class="moderation-item-header">
+            <div class="moderation-item-title">${ad.title}</div>
+            <div class="moderation-item-price">${ad.price} ₽</div>
+        </div>
+        
+        <div class="moderation-item-user">
+            <div class="moderation-user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="moderation-user-info">
+                <h4>${employer.firstName} ${employer.lastName}</h4>
+                <p>${employer.role === 'employer' ? 'Работодатель' : 'Работник'}</p>
+            </div>
+        </div>
+        
+        <div class="moderation-item-description">
+            ${ad.description}
+        </div>
+        
+        <div class="moderation-item-meta">
+            <div style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem;">
+                <span><i class="fas fa-map-marker-alt"></i> ${ad.location}</span>
+                <span><i class="fas fa-calendar"></i> ${new Date(ad.createdAt).toLocaleDateString('ru-RU')}</span>
+            </div>
+        </div>
+        
+        <div class="moderation-item-actions">
+            ${ad.status === 'moderation' ? `
+                <button class="moderation-btn approve" data-ad-id="${ad.id}">
+                    <i class="fas fa-check"></i> Одобрить
+                </button>
+                <button class="moderation-btn reject" data-ad-id="${ad.id}">
+                    <i class="fas fa-times"></i> Отклонить
+                </button>
+            ` : ''}
+            <button class="moderation-btn view" data-ad-id="${ad.id}">
+                <i class="fas fa-eye"></i> Подробнее
+            </button>
+        </div>
+    `;
+    
+    // Добавляем обработчики событий
+    if (ad.status === 'moderation') {
+        item.querySelector('.moderation-btn.approve').addEventListener('click', function() {
+            moderateAd(ad.id, true);
+        });
+        
+        item.querySelector('.moderation-btn.reject').addEventListener('click', function() {
+            moderateAd(ad.id, false);
+        });
+    }
+    
+    item.querySelector('.moderation-btn.view').addEventListener('click', function() {
+        showAdDetail(ad.id);
+    });
+    
+    return item;
+}
+
+function moderateAd(adId, approve) {
+    const ad = ads.find(a => a.id === adId);
+    if (!ad) return;
+    
+    ad.moderated = approve;
+    ad.status = approve ? 'active' : 'rejected';
+    ad.moderatedAt = new Date().toISOString();
+    ad.moderatedBy = getUser().id;
+    
+    saveAds();
+    
+    // Отправляем уведомление автору объявления
+    sendNotification(
+        ad.employerId,
+        'moderation',
+        approve ? 'Объявление одобрено' : 'Объявление отклонено',
+        approve ? 'Ваше объявление прошло модерацию и теперь видно всем пользователям' : 'Ваше объявление не прошло модерацию',
+        { adId: ad.id }
+    );
+    
+    showNotification(approve ? 'Объявление одобрено' : 'Объявление отклонено');
+    loadModerationList();
 }
