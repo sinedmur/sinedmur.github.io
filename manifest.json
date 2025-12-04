@@ -1,0 +1,23 @@
+{
+  "url": "https://ваш-домен.com/telegram-job-app/",
+  "name": "JobFinder - Подработка",
+  "short_name": "JobFinder",
+  "description": "Платформа для поиска подработки и исполнителей",
+  "icons": [
+    {
+      "src": "https://ваш-домен.com/telegram-job-app/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://ваш-домен.com/telegram-job-app/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "index.html",
+  "display": "standalone",
+  "theme_color": "#2481cc",
+  "background_color": "#ffffff",
+  "orientation": "portrait"
+}
