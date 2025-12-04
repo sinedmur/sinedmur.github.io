@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JobFinder Admin</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div id="adminApp">
+        <!-- Шапка админ-панели -->
+        <header class="admin-header">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>JobFinder Admin</h1>
+            </div>
+            <div class="admin-nav">
+                <button id="logoutBtn" class="btn-secondary">
+                    <i class="fas fa-sign-out-alt"></i> Выйти
+                </button>
+            </div>
+        </header>
+
+        <!-- Основной контент -->
+        <main class="admin-main">
+            <!-- Дашборд -->
+            <section id="dashboard" class="admin-section active">
+                <h2><i class="fas fa-tachometer-alt"></i> Дашборд</h2>
+                
+                <div class="admin-stats">
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <div class="admin-stat-info">
+                            <h3 id="pendingCount">0</h3>
+                            <p>Ожидают модерации</p>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="admin-stat-info">
+                            <h3 id="usersCount">0</h3>
+                            <p>Всего пользователей</p>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon">
+                            <i class="fas fa-ruble-sign"></i>
+                        </div>
+                        <div class="admin-stat-info">
+                            <h3 id="revenueCount">0</h3>
+                            <p>Выручка за месяц</p>
+                        </div>
+                    </div>
+                    
+                    <div class="admin-stat-card">
+                        <div class="admin-stat-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="admin-stat-info">
+                            <h3 id="ratingAvg">0.0</h3>
+                            <p>Средний рейтинг</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="admin-charts">
+                    <div class="chart-container">
+                        <h3>Активность пользователей</h3>
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>Статистика объявлений</h3>
+                        <canvas id="adsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Модерация -->
+            <section id="moderationAdmin" class="admin-section">
+                <h2><i class="fas fa-clipboard-check"></i> Модерация объявлений</h2>
+                
+                <div class="admin-filters">
+                    <select id="moderationFilter">
+                        <option value="all">Все статусы</option>
+                        <option value="pending">Ожидают</option>
+                        <option value="approved">Одобрены</option>
+                        <option value="rejected">Отклонены</option>
+                    </select>
+                    
+                    <input type="text" id="searchAds" placeholder="Поиск по названию...">
+                    
+                    <button id="refreshModerationBtn" class="btn-primary">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                
+                <div class="admin-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Название</th>
+                                <th>Автор</th>
+                                <th>Цена</th>
+                                <th>Дата</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="moderationTable">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Пользователи -->
+            <section id="usersAdmin" class="admin-section">
+                <h2><i class="fas fa-users-cog"></i> Управление пользователями</h2>
+                
+                <div class="admin-filters">
+                    <select id="userRoleFilter">
+                        <option value="all">Все роли</option>
+                        <option value="employer">Работодатели</option>
+                        <option value="worker">Работники</option>
+                        <option value="admin">Администраторы</option>
+                    </select>
+                    
+                    <input type="text" id="searchUsers" placeholder="Поиск пользователей...">
+                    
+                    <button id="addUserBtn" class="btn-primary">
+                        <i class="fas fa-user-plus"></i> Добавить
+                    </button>
+                </div>
+                
+                <div class="admin-table-container">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Имя</th>
+                                <th>Роль</th>
+                                <th>Баланс</th>
+                                <th>Рейтинг</th>
+                                <th>Дата регистрации</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTable">
+                            <!-- Данные загружаются через JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Отзывы -->
+            <section id="reviewsAdmin" class="admin-section">
+                <h2><i class="fas fa-star-half-alt"></i> Модерация отзывов</h2>
+                
+                <div class="reviews-list" id="adminReviewsList">
+                    <!-- Отзывы загружаются через JS -->
+                </div>
+            </section>
+
+            <!-- Настройки -->
+            <section id="settingsAdmin" class="admin-section">
+                <h2><i class="fas fa-cogs"></i> Настройки системы</h2>
+                
+                <div class="settings-container">
+                    <div class="settings-group">
+                        <h3><i class="fas fa-money-bill-wave"></i> Настройки оплаты</h3>
+                        
+                        <div class="setting-item">
+                            <label for="createAdPrice">Цена создания объявления (₽)</label>
+                            <input type="number" id="createAdPrice" value="50" min="0">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="acceptAdPrice">Цена принятия объявления (₽)</label>
+                            <input type="number" id="acceptAdPrice" value="30" min="0">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="subscriptionPrice">Цена подписки (₽/месяц)</label>
+                            <input type="number" id="subscriptionPrice" value="300" min="0">
+                        </div>
+                        
+                        <button id="savePaymentSettings" class="btn-primary">
+                            <i class="fas fa-save"></i> Сохранить
+                        </button>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3><i class="fas fa-bell"></i> Настройки уведомлений</h3>
+                        
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="emailNotifications" checked>
+                                Email уведомления
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="pushNotifications" checked>
+                                Push уведомления
+                            </label>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="moderationNotifications" checked>
+                                Уведомления о модерации
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-group">
+                        <h3><i class="fas fa-shield-alt"></i> Безопасность</h3>
+                        
+                        <div class="setting-item">
+                            <label for="sessionTimeout">Таймаут сессии (минут)</label>
+                            <input type="number" id="sessionTimeout" value="30" min="5">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="requireVerification" checked>
+                                Требовать верификацию
+                            </label>
+                        </div>
+                        
+                        <button id="rebuildIndexes" class="btn-secondary">
+                            <i class="fas fa-sync"></i> Перестроить индексы
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Боковая навигация -->
+        <nav class="admin-sidebar">
+            <div class="admin-profile">
+                <div class="admin-avatar">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+                <div class="admin-info">
+                    <h4 id="adminName">Администратор</h4>
+                    <p id="adminRole">Администратор</p>
+                </div>
+            </div>
+            
+            <ul class="admin-menu">
+                <li>
+                    <a href="#dashboard" class="admin-menu-item active">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Дашборд</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#moderationAdmin" class="admin-menu-item">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>Модерация</span>
+                        <span class="menu-badge" id="moderationBadge">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#usersAdmin" class="admin-menu-item">
+                        <i class="fas fa-users-cog"></i>
+                        <span>Пользователи</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#reviewsAdmin" class="admin-menu-item">
+                        <i class="fas fa-star-half-alt"></i>
+                        <span>Отзывы</span>
+                        <span class="menu-badge" id="reviewsBadge">0</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#settingsAdmin" class="admin-menu-item">
+                        <i class="fas fa-cogs"></i>
+                        <span>Настройки</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="admin-footer">
+                <div class="system-status">
+                    <div class="status-indicator online"></div>
+                    <span>Система активна</span>
+                </div>
+                <p class="version">v2.0.0</p>
+            </div>
+        </nav>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="adminModalTitle">Модальное окно</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="adminModalBody">
+                <!-- Контент модального окна -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="adminModalCancel">Отмена</button>
+                <button class="btn-primary" id="adminModalConfirm">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="admin.js"></script>
+</body>
+</html>
