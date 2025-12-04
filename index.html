@@ -3,223 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BeatMarket | Площадка для битмейкеров и артистов</title>
-    <meta name="telegram:theme" content="dark">
-    <meta name="telegram:payment_provider_token" content="TON_TEST:YOUR_PROVIDER_TOKEN">
-    <link rel="stylesheet" href="styles.css">
+    <title>JobFinder - Подработка</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="app.js" defer></script>
 </head>
 <body>
-    <div class="app-container">
+    <div id="app">
+        <!-- Шапка приложения -->
         <header class="app-header">
-            <div class="logo">BeatMarket</div>
-            <div class="user-balance" id="userBalance">0 ⭐</div>
-        </header>
-        
-        <main class="main-content">
-            <div class="role-selector">
-                <button class="role-btn active" data-role="buyer">Я артист</button>
-                <button class="role-btn" data-role="seller">Я битмейкер</button>
+            <div class="logo">
+                <i class="fas fa-briefcase"></i>
+                <h1>JobFinder</h1>
             </div>
-            
-            <!-- Для покупателей -->
-            <section class="buyer-section active">
-                <div class="search-bar">
-                    <input type="text" placeholder="Поиск по жанру, настроению, BPM..." id="searchInput">
-                    <button class="search-btn">Найти</button>
-                </div>
-                
-                <div class="filters">
-                    <select id="genreFilter">
-                        <option value="">Все жанры</option>
-                        <option value="trap">Trap</option>
-                        <option value="drill">Drill</option>
-                        <option value="rnb">R&B</option>
-                        <option value="hiphop">Hip-Hop</option>
-                    </select>
+            <div class="user-info" id="userInfo">
+                <span id="userBalance">0 ₽</span>
+                <button id="profileBtn">
+                    <i class="fas fa-user"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Основной контент -->
+        <main>
+            <!-- Экран выбора роли (первый экран) -->
+            <section id="roleScreen" class="screen active">
+                <div class="welcome-container">
+                    <h2>Добро пожаловать!</h2>
+                    <p>Выберите вашу роль в приложении:</p>
                     
-                    <select id="bpmFilter">
-                        <option value="">Любой BPM</option>
-                        <option value="60-80">60-80</option>
-                        <option value="80-100">80-100</option>
-                        <option value="100-140">100-140</option>
-                        <option value="140+">140+</option>
-                    </select>
-                </div>
-                
-                <div class="beats-grid" id="beatsGrid">
-                    <!-- Будет заполнено через JS -->
+                    <div class="role-cards">
+                        <div class="role-card employer-card" data-role="employer">
+                            <div class="role-icon">
+                                <i class="fas fa-user-tie"></i>
+                            </div>
+                            <h3>Работодатель</h3>
+                            <p>Создавайте объявления о подработке для других пользователей</p>
+                            <ul class="role-features">
+                                <li><i class="fas fa-check"></i> Размещение объявлений</li>
+                                <li><i class="fas fa-check"></i> Поиск исполнителей</li>
+                                <li><i class="fas fa-check"></i> Управление заданиями</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="role-card worker-card" data-role="worker">
+                            <div class="role-icon">
+                                <i class="fas fa-hard-hat"></i>
+                            </div>
+                            <h3>Работник</h3>
+                            <p>Находите подработку и выполняйте задания</p>
+                            <ul class="role-features">
+                                <li><i class="fas fa-check"></i> Поиск подработки</li>
+                                <li><i class="fas fa-check"></i> Выполнение заданий</li>
+                                <li><i class="fas fa-check"></i> Заработок денег</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="role-note">
+                        <p><i class="fas fa-info-circle"></i> Вы сможете изменить роль позже в настройках профиля</p>
+                    </div>
                 </div>
             </section>
-            
-            <!-- Для продавцов -->
-            <section class="seller-section">
-                <button class="upload-btn" id="uploadBeatBtn">Загрузить новый бит</button>
+
+            <!-- Главный экран для работодателя -->
+            <section id="employerScreen" class="screen">
+                <div class="screen-header">
+                    <h2><i class="fas fa-user-tie"></i> Панель работодателя</h2>
+                    <button id="createAdBtn" class="btn-primary">
+                        <i class="fas fa-plus"></i> Новое объявление
+                    </button>
+                </div>
                 
-                <!-- <div class="my-beats" id="myBeatsList">
-                     Список загруженных битов 
-                    <div class="empty-state">
-                        <p>У вас пока нет загруженных битов</p>
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="myAds">Мои объявления</button>
+                    <button class="tab-btn" data-tab="activeAds">Активные</button>
+                    <button class="tab-btn" data-tab="completedAds">Завершенные</button>
+                </div>
+                
+                <div class="tab-content active" id="myAdsTab">
+                    <div class="ads-list" id="employerAdsList">
+                        <!-- Объявления будут загружены через JS -->
+                        <div class="empty-state">
+                            <i class="fas fa-clipboard-list"></i>
+                            <h3>У вас пока нет объявлений</h3>
+                            <p>Создайте первое объявление, чтобы найти исполнителей</p>
+                            <button id="createFirstAdBtn" class="btn-primary">Создать объявление</button>
+                        </div>
                     </div>
-                </div> -->
+                </div>
                 
                 <div class="stats">
                     <div class="stat-card">
-                        <h3>Всего продаж</h3>
-                        <p id="totalSales">0</p>
+                        <h4>Баланс</h4>
+                        <p class="stat-value" id="employerBalance">0 ₽</p>
                     </div>
                     <div class="stat-card">
-                        <h3>Заработано</h3>
-                        <p id="totalEarned">0 ⭐</p>
+                        <h4>Подписка</h4>
+                        <p class="stat-value" id="employerSubscription">Не активна</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Объявления</h4>
+                        <p class="stat-value" id="employerAdsCount">0</p>
                     </div>
                 </div>
             </section>
-        </main>
-            <template id="buyerNav">
-                <button class="nav-btn active" data-section="discover">
-                    <i class="icon-search">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE1LjUgMTQuNUgxNC43MUwxNC40MyAxNC4yM0MxNS40MSAxMy4wOSAxNiAxMS41NyAxNiAxMEMxNiA2LjEzIDEyLjg3IDMgOSAzQzUuMTMgMyAyIDYuMTMgMiAxMEMyIDEzLjg3IDUuMTMgMTcgOSAxN0MxMC41NyAxNyAxMi4wOSAxNi40MSAxMy4yMyAxNS40M0wxMy41IDE1LjcxVjE2LjVMMTkgMjJMMjAuNSAyMC41TDE1LjUgMTUuNVYxNC41Wk05IDE1QzYuMjQgMTUgNCAxMi43NiA0IDEwQzQgNy4yNCA2LjI0IDUgOSA1QzExLjc2IDUgMTQgNy4yNCAxNCAxMEMxNCAxMi43NiAxMS43NiAxNSA5IDE1WiIgZmlsbD0iI0IwQjBCMCIvPgo8L3N2Zz4K" class="inactive-icon">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE1LjUgMTQuNUgxNC43MUwxNC40MyAxNC4yM0MxNS40MSAxMy4wOSAxNiAxMS41NyAxNiAxMEMxNiA2LjEzIDEyLjg3IDMgOSAzQzUuMTMgMyAyIDYuMTMgMiAxMEMyIDEzLjg3IDUuMTMgMTcgOSAxN0MxMC41NyAxNyAxMi4wOSAxNi40MSAxMy4yMyAxNS40M0wxMy41IDE1LjcxVjE2LjVMMTkgMjJMMjAuNSAyMC41TDE1LjUgMTUuNVYxNC41Wk05IDE1QzYuMjQgMTUgNCAxMi43NiA0IDEwQzQgNy4yNCA2LjI0IDUgOSA1QzExLjc2IDUgMTQgNy4yNCAxNCAxMEMxNCAxMi43NiAxMS43NiAxNSA5IDE1WiIgZmlsbD0iI2Y1YzE2YyIvPgo8L3N2Zz4K" class="active-icon">
-                    </i> 
-                    <span>Найти</span>
-                </button>
-                <button class="nav-btn" data-section="favorites">
-                    <i class="icon-heart">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIxLjM1TDEwLjU1IDE5LjAzQzYuMDQgMTMuNjIgMi41IDExLjQ5IDIuNSA4LjVDMi41IDUuNDIgNC40MiAzLjUgNy41IDMuNUM5LjI0IDMuNSAxMC45MSA0LjMxIDEyIDUuNEMxMy4wOSA0LjMxIDE0Ljc2IDMuNSAxNi41IDMuNUMxOS41OCAzLjUgMjEuNSA1LjQyIDIxLjUgOC41QzIxLjUgMTEuNDkgMTcuOTYgMTMuNjIgMTMuNDUgMTkuMDNMMTIgMjEuMzVaIiBmaWxsPSIjQjBCMEIwIi8+Cjwvc3ZnPgo=" class="inactive-icon">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDIxLjM1TDEwLjU1IDE5LjAzQzYuMDQgMTMuNjIgMi41IDExLjQ5IDIuNSA4LjVDMi41IDUuNDIgNC40MiAzLjUgNy41IDMuNUM5LjI0IDMuNSAxMC45MSA0LjMxIDEyIDUuNEMxMy4wOSA0LjMxIDE0Ljc2IDMuNSAxNi41IDMuNUMxOS41OCAzLjUgMjEuNSA1LjQyIDIxLjUgOC41QzIxLjUgMTEuNDkgMTcuOTYgMTMuNjIgMTMuNDUgMTkuMDNMMTIgMjEuMzVaIiBmaWxsPSIjZjVjMTZjIi8+Cjwvc3ZnPgo=" class="active-icon">
-                    </i>
-                    <span>Избранное</span>
-                </button>
-                <button class="nav-btn" data-section="purchases">
-                    <i class="icon-bag">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTYgMkwzIDhWMjBIMjFWOFYySDE4SDE2SDEySDhINlpNNSAxMEgxOVY4SDE3VjVIMTJWOFYxMEgxMlY1SDE3VjEwSDE5VjIwSDRWMTBINVpNMTIgMTBIMTdWMTJIMTJWMTAiIGZpbGw9IiNCMEIwQjAiLz4KPC9zdmc+Cg==" class="inactive-icon">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTYgMkwyIDhWMjBIMjFWOFYySDE4SDE2SDEySDhINlpNNSAxMEgxOVY4SDE3VjVIMTJWOFYxMEgxMlY1SDE3VjEwSDE5VjIwSDRWMTBINVpNMTIgMTBIMTdWMTJIMTJWMTAiIGZpbGw9IiNmNWMxNmMiLz4KPC9zdmc+Cg==" class="active-icon">
-                    </i>
-                    <span>Покупки</span>
-                </button>
-                <button class="nav-btn" data-section="profile">
-                    <i class="icon-user">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDRDMTAuOSA0IDEwIDQuOSAxMCA2QzEwIDcuMSAxMC45IDggMTIgOEMxMy4xIDggMTQgNy4xIDE0IDZDMTQgNC45IDEzLjEgNCAxMiA0Wk0xMiAxNEM5LjcgMTQgNiAxNS4xIDYgMTcuNVYxOUgxOFYxNy41QzE4IDE1LjEgMTQuMyAxNCAxMiAxNFoiIGZpbGw9IiNCMEIwQjAiLz4KPC9zdmc+Cg==" class="inactive-icon">
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDRDMTAuOSA0IDEwIDQuOSAxMCA2QzEwIDcuMSAxMC45IDggMTIgOEMxMy4xIDggMTQgNy4xIDE0IDZDMTQgNC45IDEzLjEgNCAxMiA0Wk0xMiAxNEM5LjcgMTQgNiAxNS4xIDYgMTcuNVYxOUgxOFYxNy41QzE4IDE1LjEgMTQuMyAxNCAxMiAxNFoiIGZpbGw9IiNmNWMxNmMiLz4KPC9zdmc+Cg==" class="active-icon">
-                    </i>
-                    <span>Профиль</span>
-                </button>
-            </template>        
-            <!-- Для продавцов (битмейкеров) -->
-            <template id="sellerNav">
-                <button class="nav-btn active" data-section="myBeats">
-                    <i class="icon-music">
-                        <!-- Иконка "Мои биты" (неактивная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMThWNUwxOSA3VjE2TTkgMThDNy44OTU0MyAxOCA3IDE3LjEwNDYgNyAxNkM3IDE0Ljg5NTQgNy44OTU0MyAxNCA5IDE0QzEwLjEwNDYgMTQgMTEgMTQuODk1NCAxMSAxNkMxMSAxNy4xMDQ2IDEwLjEwNDYgMTggOSAxOFpNMTkgMTZDMTcuODk1NCAxNiAxNyAxNS4xMDQ2IDE3IDE0QzE3IDEyLjg5NTQgMTcuODk1NCAxMiAxOSAxMkMyMC4xMDQ2IDEyIDIxIDEyLjg5NTQgMjEgMTRDMjEgMTUuMTA0NiAyMC4xMDQ2IDE2IDE5IDE2WiIgZmlsbD0iI0IwQjBCMCIvPgo8L3N2Zz4=" class="inactive-icon">
-                        <!-- Иконка "Мои биты" (активная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkgMThWNUwxOSA3VjE2TTkgMThDNy44OTU0MyAxOCA3IDE3LjEwNDYgNyAxNkM3IDE0Ljg5NTQgNy44OTU0MyAxNCA5IDE0QzEwLjEwNDYgMTQgMTEgMTQuODk1NCAxMSAxNkMxMSAxNy4xMDQ2IDEwLjEwNDYgMTggOSAxOFpNMTkgMTZDMTcuODk1NCAxNiAxNyAxNS4xMDQ2IDE3IDE0QzE3IDEyLjg5NTQgMTcuODk1NCAxMiAxOSAxMkMyMC4xMDQ2IDEyIDIxIDEyLjg5NTQgMjEgMTRDMjEgMTUuMTA0NiAyMC4xMDQ2IDE2IDE5IDE2WiIgZmlsbD0iI2Y1YzE2YyIvPgo8L3N2Zz4=" class="active-icon">
-                    </i>
-                    <span>Мои биты</span>
-                </button>
-                <button class="nav-btn" data-section="upload">
-                    <i class="icon-upload">
-                        <!-- Иконка "Загрузить" (неактивная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTUgMTZWMTlIMTlWMTZIMjFWMjBIM1YxNkg1Wk0xMSA4VjE1SDEzVjhMMTcgMTJMMTguNCAxMC42TDEyIDQuMkw1LjYgMTAuNkw3IDEyTDExIDhaIiBmaWxsPSIjQjBCMEIwIi8+Cjwvc3ZnPg==" class="inactive-icon">
-                        <!-- Иконка "Загрузить" (активная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTUgMTZWMTlIMTlWMTZIMjFWMjBIM1YxNkg1Wk0xMSA4VjE1SDEzVjhMMTcgMTJMMTguNCAxMC42TDEyIDQuMkw1LjYgMTAuNkw3IDEyTDExIDhaIiBmaWxsPSIjZjVjMTZjIi8+Cjwvc3ZnPg==" class="active-icon">
-                    </i>
-                    <span>Загрузить</span>
-                </button>
-                <button class="nav-btn" data-section="stats">
-                    <i class="icon-chart">
-                        <!-- Иконка "Статистика" (неактивная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgN0g4VjE5SDRWN1pNMTAgMTNIMTRWMTlIMTBWMTNaTTE2IDJIMjBWMTlIMTZWMlpNMiAxOUwyMiAxOSIgZmlsbD0iI0IwQjBCMCIvPgo8L3N2Zz4=" class="inactive-icon">
-                        <!-- Иконка "Статистика" (активная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTQgN0g4VjE5SDRWN1pNMTAgMTNIMTRWMTlIMTBWMTNaTTE2IDJIMjBWMTlIMTZWMlpNMiAxOUwyMiAxOSIgZmlsbD0iI2Y1YzE2YyIvPgo8L3N2Zz4=" class="active-icon">
-                    </i>
-                    <span>Статистика</span>
-                </button>
-                <button class="nav-btn" data-section="profile">
-                    <i class="icon-user">
-                        <!-- Иконка "Профиль" (неактивная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDRDMTAuOSA0IDEwIDQuOSAxMCA2QzEwIDcuMSAxMC45IDggMTIgOEMxMy4xIDggMTQgNy4xIDE0IDZDMTQgNC45IDEzLjEgNCAxMiA0Wk0xMiAxNEM5LjcgMTQgNiAxNS4xIDYgMTcuNVYxOUgxOFYxNy41QzE4IDE1LjEgMTQuMyAxNCAxMiAxNFoiIGZpbGw9IiNCMEIwQjAiLz4KPC9zdmc+" class="inactive-icon">
-                        <!-- Иконка "Профиль" (активная) -->
-                        <img alt="" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDRDMTAuOSA0IDEwIDQuOSAxMCA2QzEwIDcuMSAxMC45IDggMTIgOEMxMy4xIDggMTQgNy4xIDE0IDZDMTQgNC45IDEzLjEgNCAxMiA0Wk0xMiAxNEM5LjcgMTQgNiAxNS4xIDYgMTcuNVYxOUgxOFYxNy41QzE4IDE1LjEgMTQuMyAxNCAxMiAxNFoiIGZpbGw9IiNmNWMxNmMiLz4KPC9zdmc+" class="active-icon">
-                    </i>
-                    <span>Профиль</span>
-                </button>
-            </template>   
-            <nav class="bottom-nav"></nav>
-    </div>
-    
-    <!-- Модальное окно загрузки бита -->
-    <div class="modal" id="uploadModal">
-        <div class="modal-content">
-            <h2>Загрузить новый бит</h2>
-            <form id="uploadForm">
-                <div class="form-group">
-                    <label for="beatTitle">Название бита</label>
-                    <input type="text" id="beatTitle" required>
+
+            <!-- Главный экран для работника -->
+            <section id="workerScreen" class="screen">
+                <div class="screen-header">
+                    <h2><i class="fas fa-hard-hat"></i> Доступные задания</h2>
+                    <button id="refreshAdsBtn" class="btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Обновить
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label for="beatGenre">Жанр</label>
-                    <select id="beatGenre" required>
-                        <option value="">Выберите жанр</option>
-                        <option value="trap">Trap</option>
-                        <option value="drill">Drill</option>
-                        <option value="rnb">R&B</option>
-                        <option value="hiphop">Hip-Hop</option>
+                
+                <div class="filter-bar">
+                    <select id="categoryFilter">
+                        <option value="all">Все категории</option>
+                        <option value="delivery">Доставка</option>
+                        <option value="cleaning">Уборка</option>
+                        <option value="repair">Ремонт</option>
+                        <option value="computer">Компьютерная помощь</option>
                         <option value="other">Другое</option>
                     </select>
+                    
+                    <select id="priceFilter">
+                        <option value="all">Любая цена</option>
+                        <option value="low">До 1000 ₽</option>
+                        <option value="medium">1000-5000 ₽</option>
+                        <option value="high">От 5000 ₽</option>
+                    </select>
                 </div>
-                <div class="form-group">
-                    <label for="beatBpm">BPM</label>
-                    <input type="number" id="beatBpm" min="60" max="300" required>
+                
+                <div class="ads-list" id="workerAdsList">
+                    <!-- Объявления будут загружены через JS -->
+                    <div class="empty-state">
+                        <i class="fas fa-search"></i>
+                        <h3>Нет доступных заданий</h3>
+                        <p>Попробуйте обновить список или изменить фильтры</p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="beatPrice">Цена (Stars)</label>
-                    <input type="number" id="beatPrice" min="10" step="5" required>
+                
+                <div class="stats">
+                    <div class="stat-card">
+                        <h4>Баланс</h4>
+                        <p class="stat-value" id="workerBalance">0 ₽</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Подписка</h4>
+                        <p class="stat-value" id="workerSubscription">Не активна</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4>Выполнено</h4>
+                        <p class="stat-value" id="workerCompleted">0</p>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="beatCoverFile">Обложка</label>
-                    <input type="file" id="beatCoverFile" accept="image/*" required>
-                    <div class="file-preview" id="coverPreview"></div>
-                </div>
-                <div class="form-group">
-                    <label for="beatFile">Аудио файл (MP3, WAV)</label>
-                    <input type="file" id="beatFile" accept="audio/*" required>
-                </div>          
-                <div class="form-actions">
-                    <button type="button" class="cancel-btn" id="cancelUpload">Отмена</button>
-                    <button type="submit" class="submit-btn" id="uploadBtn">Опубликовать</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Модальное окно проигрывателя -->
-    <div class="modal" id="playerModal">
-        <div class="modal-content player-content">
-            <button class="close-player" id="closePlayer">×</button>
-            <div class="beat-cover" id="beatCover"></div>
-            <h2 id="playerTitle">Название бита</h2>
-            <p class="beat-info" id="playerInfo">Жанр: Trap • BPM: 140</p>           
-            <div class="audio-player">
-                <audio id="audioPlayer" controls></audio>
-                <div class="player-controls">
-                    <button class="control-btn" id="playPauseBtn">
-                        <i class="icon-play"></i>
+            </section>
+
+            <!-- Экран создания объявления -->
+            <section id="createAdScreen" class="screen">
+                <div class="screen-header">
+                    <h2><i class="fas fa-plus-circle"></i> Создание объявления</h2>
+                    <button id="backToEmployerBtn" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
                     </button>
-                    <input type="range" id="progressBar" value="0">
-                    <span class="time" id="currentTime">0:00</span>
-                    <span class="time" id="duration">0:00</span>
                 </div>
+                
+                <div class="form-container">
+                    <div class="form-group">
+                        <label for="adTitle">Заголовок объявления</label>
+                        <input type="text" id="adTitle" placeholder="Например: Нужно помочь с переездом">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adCategory">Категория</label>
+                        <select id="adCategory">
+                            <option value="delivery">Доставка</option>
+                            <option value="cleaning">Уборка</option>
+                            <option value="repair">Ремонт</option>
+                            <option value="computer">Компьютерная помощь</option>
+                            <option value="other">Другое</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adDescription">Описание задачи</label>
+                        <textarea id="adDescription" rows="4" placeholder="Опишите задачу подробно..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adPrice">Стоимость работы (₽)</label>
+                        <input type="number" id="adPrice" min="100" max="100000" value="1000">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adLocation">Местоположение</label>
+                        <input type="text" id="adLocation" placeholder="Город или район">
+                    </div>
+                    
+                    <div class="payment-info">
+                        <div class="payment-warning">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <div>
+                                <h4>Стоимость размещения: <span id="createPrice">50 ₽</span></h4>
+                                <p>При наличии активной подписки плата не взимается</p>
+                            </div>
+                        </div>
+                        
+                        <div class="subscription-offer" id="subscriptionOfferCreate">
+                            <h4><i class="fas fa-crown"></i> Экономьте с подпиской!</h4>
+                            <p>Всего 300 ₽ в месяц за неограниченное количество объявлений</p>
+                            <button id="buySubscriptionBtn" class="btn-secondary">Купить подписку</button>
+                        </div>
+                    </div>
+                    
+                    <button id="publishAdBtn" class="btn-primary btn-large">
+                        <i class="fas fa-paper-plane"></i> Опубликовать объявление
+                    </button>
+                </div>
+            </section>
+
+            <!-- Экран просмотра объявления -->
+            <section id="adDetailScreen" class="screen">
+                <div class="screen-header">
+                    <button id="backToListBtn" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
+                </div>
+                
+                <div class="ad-detail-container" id="adDetailContainer">
+                    <!-- Детали объявления будут загружены через JS -->
+                </div>
+            </section>
+
+            <!-- Экран профиля и настроек -->
+            <section id="profileScreen" class="screen">
+                <div class="screen-header">
+                    <h2><i class="fas fa-user-cog"></i> Профиль и настройки</h2>
+                    <button id="closeProfileBtn" class="btn-secondary">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="profile-info">
+                            <h3 id="profileUserName">Пользователь</h3>
+                            <p class="role-badge" id="profileUserRole">Работодатель</p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Баланс</span>
+                            <span class="stat-value" id="profileBalance">0 ₽</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Подписка</span>
+                            <span class="stat-value" id="profileSubscriptionStatus">Не активна</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Объявления</span>
+                            <span class="stat-value" id="profileAdsCount">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <h3>Управление аккаунтом</h3>
+                        
+                        <button class="profile-action-btn" id="changeRoleBtn">
+                            <i class="fas fa-exchange-alt"></i>
+                            <span>Сменить роль</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <button class="profile-action-btn" id="buySubscriptionProfileBtn">
+                            <i class="fas fa-crown"></i>
+                            <span>Купить подписку</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <button class="profile-action-btn" id="depositBtn">
+                            <i class="fas fa-wallet"></i>
+                            <span>Пополнить баланс</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <button class="profile-action-btn" id="historyBtn">
+                            <i class="fas fa-history"></i>
+                            <span>История операций</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="subscription-section">
+                        <h3><i class="fas fa-crown"></i> Преимущества подписки</h3>
+                        <ul class="subscription-benefits">
+                            <li><i class="fas fa-check"></i> Бесплатное размещение объявлений</li>
+                            <li><i class="fas fa-check"></i> Бесплатное принятие заданий</li>
+                            <li><i class="fas fa-check"></i> Приоритет в поиске</li>
+                            <li><i class="fas fa-check"></i> Поддержка 24/7</li>
+                        </ul>
+                        
+                        <div class="subscription-price">
+                            <h4>Всего 300 ₽/месяц</h4>
+                            <button id="buySubscriptionMainBtn" class="btn-primary">Активировать подписку</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Экран оплаты -->
+            <section id="paymentScreen" class="screen">
+                <div class="screen-header">
+                    <h2><i class="fas fa-credit-card"></i> Оплата</h2>
+                    <button id="cancelPaymentBtn" class="btn-secondary">
+                        <i class="fas fa-times"></i> Отмена
+                    </button>
+                </div>
+                
+                <div class="payment-container" id="paymentContainer">
+                    <!-- Содержимое оплаты будет загружено через JS -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Нижняя навигация -->
+        <nav class="bottom-nav" id="bottomNav">
+            <button class="nav-btn active" data-screen="employerScreen">
+                <i class="fas fa-home"></i>
+                <span>Главная</span>
+            </button>
+            <button class="nav-btn" data-screen="workerScreen">
+                <i class="fas fa-search"></i>
+                <span>Поиск</span>
+            </button>
+            <button class="nav-btn" id="addAdBtn">
+                <i class="fas fa-plus-circle"></i>
+                <span>Создать</span>
+            </button>
+            <button class="nav-btn" data-screen="profileScreen">
+                <i class="fas fa-user"></i>
+                <span>Профиль</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- Модальное окно для подтверждения -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Подтверждение</h3>
+                <button id="closeModalBtn" class="close-modal">&times;</button>
             </div>
-            <div class="beat-actions">
-                <button class="action-btn favorite" id="favoriteBtn">
-                    <i class="icon-heart"></i> В избранное
-                </button>
-                <button class="action-btn buy" id="buyBtn">
-                    Купить за <span id="beatPriceDisplay">0</span> Stars
-                </button>
+            <div class="modal-body" id="modalBody">
+                <!-- Контент модального окна -->
+            </div>
+            <div class="modal-footer">
+                <button id="modalCancelBtn" class="btn-secondary">Отмена</button>
+                <button id="modalConfirmBtn" class="btn-primary">Подтвердить</button>
             </div>
         </div>
     </div>
+
+    <!-- Уведомления -->
+    <div id="notification" class="notification">
+        <div class="notification-content">
+            <span id="notificationText"></span>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
 </body>
 </html>
