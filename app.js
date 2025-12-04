@@ -51,7 +51,7 @@ function initUser() {
             firstName: tg.initDataUnsafe.user?.first_name || 'Тестовый',
             lastName: tg.initDataUnsafe.user?.last_name || 'Пользователь',
             balance: 1000,
-            role: null, // 'employer' или 'worker'
+            role: 'admin', // 'employer' или 'worker'
             subscriptionUntil: null,
             createdAt: new Date().toISOString()
         }];
@@ -1938,4 +1938,5 @@ function moderateAd(adId, approve) {
     showNotification(approve ? 'Объявление одобрено' : 'Объявление отклонено');
     loadModerationList();
 }
+
 
