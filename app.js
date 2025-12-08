@@ -5,6 +5,30 @@ tg.enableClosingConfirmation(); // Подтверждение при закры�
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', function() {
+
+    // Добавляем класс loaded после загрузки
+    setTimeout(() => {
+        document.body.classList.add('loaded');
+    }, 500);
+
+    // Предотвращаем зум на iOS при фокусе
+    document.addEventListener('touchstart', function(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+            e.target.style.fontSize = '16px';
+        }
+    });
+    
+    // Исправляем отступы для iOS
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
+        document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
+    }
+    
+    // Делаем прокрутку более плавной
+    document.querySelectorAll('.chat-container, .modal-content').forEach(el => {
+        el.style.webkitOverflowScrolling = 'touch';
+    });
+
     // Инициализация данных пользователя
     initUser();
     
@@ -36,6 +60,8 @@ document.addEventListener('DOMContentLoaded', function() {
 let users = [];
 let ads = [];
 let transactions = [];
+
+
 
 // Инициализация пользователя
 function initUser() {
