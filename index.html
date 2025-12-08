@@ -3,10 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2481cc">
+    <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Prevent text size adjustment -->
+    <meta name="HandheldFriendly" content="true">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- iOS specific -->
+    <meta name="apple-mobile-web-app-title" content="JobFinder">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    
+    <!-- Android specific -->
+    <meta name="mobile-web-app-capable" content="yes">
     <title>JobFinder - Подработка</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+     <style>
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+        
+        @media screen and (max-width: 480px) {
+            /* Prevent horizontal scroll */
+            html, body {
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+            
+            /* Improve tap targets */
+            button, a, .btn-primary, .btn-secondary {
+                min-height: 44px;
+                min-width: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="app">
@@ -500,5 +537,41 @@
     </div>
 
     <script src="app.js"></script>
+    <div id="loading" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    transition: opacity 0.3s ease;
+">
+    <div class="loading-spinner"></div>
+</div>
+
+<style>
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(36, 129, 204, 0.2);
+    border-top-color: var(--primary-glass);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+body.loaded #loading {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+</style>
 </body>
 </html>
