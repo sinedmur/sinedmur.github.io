@@ -752,7 +752,7 @@ main {
 }
 
 .stat-card h4 {
-    font-size: 1rem;
+    font-size: 0.8rem;
     color: #868e96;
     margin-bottom: 8px;
     font-weight: 600;
@@ -762,7 +762,7 @@ main {
 
 .stat-value {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.8rem;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
