@@ -1357,7 +1357,7 @@ main {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 20px 12px;
+    padding: 20px 24px;
 }
 
 /* Адаптивность */
@@ -2901,7 +2901,7 @@ main {
 /* Адаптивность */
 @media (max-width: 480px) {
     .app-header {
-        padding: 16px 20px;
+        padding: 16px 12px;
     }
     
     .logo h1 {
@@ -2909,7 +2909,7 @@ main {
     }
     
     .welcome-container {
-        padding: 32px 20px;
+        padding: 32px 12px;
     }
     
     .welcome-container h2 {
@@ -2917,7 +2917,7 @@ main {
     }
     
     .role-card {
-        padding: 24px 20px;
+        padding: 24px 12px;
     }
     
     .screen-header,
@@ -2926,7 +2926,7 @@ main {
     .filter-bar,
     .form-container,
     .stats {
-        padding: 0 20px;
+        padding: 0 12px;
     }
     
     .payment-info {
@@ -2935,7 +2935,7 @@ main {
     
     .bottom-nav {
         width: calc(100% - 40px);
-        padding: 12px 20px;
+        padding: 12px 12px;
     }
     
     #addAdBtn {
