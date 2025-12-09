@@ -696,13 +696,12 @@ main {
 
 /* Фильтры */
 .filter-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Две равные колонки */
     gap: 12px;
     margin-bottom: 28px;
     padding: 0 12px;
     width: 100%;
-    flex-wrap: wrap; /* Добавьте эту строку */
-    box-sizing: border-box; /* Важно для правильного расчета ширины */
 }
 
 .filter-bar select {
@@ -719,8 +718,6 @@ main {
     background-position: right 20px center;
     background-size: 16px;
     padding-right: 50px;
-    box-sizing: border-box; /* Важно! */
-    max-width: 100%; /* Не больше ширины контейнера */
 }
 
 .filter-bar select:focus {
