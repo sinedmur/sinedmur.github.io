@@ -696,12 +696,16 @@ main {
 
 /* Фильтры */
 .filter-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr; /* Две равные колонки */
+    display: flex;
     gap: 12px;
     margin-bottom: 28px;
     padding: 0 12px;
     width: 100%;
+}
+
+/* Просто добавьте это правило */
+.filter-bar > * {
+    flex: 1;
 }
 
 .filter-bar select {
