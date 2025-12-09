@@ -1360,34 +1360,6 @@ main {
     padding: 20px 24px;
 }
 
-/* Адаптивность */
-@media (max-width: 480px) {
-    .screen {
-        padding: 15px;
-    }
-    
-    .role-cards {
-        gap: 15px;
-    }
-    
-    .role-card {
-        padding: 20px;
-    }
-    
-    .stats {
-        grid-template-columns: 1fr;
-        gap: 10px;
-    }
-    
-    .ad-detail-actions {
-        flex-direction: column;
-    }
-    
-    .modal-content {
-        width: 95%;
-    }
-}
-
 /* Темная тема для Telegram */
 @media (prefers-color-scheme: dark) {
     body {
@@ -2198,26 +2170,6 @@ main {
 .review-ad-title {
     font-weight: 600;
     color: var(--primary-color);
-}
-
-/* Адаптивность */
-@media (max-width: 480px) {
-    .message {
-        max-width: 85%;
-    }
-    
-    .moderation-item-actions {
-        flex-direction: column;
-    }
-    
-    .notifications-dropdown {
-        width: 280px;
-        right: 10px;
-    }
-    
-    .dropdown-menu {
-        min-width: 200px;
-    }
 }
 
 /* Темная тема */
