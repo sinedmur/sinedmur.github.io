@@ -60,7 +60,6 @@ body {
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* max-width: 100%; */
     overflow-x: hidden;
 }
 
@@ -472,9 +471,10 @@ main {
 /* Табы с современным дизайном */
 .tabs {
     display: flex;
-    gap: 8px;
     margin-bottom: 28px;
     padding: 0 24px;
+    width: 100%;
+    justify-content: space-between;
 }
 
 .tab-btn {
@@ -485,7 +485,7 @@ main {
     color: #adb5bd;
     transition: var(--transition);
     border-radius: var(--border-radius);
-
+    position: relative;
 }
 
 .tab-btn::before {
