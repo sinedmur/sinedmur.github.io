@@ -522,7 +522,6 @@ main {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    margin-bottom: 28px;
     padding: 0 12px;
 }
 
@@ -728,10 +727,11 @@ main {
 /* Статистика */
 .stats {
     display: flex;
-    margin-top: 40px;
+    margin-top: 12px;
     margin-bottom: 40px;
     padding: 0 12px;
     justify-content: space-between;
+    gap: 8px;
 }
 
 .stat-card {
@@ -742,6 +742,7 @@ main {
     box-shadow: var(--box-shadow-card);
     transition: var(--transition);
     border: 2px solid transparent;
+    width: 100%;
 }
 
 .stat-card:hover {
@@ -751,7 +752,7 @@ main {
 }
 
 .stat-card h4 {
-    font-size: 0.7rem;
+    font-size: 1rem;
     color: #868e96;
     margin-bottom: 8px;
     font-weight: 600;
@@ -761,7 +762,7 @@ main {
 
 .stat-value {
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 1rem;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
