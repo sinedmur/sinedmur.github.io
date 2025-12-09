@@ -468,7 +468,7 @@ main {
     color: #adb5bd;
     transition: var(--transition);
     border-radius: var(--border-radius);
-    overflow: hidden;
+
 }
 
 .tab-btn::before {
