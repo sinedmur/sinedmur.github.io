@@ -728,7 +728,6 @@ main {
 /* Статистика */
 .stats {
     display: flex;
-    gap: 8px;
     margin-top: 40px;
     margin-bottom: 40px;
     padding: 0 12px;
@@ -738,7 +737,7 @@ main {
 .stat-card {
     background: var(--surface-color);
     border-radius: var(--border-radius-lg);
-    padding: 20px;
+    padding: 20px 20px 0 20px;
     text-align: center;
     box-shadow: var(--box-shadow-card);
     transition: var(--transition);
@@ -752,7 +751,7 @@ main {
 }
 
 .stat-card h4 {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     color: #868e96;
     margin-bottom: 8px;
     font-weight: 600;
@@ -762,7 +761,7 @@ main {
 
 .stat-value {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.7rem;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
