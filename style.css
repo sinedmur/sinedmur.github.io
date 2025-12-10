@@ -915,7 +915,7 @@ main {
 }
 
 .ad-detail-description {
-    background-color: #f8f9fa;
+    background-color: var(--surface-color);
     padding: 20px;
     border-radius: var(--border-radius);
     margin-bottom: 25px;
@@ -1953,7 +1953,7 @@ main {
 
 .dropdown-header {
     padding: 15px;
-    border-bottom: 1px solid #eee;
+    
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2003,7 +2003,6 @@ main {
 
 .dropdown-footer {
     padding: 10px;
-    border-top: 1px solid #eee;
     text-align: center;
 }
 
@@ -2027,12 +2026,11 @@ main {
     align-items: flex-start;
     gap: 10px;
     padding: 10px 15px;
-    border-bottom: 1px solid #f8f9fa;
     transition: var(--transition);
 }
 
 .notification-dropdown-item:hover {
-    background-color: #f8f9fa;
+    background-color: var(--primary-color);
 }
 
 .notification-dropdown-item.unread {
