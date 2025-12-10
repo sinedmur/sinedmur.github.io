@@ -75,18 +75,6 @@ body {
     overflow: hidden;
 }
 
-/* Декоративные элементы */
-#app::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 6px;
-    background: var(--primary-gradient);
-    z-index: 1000;
-}
-
 /* Стеклянный эффект для шапки */
 .app-header {
     display: flex;
@@ -125,7 +113,6 @@ body {
     border: none;
     color: white;
     font-size: 1.2rem;
-    
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -696,7 +683,8 @@ main {
 
 /* Фильтры */
 .filter-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Две строго равные колонки */
     gap: 12px;
     margin-bottom: 28px;
     padding: 0 12px;
@@ -704,22 +692,19 @@ main {
     box-sizing: border-box;
 }
 
-/* Жесткое ограничение */
+/* Все содержимое обрезаем если не влезает */
 .filter-bar > * {
-    flex: 1 1 0px; /* Важно: 0px вместо 0% */
-    min-width: 0; /* Критически важно! */
-    max-width: 100%;
+    min-width: 0;
     overflow: hidden;
 }
 
-/* Для текста внутри */
-.filter-bar > * span,
-.filter-bar > * div {
-    white-space: nowrap;
+.filter-bar button,
+.filter-bar div,
+.filter-bar span {
+    width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
-    width: 100%;
+    white-space: nowrap;
 }
 
 .filter-bar select {
