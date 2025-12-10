@@ -701,11 +701,25 @@ main {
     margin-bottom: 28px;
     padding: 0 12px;
     width: 100%;
+    box-sizing: border-box;
 }
 
-/* Просто добавьте это правило */
+/* Жесткое ограничение */
 .filter-bar > * {
-    flex: 1;
+    flex: 1 1 0px; /* Важно: 0px вместо 0% */
+    min-width: 0; /* Критически важно! */
+    max-width: 100%;
+    overflow: hidden;
+}
+
+/* Для текста внутри */
+.filter-bar > * span,
+.filter-bar > * div {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    width: 100%;
 }
 
 .filter-bar select {
