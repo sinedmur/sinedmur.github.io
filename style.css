@@ -459,7 +459,7 @@ main {
     display: flex;
     padding: 28px 12px;
     
-    justify-content: space-between;
+    justify-content: center;
     gap: 12px;
 }
 
@@ -733,7 +733,7 @@ main {
 .stats {
     display: flex;
     margin: 12px 12px 30px;
-    justify-content: space-between;
+    justify-content: center;
     gap: 12px;
 }
 
