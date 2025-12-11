@@ -457,14 +457,14 @@ main {
 /* Табы с современным дизайном */
 .tabs {
     display: flex;
-    margin: 28px 12px;
+    padding: 28px 12px;
     
     justify-content: space-between;
     gap: 12px;
 }
 
 .tab-btn {
-    padding: 14px 24px;
+    padding: 14px 20px;
     background: none;
     border: none;
     font-weight: 600;
@@ -740,7 +740,7 @@ main {
 .stat-card {
     background: var(--surface-color);
     border-radius: var(--border-radius-lg);
-    padding: 24px 24px 0 24px;
+    padding: 20px 20px 0 20px;
     text-align: center;
     box-shadow: var(--box-shadow-card);
     transition: var(--transition);
@@ -3373,7 +3373,7 @@ input:checked + .slider:before {
     }
     
     .tab-btn {
-        padding: 10px 12px; /* Уменьшаем паддинги */
+        padding: 10px 17px; /* Уменьшаем паддинги */
         font-size: 0.8rem; /* Уменьшаем размер шрифта */
         font-weight: 500; /* Делаем шрифт немного легче */
         border-radius: var(--border-radius-sm); /* Используем меньший радиус */
