@@ -2912,3 +2912,351 @@ button, .ad-card, .nav-btn {
         opacity: 0.2;
     }
 }
+
+/* Добавьте в конец файла */
+
+/* Стили для торгов */
+.auction-control {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+}
+
+.auction-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--primary-color);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.auction-settings {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.auction-settings.active {
+    display: block;
+}
+
+.auction-timer {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.auction-timer input {
+    width: 80px;
+    padding: 8px 12px;
+    border-radius: var(--border-radius-sm);
+    border: 1px solid #ddd;
+}
+
+/* Карточка объявления с аукционом */
+.ad-card-auction {
+    position: relative;
+    border: 2px solid #ffc107;
+}
+
+.ad-card-auction .auction-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: #ffc107;
+    color: #856404;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.auction-info {
+    margin: 15px 0;
+    padding: 12px;
+    background-color: #fff3cd;
+    border-radius: var(--border-radius-sm);
+    border-left: 3px solid #ffc107;
+}
+
+.auction-info h4 {
+    color: #856404;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.auction-stats {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.auction-current-bid {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.auction-time-left {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.auction-bid-form {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    align-items: center;
+}
+
+.auction-bid-form input {
+    flex: 1;
+    padding: 10px 15px;
+    border-radius: var(--border-radius);
+    border: 2px solid #e9ecef;
+    font-size: 1rem;
+}
+
+.auction-bid-form button {
+    padding: 10px 20px;
+}
+
+.bids-history {
+    margin-top: 20px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.bids-history h5 {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+.bid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f1f3f5;
+    font-size: 0.9rem;
+}
+
+.bid-item:last-child {
+    border-bottom: none;
+}
+
+.bid-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.bid-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.bid-amount {
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.bid-time {
+    font-size: 0.8rem;
+    color: #868e96;
+}
+
+/* Экран торгов */
+.auction-screen {
+    padding: 0 12px;
+}
+
+.auction-header {
+    text-align: center;
+    padding: 20px 0;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.auction-timer-large {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 15px 0;
+    text-align: center;
+}
+
+.auction-price {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 25px 0;
+}
+
+.price-item {
+    text-align: center;
+}
+
+.price-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    margin-bottom: 5px;
+}
+
+.price-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.initial-price {
+    color: #6c757d;
+}
+
+.current-price {
+    color: var(--danger-color);
+}
+
+.auction-bid-container {
+    background-color: white;
+    border-radius: var(--border-radius-lg);
+    padding: 25px;
+    box-shadow: var(--box-shadow);
+    margin: 20px 0;
+}
+
+.bid-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.bid-input-group input {
+    flex: 1;
+    padding: 15px 20px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-align: center;
+    border: 2px solid #e9ecef;
+    border-radius: var(--border-radius);
+}
+
+.bid-step-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.bid-step-btn {
+    flex: 1;
+    padding: 12px;
+    border: 1px solid #ddd;
+    background: none;
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    transition: var(--transition);
+}
+
+.bid-step-btn:hover {
+    background-color: #f8f9fa;
+}
+
+.bid-hint {
+    text-align: center;
+    color: #6c757d;
+    font-size: 0.9rem;
+    margin-top: 10px;
+}
+
+/* Темная тема для аукциона */
+@media (prefers-color-scheme: dark) {
+    .auction-control {
+        background-color: #2d2d2d;
+        border-color: #444;
+    }
+    
+    .auction-info {
+        background-color: #856404;
+        border-left-color: #ffc107;
+    }
+    
+    .auction-info h4 {
+        color: #ffc107;
+    }
+    
+    .auction-bid-container {
+        background-color: #2d2d2d;
+    }
+    
+    .bid-step-btn {
+        background-color: #3d3d3d;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+    
+    .bid-step-btn:hover {
+        background-color: #4d4d4d;
+    }
+}
