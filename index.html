@@ -201,7 +201,39 @@
                         <label for="adLocation">Местоположение</label>
                         <input type="text" id="adLocation" placeholder="Город или район">
                     </div>
-                    
+                                        <!-- В разделе createAdScreen добавьте после поля location: -->
+                    <div class="auction-control">
+                        <div class="auction-toggle">
+                            <label class="switch">
+                                <input type="checkbox" id="auctionToggle">
+                                <span class="slider round"></span>
+                            </label>
+                            <span style="font-weight: 600;">Включить торги</span>
+                        </div>
+                        
+                        <div class="auction-settings" id="auctionSettings">
+                            <p>Работники смогут предлагать цены ниже вашей. Задание получит тот, кто предложит меньше.</p>
+                            
+                            <div class="form-group">
+                                <label for="auctionDuration">Продолжительность торгов</label>
+                                <div class="auction-timer">
+                                    <input type="number" id="auctionHours" min="0" max="72" value="1" style="width: 80px;">
+                                    <span>часов</span>
+                                    <input type="number" id="auctionMinutes" min="0" max="59" value="0" style="width: 80px;">
+                                    <span>минут</span>
+                                </div>
+                            </div>
+                            
+                            <div class="payment-warning" style="margin-top: 15px;">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    <h4>Важно!</h4>
+                                    <p>После окончания торгов задание автоматически будет назначено пользователю с минимальной ставкой</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="payment-info">
                         <div class="payment-warning">
                             <i class="fas fa-exclamation-circle"></i>
