@@ -1503,23 +1503,50 @@ function timeAgo(date) {
     const now = new Date();
     const seconds = Math.floor((now - date) / 1000);
     
-    const intervals = {
-        год: 31536000,
-        месяц: 2592000,
-        неделя: 604800,
-        день: 86400,
-        час: 3600,
-        минута: 60
-    };
+    const intervals = [
+        {name: 'год', seconds: 31536000},
+        {name: 'месяц', seconds: 2592000},
+        {name: 'неделю', seconds: 604800},
+        {name: 'день', seconds: 86400},
+        {name: 'час', seconds: 3600},
+        {name: 'минуту', seconds: 60}
+    ];
     
-    for (const [name, secondsInUnit] of Object.entries(intervals)) {
-        const interval = Math.floor(seconds / secondsInUnit);
-        if (interval >= 1) {
-            return `${interval} ${name}${interval >= 2 && interval <= 4 ? 'а' : interval >= 5 ? 'ов' : ''} назад`;
+    for (const interval of intervals) {
+        const count = Math.floor(seconds / interval.seconds);
+        if (count >= 1) {
+            const word = getRussianWord(count, interval.name);
+            return `${count} ${word} назад`;
         }
     }
     
     return 'только что';
+}
+
+function getRussianWord(number, word) {
+    const forms = {
+        'год': ['год', 'года', 'лет'],
+        'месяц': ['месяц', 'месяца', 'месяцев'],
+        'неделю': ['неделю', 'недели', 'недель'],
+        'день': ['день', 'дня', 'дней'],
+        'час': ['час', 'часа', 'часов'],
+        'минуту': ['минуту', 'минуты', 'минут']
+    };
+    
+    const lastDigit = number % 10;
+    const lastTwoDigits = number % 100;
+    
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 19) {
+        return forms[word][2];
+    }
+    
+    switch (lastDigit) {
+        case 1: return forms[word][0];
+        case 2:
+        case 3:
+        case 4: return forms[word][1];
+        default: return forms[word][2];
+    }
 }
 
 function sendNotification(userId, type, title, message, data = {}) {
@@ -1624,14 +1651,14 @@ function createNotificationElement(notification) {
                 ${new Date(notification.createdAt).toLocaleDateString('ru-RU')} в 
                 ${new Date(notification.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
             </div>
+        </div>
             ${notification.data.adId ? `
                 <div class="notification-actions">
                     <button class="btn-secondary btn-small" data-action="view-ad" data-ad-id="${notification.data.adId}">
-                        Посмотреть объявление
+                        Открыть
                     </button>
                 </div>
             ` : ''}
-        </div>
     `;
     
     return item;
