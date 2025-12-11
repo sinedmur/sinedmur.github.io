@@ -532,5 +532,18 @@
     </div>
 
     <script src="app.js"></script>
+    <!-- Добавьте в конец body перед закрывающим тегом -->
+<button id="clearStorageBtn" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; padding: 10px; background: red; color: white; border: none; border-radius: 5px;">
+    Очистить данные
+</button>
+
+<script>
+document.getElementById('clearStorageBtn').addEventListener('click', function() {
+    if (confirm('Очистить все данные приложения?')) {
+        localStorage.clear();
+        location.reload();
+    }
+});
+</script>
 </body>
 </html>
