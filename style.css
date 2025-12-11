@@ -457,9 +457,8 @@ main {
 /* Табы с современным дизайном */
 .tabs {
     display: flex;
-    margin-bottom: 28px;
-    padding: 0 12px;
-    width: 100%;
+    margin: 28px 12px;
+    
     justify-content: space-between;
     gap: 12px;
 }
@@ -733,9 +732,7 @@ main {
 /* Статистика */
 .stats {
     display: flex;
-    margin-top: 12px;
-    margin-bottom: 40px;
-    padding: 0 12px;
+    margin: 12px 12px 30px;
     justify-content: space-between;
     gap: 12px;
 }
@@ -2928,7 +2925,6 @@ button, .ad-card, .nav-btn {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 15px;
 }
 
 .switch {
@@ -2946,7 +2942,6 @@ button, .ad-card, .nav-btn {
 
 .slider {
     position: absolute;
-    cursor: pointer;
     top: 0;
     left: 0;
     right: 0;
