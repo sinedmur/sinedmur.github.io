@@ -60,7 +60,573 @@ document.addEventListener('DOMContentLoaded', function() {
 let users = [];
 let ads = [];
 let transactions = [];
+let bids = []; // Массив ставок
 
+// Инициализация данных аукциона
+function initAuctionData() {
+    const savedBids = localStorage.getItem('telegramJobBids');
+    if (savedBids) {
+        bids = JSON.parse(savedBids);
+    } else {
+        bids = [];
+        saveBids();
+    }
+}
+
+function saveBids() {
+    localStorage.setItem('telegramJobBids', JSON.stringify(bids));
+}
+
+// Добавьте в конец функции initAppData():
+initAuctionData();
+
+// Обновим функцию createAdElement для отображения аукциона
+function createAdElement(ad, isEmployerView) {
+    const adElement = document.createElement('div');
+    adElement.className = `ad-card ${ad.auction ? 'ad-card-auction' : ''}`;
+    
+    // Определение цвета категории
+    const categoryColors = {
+        delivery: '#28a745',
+        cleaning: '#17a2b8',
+        repair: '#ffc107',
+        computer: '#6610f2',
+        other: '#6c757d'
+    };
+    
+    const categoryNames = {
+        delivery: 'Доставка',
+        cleaning: 'Уборка',
+        repair: 'Ремонт',
+        computer: 'Компьютерная помощь',
+        other: 'Другое'
+    };
+    
+    // Получаем текущую минимальную ставку
+    const currentBid = ad.auction ? getCurrentBid(ad.id) : null;
+    const auctionEnded = ad.auction && new Date(ad.auctionEndsAt) < new Date();
+    
+    // Статус объявления
+    let statusBadge = '';
+    if (ad.status === 'taken') {
+        statusBadge = '<span class="ad-card-status" style="color: #ffc107; font-weight: 600;">В работе</span>';
+    } else if (ad.status === 'completed') {
+        statusBadge = '<span class="ad-card-status" style="color: #28a745; font-weight: 600;">Завершено</span>';
+    } else if (ad.auction && !auctionEnded) {
+        statusBadge = '<span class="ad-card-status" style="color: #6610f2; font-weight: 600;">Аукцион</span>';
+    }
+    
+    let auctionInfo = '';
+    if (ad.auction && !isEmployerView) {
+        const timeLeft = getTimeLeft(ad.auctionEndsAt);
+        auctionInfo = `
+            <div class="auction-info">
+                <h4>${auctionEnded ? 'Аукцион завершен' : 'Идет аукцион'}</h4>
+                <div class="auction-stats">
+                    <span class="auction-current-bid">Текущая ставка: ${currentBid ? currentBid.amount + ' ₽' : 'Нет ставок'}</span>
+                    <span class="auction-time-left">${auctionEnded ? 'Завершен' : 'Осталось: ' + timeLeft}</span>
+                </div>
+                ${!auctionEnded ? `
+                    <div class="auction-bid-form">
+                        <input type="number" id="bidInput_${ad.id}" placeholder="Ваша ставка" min="1" max="${ad.price}">
+                        <button class="btn-secondary btn-small" onclick="placeBid(${ad.id})">Предложить</button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    adElement.innerHTML = `
+        <div class="ad-card-header">
+            <div class="ad-card-title">${ad.title}</div>
+            <div class="ad-card-price">${ad.price} ₽</div>
+        </div>
+        <div class="ad-card-category" style="background-color: ${categoryColors[ad.category] + '20'}; color: ${categoryColors[ad.category]}">
+            ${categoryNames[ad.category]}
+            ${ad.auction ? '<span class="auction-badge"><i class="fas fa-gavel"></i> Торги</span>' : ''}
+        </div>
+        <div class="ad-card-description">${ad.description.substring(0, 100)}${ad.description.length > 100 ? '...' : ''}</div>
+        ${auctionInfo}
+        <div class="ad-card-footer">
+            <div class="ad-card-location">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>${ad.location}</span>
+            </div>
+            ${statusBadge}
+        </div>
+        <div class="ad-card-actions">
+            ${isEmployerView ? 
+                `<button class="ad-card-action-btn details" data-ad-id="${ad.id}">Детали</button>
+                 ${ad.status === 'active' ? `<button class="ad-card-action-btn edit" data-ad-id="${ad.id}">Изменить</button>` : ''}` : 
+                `<button class="ad-card-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
+                 ${ad.auction && !auctionEnded ? 
+                    `<button class="ad-card-action-btn accept" onclick="showAuctionScreen(${ad.id})">Участвовать</button>` : 
+                    `<button class="ad-card-action-btn accept" data-ad-id="${ad.id}">Принять</button>`
+                 }`
+            }
+        </div>
+    `;
+    
+    // Добавление обработчиков событий для стандартных кнопок
+    const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
+    detailsBtn.addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        showAdDetail(adId);
+    });
+    
+    if (!isEmployerView && !ad.auction) {
+        const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+        acceptBtn.addEventListener('click', function() {
+            const adId = parseInt(this.getAttribute('data-ad-id'));
+            acceptAd(adId);
+        });
+    }
+    
+    return adElement;
+}
+
+// Функции для работы с аукционами
+function getCurrentBid(adId) {
+    const adBids = bids.filter(bid => bid.adId === adId);
+    if (adBids.length === 0) return null;
+    return adBids.reduce((min, bid) => bid.amount < min.amount ? bid : min);
+}
+
+function getTimeLeft(endDate) {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diff = end - now;
+    
+    if (diff <= 0) return 'Завершен';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}ч ${minutes}м`;
+}
+
+// Обновим функцию publishAd() для добавления аукциона
+function publishAd() {
+    const user = getUser();
+    
+    // Получение данных из формы
+    const title = document.getElementById('adTitle').value.trim();
+    const category = document.getElementById('adCategory').value;
+    const description = document.getElementById('adDescription').value.trim();
+    const price = parseInt(document.getElementById('adPrice').value);
+    const location = document.getElementById('adLocation').value.trim();
+    const auctionEnabled = document.getElementById('auctionToggle').checked;
+    const auctionHours = auctionEnabled ? parseInt(document.getElementById('auctionHours').value) : 0;
+    const auctionMinutes = auctionEnabled ? parseInt(document.getElementById('auctionMinutes').value) : 0;
+    
+    // Проверка данных
+    if (!title || !description || !location || price < 100) {
+        showNotification('Заполните все поля корректно. Минимальная цена - 100 ₽');
+        return;
+    }
+    
+    // Проверка времени аукциона
+    if (auctionEnabled && (auctionHours === 0 && auctionMinutes === 0)) {
+        showNotification('Укажите время проведения аукциона');
+        return;
+    }
+    
+    // Проверка подписки
+    const hasSubscription = checkUserSubscription();
+    const createPrice = 50; // Цена за создание объявления
+    
+    if (!hasSubscription) {
+        if (user.balance < createPrice) {
+            showNotification(`Недостаточно средств. Нужно ${createPrice} ₽. Ваш баланс: ${user.balance} ₽`);
+            showPaymentScreen('create_ad', createPrice, 'Оплата размещения объявления');
+            return;
+        }
+        
+        // Списание средств
+        user.balance -= createPrice;
+        transactions.push({
+            id: transactions.length + 1,
+            userId: user.id,
+            amount: -createPrice,
+            type: 'create_ad',
+            description: `Создание объявления: ${title}`,
+            createdAt: new Date().toISOString()
+        });
+        saveTransactions();
+    }
+    
+    // Расчет времени окончания аукциона
+    let auctionEndsAt = null;
+    if (auctionEnabled) {
+        auctionEndsAt = new Date();
+        auctionEndsAt.setHours(auctionEndsAt.getHours() + auctionHours);
+        auctionEndsAt.setMinutes(auctionEndsAt.getMinutes() + auctionMinutes);
+    }
+    
+    // Создание объявления
+    const newAd = {
+        id: ads.length + 1,
+        employerId: user.id,
+        title,
+        description,
+        category,
+        price,
+        location,
+        auction: auctionEnabled,
+        auctionEndsAt: auctionEndsAt ? auctionEndsAt.toISOString() : null,
+        status: user.role === 'admin' ? 'active' : 'moderation',
+        moderated: user.role === 'admin',
+        takenBy: null,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 7 * 86400000).toISOString()
+    };
+    
+    ads.push(newAd);
+    saveAds();
+    
+    // Обновление пользователя
+    saveUsers();
+    
+    // Очистка формы и возврат
+    document.getElementById('adTitle').value = '';
+    document.getElementById('adDescription').value = '';
+    document.getElementById('adPrice').value = '1000';
+    document.getElementById('adLocation').value = '';
+    document.getElementById('auctionToggle').checked = false;
+    document.getElementById('auctionHours').value = '1';
+    document.getElementById('auctionMinutes').value = '0';
+    
+    showNotification(`Объявление "${title}" успешно опубликовано!`);
+    showScreen('employerScreen');
+    loadEmployerAds();
+    updateEmployerStats();
+    updateHeaderInfo();
+    
+    if (user.role !== 'admin') {
+        // Отправляем уведомление админам
+        const adminUsers = users.filter(u => u.role === 'admin');
+        adminUsers.forEach(admin => {
+            sendNotification(
+                admin.id,
+                'moderation',
+                'Новое объявление на модерацию',
+                `Пользователь ${user.firstName} ${user.lastName} создал новое объявление`,
+                { adId: newAd.id }
+            );
+        });
+    }
+}
+
+// Функция для отображения экрана аукциона
+function showAuctionScreen(adId) {
+    const ad = ads.find(a => a.id === adId);
+    if (!ad || !ad.auction) return;
+    
+    const currentBid = getCurrentBid(adId);
+    const userBid = bids.find(bid => bid.adId === adId && bid.userId === getUser().id);
+    
+    const container = document.getElementById('adDetailContainer');
+    container.innerHTML = `
+        <div class="auction-screen">
+            <div class="auction-header">
+                <h2>${ad.title}</h2>
+                <p>Аукцион за задание</p>
+            </div>
+            
+            <div class="auction-timer-large" id="auctionTimer">
+                ${getTimeLeft(ad.auctionEndsAt)}
+            </div>
+            
+            <div class="auction-price">
+                <div class="price-item">
+                    <div class="price-label">Начальная цена</div>
+                    <div class="price-value initial-price">${ad.price} ₽</div>
+                </div>
+                <div class="price-item">
+                    <div class="price-label">Текущая ставка</div>
+                    <div class="price-value current-price">${currentBid ? currentBid.amount + ' ₽' : 'Нет'}</div>
+                </div>
+            </div>
+            
+            <div class="auction-bid-container">
+                <h4>Ваше предложение</h4>
+                <p>Предложите цену ниже текущей ставки или начальной цены</p>
+                
+                <div class="bid-input-group">
+                    <input type="number" id="auctionBidInput" 
+                           value="${userBid ? userBid.amount - 10 : ad.price - 10}" 
+                           min="1" max="${currentBid ? currentBid.amount - 1 : ad.price}">
+                    <span style="font-size: 1.2rem; font-weight: 600;">₽</span>
+                </div>
+                
+                <div class="bid-step-buttons">
+                    <button class="bid-step-btn" onclick="updateBid(-10)">-10 ₽</button>
+                    <button class="bid-step-btn" onclick="updateBid(-50)">-50 ₽</button>
+                    <button class="bid-step-btn" onclick="updateBid(-100)">-100 ₽</button>
+                    <button class="bid-step-btn" onclick="updateBid(-200)">-200 ₽</button>
+                </div>
+                
+                <div class="bid-hint" id="bidHint">
+                    ${currentBid ? `Текущая ставка: ${currentBid.amount} ₽` : `Начальная цена: ${ad.price} ₽`}
+                </div>
+                
+                <button id="submitBidBtn" class="btn-primary btn-large">
+                    <i class="fas fa-gavel"></i> Сделать ставку
+                </button>
+            </div>
+            
+            <div class="bids-history">
+                <h5>История ставок</h5>
+                <div id="bidsHistoryList">
+                    <!-- История ставок будет загружена здесь -->
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Загружаем историю ставок
+    loadBidsHistory(adId);
+    
+    // Обновляем таймер каждую минуту
+    const timerElement = document.getElementById('auctionTimer');
+    const updateTimer = () => {
+        const timeLeft = getTimeLeft(ad.auctionEndsAt);
+        timerElement.textContent = timeLeft;
+        
+        if (timeLeft === 'Завершен') {
+            clearInterval(timerInterval);
+            // Проверяем результаты аукциона
+            checkAuctionResults(adId);
+        }
+    };
+    
+    const timerInterval = setInterval(updateTimer, 60000); // Обновляем каждую минуту
+    
+    // Настройка обработчиков событий
+    const bidInput = document.getElementById('auctionBidInput');
+    bidInput.addEventListener('input', function() {
+        updateBidHint();
+    });
+    
+    document.getElementById('submitBidBtn').addEventListener('click', function() {
+        const amount = parseInt(bidInput.value);
+        if (isValidBid(adId, amount)) {
+            placeAuctionBid(adId, amount);
+        } else {
+            showNotification('Ставка должна быть ниже текущей минимальной');
+        }
+    });
+    
+    showScreen('adDetailScreen');
+}
+
+function updateBid(change) {
+    const input = document.getElementById('auctionBidInput');
+    const currentValue = parseInt(input.value) || 0;
+    const newValue = currentValue + change;
+    
+    if (newValue > 0) {
+        input.value = newValue;
+        updateBidHint();
+    }
+}
+
+function updateBidHint() {
+    const input = document.getElementById('auctionBidInput');
+    const hint = document.getElementById('bidHint');
+    const amount = parseInt(input.value) || 0;
+    
+    hint.textContent = `Вы предлагаете: ${amount} ₽`;
+}
+
+function isValidBid(adId, amount) {
+    const ad = ads.find(a => a.id === adId);
+    if (!ad) return false;
+    
+    const currentBid = getCurrentBid(adId);
+    
+    // Проверяем, что ставка ниже текущей минимальной или начальной цены
+    if (currentBid) {
+        return amount < currentBid.amount;
+    } else {
+        return amount < ad.price;
+    }
+}
+
+function placeAuctionBid(adId, amount) {
+    const user = getUser();
+    const ad = ads.find(a => a.id === adId);
+    
+    if (!ad || !ad.auction) {
+        showNotification('Аукцион не найден');
+        return;
+    }
+    
+    // Проверяем, что аукцион еще не закончился
+    if (new Date(ad.auctionEndsAt) < new Date()) {
+        showNotification('Аукцион уже завершен');
+        return;
+    }
+    
+    // Проверяем валидность ставки
+    if (!isValidBid(adId, amount)) {
+        showNotification('Ставка должна быть ниже текущей минимальной');
+        return;
+    }
+    
+    // Создаем ставку
+    const bid = {
+        id: bids.length + 1,
+        adId: adId,
+        userId: user.id,
+        userName: `${user.firstName} ${user.lastName}`,
+        amount: amount,
+        createdAt: new Date().toISOString()
+    };
+    
+    bids.push(bid);
+    saveBids();
+    
+    // Отправляем уведомление работодателю
+    sendNotification(
+        ad.employerId,
+        'system',
+        'Новая ставка на аукционе',
+        `Пользователь ${user.firstName} ${user.lastName} сделал ставку ${amount} ₽ на ваше задание "${ad.title}"`,
+        { adId: adId, bidId: bid.id }
+    );
+    
+    // Обновляем UI
+    showNotification(`Ваша ставка ${amount} ₽ принята!`);
+    
+    // Обновляем экран аукциона
+    showAuctionScreen(adId);
+    
+    // Обновляем список объявлений
+    if (user.role === 'worker') {
+        loadWorkerAds();
+    }
+}
+
+function loadBidsHistory(adId) {
+    const adBids = bids
+        .filter(bid => bid.adId === adId)
+        .sort((a, b) => a.amount - b.amount); // Сортируем по возрастанию цены
+    
+    const container = document.getElementById('bidsHistoryList');
+    
+    if (adBids.length === 0) {
+        container.innerHTML = '<p style="text-align: center; color: #6c757d;">Ставок еще нет</p>';
+        return;
+    }
+    
+    container.innerHTML = adBids.map(bid => `
+        <div class="bid-item">
+            <div class="bid-user">
+                <div class="bid-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <span>${bid.userName}</span>
+            </div>
+            <div class="bid-amount">${bid.amount} ₽</div>
+            <div class="bid-time">${new Date(bid.createdAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+        </div>
+    `).join('');
+}
+
+function checkAuctionResults(adId) {
+    const ad = ads.find(a => a.id === adId);
+    if (!ad || !ad.auction || ad.status !== 'active') return;
+    
+    const adBids = bids.filter(bid => bid.adId === adId);
+    
+    if (adBids.length === 0) {
+        // Нет ставок - аукцион завершился без победителя
+        sendNotification(
+            ad.employerId,
+            'system',
+            'Аукцион завершен',
+            `Аукцион по заданию "${ad.title}" завершился без ставок`,
+            { adId: adId }
+        );
+        return;
+    }
+    
+    // Находим минимальную ставку
+    const winningBid = adBids.reduce((min, bid) => bid.amount < min.amount ? bid : min);
+    
+    // Обновляем объявление
+    ad.status = 'taken';
+    ad.takenBy = winningBid.userId;
+    ad.finalPrice = winningBid.amount;
+    saveAds();
+    
+    // Отправляем уведомления
+    sendNotification(
+        ad.employerId,
+        'system',
+        'Аукцион завершен',
+        `Победитель аукциона по заданию "${ad.title}": ${winningBid.userName} с ценой ${winningBid.amount} ₽`,
+        { adId: adId, winnerId: winningBid.userId }
+    );
+    
+    sendNotification(
+        winningBid.userId,
+        'system',
+        'Вы выиграли аукцион!',
+        `Вы выиграли аукцион по заданию "${ad.title}" с ценой ${winningBid.amount} ₽`,
+        { adId: adId }
+    );
+    
+    showNotification(`Аукцион по заданию "${ad.title}" завершен. Победитель: ${winningBid.userName}`);
+}
+
+// Обновим функцию acceptAd для работы с аукционами
+function acceptAd(adId) {
+    const user = getUser();
+    const ad = ads.find(a => a.id === adId);
+    
+    if (!ad) {
+        showNotification('Объявление не найдено');
+        return;
+    }
+    
+    if (ad.auction) {
+        showAuctionScreen(adId);
+        return;
+    }
+    
+    // Остальной код функции остается без изменений...
+    // [Существующий код функции acceptAd]
+}
+
+// Обновим setupEventListeners для добавления аукциона
+function setupEventListeners() {
+    // Существующий код...
+    
+    // Добавим обработчики для аукциона
+    document.getElementById('auctionToggle')?.addEventListener('change', function() {
+        const settings = document.getElementById('auctionSettings');
+        if (this.checked) {
+            settings.classList.add('active');
+        } else {
+            settings.classList.remove('active');
+        }
+    });
+}
+
+// Добавим проверку завершенных аукционов при загрузке
+setInterval(() => {
+    const activeAuctions = ads.filter(ad => 
+        ad.auction && 
+        ad.status === 'active' && 
+        new Date(ad.auctionEndsAt) < new Date()
+    );
+    
+    activeAuctions.forEach(ad => {
+        checkAuctionResults(ad.id);
+    });
+}, 60000); // Проверяем каждую минуту
 
 
 // Инициализация пользователя
@@ -1991,3 +2557,4 @@ function moderateAd(adId, approve) {
     showNotification(approve ? 'Объявление одобрено' : 'Объявление отклонено');
     loadModerationList();
 }
+
