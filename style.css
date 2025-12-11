@@ -1356,12 +1356,7 @@ main {
     transform: translateX(0);
 }
 
-.notification-content {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 24px;
-}
+
 
 /* Темная тема для Telegram */
 @media (prefers-color-scheme: dark) {
@@ -1724,23 +1719,20 @@ main {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    padding: 20px;
+    padding: 12px;
 }
 
 .notification-item {
     display: flex;
     align-items: flex-start;
-    gap: 15px;
-    padding: 15px;
-    background-color: white;
+    padding: 0 12px;
+    background-color: var(--surface-color);
     border-radius: var(--border-radius);
     border-left: 4px solid transparent;
-    
     transition: var(--transition);
 }
 
 .notification-item:hover {
-    background-color: #f8f9fa;
     transform: translateX(5px);
 }
 
@@ -1758,6 +1750,7 @@ main {
     justify-content: center;
     font-size: 1.2rem;
     flex-shrink: 0;
+    margin: auto;
 }
 
 .notification-icon.message {
@@ -1781,30 +1774,33 @@ main {
 }
 
 .notification-content {
-    flex: 1;
+    flex-direction: column;
+    display: flex;
+
+    padding: 20px 24px;
 }
 
 .notification-title {
     font-weight: 600;
-    margin-bottom: 5px;
     color: var(--dark-color);
+    font-size: 1rem;
 }
 
 .notification-text {
     color: var(--secondary-color);
-    font-size: 0.9rem;
-    margin-bottom: 5px;
+    font-size: 0.8rem;
+   
 }
 
 .notification-time {
-    font-size: 0.8rem;
+    font-size: 0.5rem;
     color: #6c757d;
 }
 
 .notification-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 10px;
+    margin: auto;
+    width: auto;
 }
 
 /* Стили для модерации */
@@ -2176,7 +2172,6 @@ main {
 @media (prefers-color-scheme: dark) {
     .chat-ad-info,
     .rating-form,
-    .notification-item,
     .moderation-item,
     .review-item {
         background-color: #2d2d2d;
@@ -2734,10 +2729,6 @@ main {
     border-left: 4px solid #17a2b8;
 }
 
-.notification-icon {
-    font-size: 1.5rem;
-}
-
 .notification-icon .fa-check-circle {
     color: #28a745;
 }
@@ -2748,11 +2739,6 @@ main {
 
 .notification-icon .fa-info-circle {
     color: #17a2b8;
-}
-
-.notification-content {
-    flex: 1;
-    font-weight: 500;
 }
 
 .close-notification {
