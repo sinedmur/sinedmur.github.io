@@ -3255,3 +3255,855 @@ input:checked + .slider:before {
         background-color: #4d4d4d;
     }
 }
+/* Медиа-запросы для маленьких телефонов (до 360px) */
+@media (max-width: 360px) {
+    /* Общие корректировки */
+    #app {
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    .app-header {
+        padding: 12px 8px;
+    }
+    
+    .logo h1 {
+        font-size: 1.1rem;
+    }
+    
+    #userBalance {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+    
+    #notificationsBtn,
+    #profileBtn {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    
+    /* Экран приветствия */
+    .welcome-container {
+        padding: 20px 8px;
+    }
+    
+    /* Дополнительные уменьшения для заголовков */
+    .welcome-container h2 {
+        font-size: 1.6rem; /* Еще уменьшаем заголовок приветствия */
+        margin-bottom: 8px;
+    }
+    
+    .welcome-container p {
+        font-size: 1rem;
+        margin-bottom: 30px;
+    }
+    
+    .role-cards {
+        gap: 16px;
+    }
+    
+    .role-card {
+        padding: 20px;
+    }
+    
+    .role-icon {
+        font-size: 2.5rem;
+    }
+    
+ .role-card h3 {
+        font-size: 1.1rem; /* Уменьшаем заголовки карточек ролей */
+        margin-bottom: 8px;
+    }
+    
+    .role-features li {
+        font-size: 0.85rem; /* Уменьшаем текст в списке возможностей */
+        margin-bottom: 8px;
+        padding: 6px;
+    }
+    
+    .role-features i {
+        width: 20px; /* Уменьшаем иконки в списке */
+        height: 20px;
+        font-size: 0.7rem;
+        border-radius: 4px;
+    }
+
+    
+    /* Заголовки экранов - уменьшаем шрифт */
+    .screen-header {
+        padding: 16px 8px 0; /* Уменьшаем отступы */
+        margin-bottom: 16px; /* Уменьшаем отступ снизу */
+    }
+    
+    .screen-header h2 {
+        font-size: 1rem; /* Уменьшаем заголовок */
+        font-weight: 600; /* Делаем легче */
+        gap: 8px; /* Уменьшаем расстояние до иконки */
+    }
+    
+    .screen-header h2 i {
+        font-size: 1.1rem; /* Уменьшаем иконку в заголовке */
+        width: 24px; /* Уменьшаем размер контейнера иконки */
+        height: 24px;
+    }
+    
+    .screen-header .btn-primary,
+    .screen-header .btn-secondary {
+        padding: 8px 14px; /* Уменьшаем кнопки в заголовке */
+        font-size: 0.8rem;
+        border-radius: var(--border-radius-sm);
+    }
+    
+    /* Кнопки */
+    .btn-primary, .btn-secondary, .btn-large {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+    }
+    
+    .btn-large {
+        padding: 16px 24px;
+        font-size: 1rem;
+    }
+    
+    /* Табы - уменьшаем шрифт */
+    .tabs {
+        margin: 15px 8px; /* Уменьшаем отступы */
+        gap: 6px; /* Уменьшаем расстояние между табами */
+    }
+    
+    .tab-btn {
+        padding: 10px 12px; /* Уменьшаем паддинги */
+        font-size: 0.8rem; /* Уменьшаем размер шрифта */
+        font-weight: 500; /* Делаем шрифт немного легче */
+        border-radius: var(--border-radius-sm); /* Используем меньший радиус */
+    }
+    
+    .tab-btn::before {
+        height: 2px; /* Уменьшаем индикатор */
+    }
+    
+    .tab-btn.active::before {
+        width: 30px; /* Уменьшаем активный индикатор */
+    }
+    
+    /* Карточки объявлений - уменьшаем шрифт */
+    .ad-card {
+        padding: 16px; /* Уменьшаем отступы */
+    }
+    
+    .ad-card-header {
+        margin-bottom: 12px; /* Уменьшаем отступ */
+    }
+    
+    .ad-card-title {
+        font-size: 0.95rem; /* Уменьшаем заголовок */
+        font-weight: 600; /* Делаем чуть легче */
+        line-height: 1.3; /* Уменьшаем межстрочный интервал */
+    }
+    
+    .ad-card-price {
+        font-size: 1rem; /* Уменьшаем цену */
+        font-weight: 700;
+        margin-left: 12px; /* Уменьшаем отступ */
+    }
+    
+    .ad-card-category {
+        padding: 4px 10px; /* Уменьшаем паддинги */
+        font-size: 0.75rem; /* Уменьшаем шрифт категории */
+        margin-bottom: 12px;
+        border-radius: 16px; /* Уменьшаем радиус */
+    }
+    
+    .ad-card-description {
+        font-size: 0.85rem; /* Уменьшаем описание */
+        margin-bottom: 16px;
+        line-height: 1.5; /* Уменьшаем межстрочный интервал */
+        -webkit-line-clamp: 2; /* Оставляем 2 строки */
+    }
+    
+    .ad-card-footer {
+        padding-top: 12px; /* Уменьшаем отступ сверху */
+    }
+    
+    .ad-card-location {
+        font-size: 0.8rem; /* Уменьшаем шрифт локации */
+        gap: 6px;
+    }
+    
+    .ad-card-location i {
+        font-size: 0.9rem; /* Уменьшаем иконку */
+    }
+
+    
+    /* Фильтры */
+    .filter-bar {
+        padding: 0 8px;
+        gap: 8px;
+    }
+    
+    .filter-bar select {
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        background-position: right 16px center;
+        padding-right: 40px;
+    }
+    
+    /* Статистика */
+    .stats {
+        margin: 8px 8px 24px;
+        gap: 8px;
+    }
+    
+    .stat-card {
+        padding: 16px 16px 0 16px;
+    }
+    
+    .stat-value {
+        font-size: 0.7rem;
+    }
+    
+    /* Формы */
+    .form-container {
+        padding: 0 8px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 14px 16px;
+        font-size: 0.9rem;
+    }
+    
+    /* Нижняя навигация */
+    .bottom-nav {
+        width: 98%;
+        padding: 8px 6px;
+        bottom: 10px;
+        border-radius: var(--border-radius-lg);
+    }
+    
+    .nav-btn i {
+        font-size: 1.2rem;
+    }
+    
+    .nav-btn span {
+        font-size: 0.7rem;
+    }
+    
+    #addAdBtn {
+        width: 56px;
+        height: 56px;
+        margin-top: -28px;
+    }
+    
+    #addAdBtn i {
+        font-size: 1.4rem;
+    }
+    
+    /* Модальные окна */
+    .modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .modal-header {
+        padding: 16px;
+    }
+    
+    .modal-body {
+        padding: 24px;
+    }
+    
+    /* Профиль */
+    .profile-container {
+        padding: 0 8px;
+    }
+    
+    .profile-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .profile-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    /* Чат */
+    .chat-container {
+        height: calc(100vh - 150px);
+    }
+    
+    .chat-messages {
+        padding: 16px;
+    }
+    
+    .message {
+        max-width: 85%;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+    }
+    
+    .chat-input-container {
+        padding: 12px;
+    }
+    
+    #chatInput {
+        padding: 10px 12px;
+    }
+    
+    /* Аукцион */
+    .auction-price {
+        gap: 15px;
+    }
+    
+    .price-value {
+        font-size: 1.5rem;
+    }
+    
+    .auction-timer-large {
+        font-size: 2rem;
+    }
+    
+    .auction-bid-container {
+        padding: 20px;
+    }
+    
+    .bid-input-group input {
+        padding: 12px 16px;
+        font-size: 1.1rem;
+    }
+    
+    .bid-step-buttons {
+        flex-wrap: wrap;
+    }
+    
+    /* Админ-панель */
+    .admin-stats {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-stat-card {
+        padding: 20px;
+    }
+    
+    .admin-stat-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+    
+    .admin-stat-info h3 {
+        font-size: 1.6rem;
+    }
+    
+    .admin-table-container {
+        padding: 15px;
+        overflow-x: auto;
+    }
+    
+    .admin-table {
+        min-width: 600px;
+        font-size: 0.9rem;
+    }
+    
+    /* Уведомления */
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    /* Выпадающие меню */
+    .dropdown-menu {
+        right: 10px;
+        left: 10px;
+        width: calc(100% - 20px);
+        max-width: none;
+    }
+    
+    /* Корректировка текста */
+    h1, h2, h3, h4, h5, h6 {
+        letter-spacing: -0.02em;
+    }
+    
+    /* Отступы для контента */
+    main {
+        padding: 0 0 80px;
+    }
+    
+    /* Улучшение прокрутки на маленьких экранах */
+    .chat-messages,
+    .modal-body,
+    .bids-history {
+        -webkit-overflow-scrolling: touch;
+    }
+
+        /* Детали объявления */
+    .ad-detail-container {
+        padding: 15px;
+        margin: 0 8px;
+    }
+    
+    .ad-detail-title {
+        font-size: 1.3rem;
+    }
+    
+    .ad-detail-price {
+        font-size: 1.5rem;
+    }
+    
+    .ad-detail-description {
+        padding: 15px;
+        font-size: 0.95rem;
+    }
+    
+    .ad-detail-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    /* Рейтинг и отзывы */
+    .rating-container {
+        padding: 15px;
+    }
+    
+    .rating-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.8rem;
+    }
+    
+    .star-btn {
+        font-size: 2.5rem;
+    }
+    
+    .rating-form {
+        padding: 15px;
+    }
+    
+    .rating-tips {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+    
+    /* Уведомления */
+    .notifications-list {
+        padding: 8px;
+    }
+    
+    .notification-item {
+        margin: 0 8px;
+    }
+    
+    .notification-content {
+        padding: 16px 20px;
+    }
+    
+    .notification-title {
+        font-size: 0.95rem;
+    }
+    
+    .notification-text {
+        font-size: 0.75rem;
+    }
+    
+    /* Модерация */
+    .moderation-list {
+        padding: 15px;
+    }
+    
+    .moderation-item {
+        padding: 15px;
+        margin: 0 8px 12px;
+    }
+    
+    .moderation-item-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .moderation-btn {
+        width: 100%;
+    }
+    
+    /* Выпадающие меню */
+    .dropdown-item {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    /* Отзывы в профиле */
+    .review-item {
+        padding: 12px;
+        margin: 0 8px 12px;
+    }
+    
+    .review-user-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 0.9rem;
+    }
+    
+    /* Аукцион */
+    .auction-badge {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+    }
+    
+    .auction-info {
+        padding: 10px;
+        margin: 12px 0;
+    }
+    
+    .auction-stats {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .bids-history {
+        max-height: 120px;
+    }
+    
+    .bid-item {
+        font-size: 0.8rem;
+        padding: 6px 8px;
+    }
+    
+    .bid-avatar {
+        width: 20px;
+        height: 20px;
+        font-size: 0.7rem;
+    }
+    
+    /* Оплата */
+    .payment-info {
+        padding: 20px;
+        margin: 20px 12px;
+    }
+    
+    .payment-warning {
+        padding: 15px;
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .subscription-offer {
+        padding: 20px;
+    }
+    
+    /* Чат - дополнительная адаптация */
+    .chat-header {
+        padding: 12px;
+    }
+    
+    .chat-avatar {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .chat-user-info h4 {
+        font-size: 0.95rem;
+    }
+    
+    .btn-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 1rem;
+    }
+    
+    .chat-ad-info {
+        padding: 12px;
+    }
+    
+    /* Статусы в чате */
+    .ad-info-status {
+        padding: 2px 8px;
+        font-size: 0.75rem;
+    }
+    
+    /* Рейтинг */
+    .rating-stars-small {
+        font-size: 0.8rem;
+    }
+    
+    .rating-value {
+        font-size: 0.95rem;
+    }
+    
+    /* Пустые состояния */
+    .empty-state {
+        padding: 40px 8px;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.3rem;
+    }
+    
+    .empty-state p {
+        font-size: 0.95rem;
+    }
+    
+    /* Форма создания объявления */
+    .form-group textarea {
+        min-height: 100px;
+    }
+    
+    /* Подписка */
+    .subscription-section {
+        padding: 20px;
+    }
+    
+    .subscription-benefits li {
+        font-size: 0.9rem;
+    }
+    
+    /* Экран оплаты */
+    .payment-container {
+        padding: 20px;
+        margin: 0 8px;
+    }
+    
+    .payment-method {
+        padding: 12px;
+    }
+    
+    .payment-method-icon {
+        width: 35px;
+        height: 35px;
+    }
+    
+    /* Нижняя навигация - детальная адаптация */
+    .bottom-nav {
+        gap: 4px;
+    }
+    
+    .nav-btn {
+        min-width: 0;
+    }
+    
+    /* Профиль - дополнительная адаптация */
+    .profile-action-btn {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+    
+    .profile-action-btn i {
+        font-size: 1.1rem;
+    }
+    
+    /* Табы модерации */
+    .moderation-tabs {
+        padding: 0 8px;
+    }
+    
+    /* Админ-панель */
+    .admin-main {
+        padding: 70px 15px 20px;
+    }
+    
+    .admin-charts {
+        gap: 15px;
+    }
+    
+    .chart-container {
+        padding: 15px;
+    }
+    
+    .admin-filters {
+        gap: 10px;
+    }
+    
+    .admin-filters input {
+        min-width: 100%;
+    }
+    
+    .reviews-list {
+        gap: 15px;
+    }
+    
+    .review-item-admin {
+        padding: 15px;
+    }
+    
+    .review-header-admin {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .settings-container {
+        gap: 15px;
+    }
+    
+    .settings-group {
+        padding: 15px;
+    }
+    
+    .admin-notification {
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+        width: calc(100% - 20px);
+    }
+
+}
+
+/* Медиа-запросы для очень маленьких телефонов (до 320px) */
+@media (max-width: 320px) {
+    /* Еще большее уменьшение размеров */
+    .logo h1 {
+        font-size: 1rem;
+    }
+    
+    .welcome-container h2 {
+        font-size: 1.6rem;
+    }
+    
+    .role-card {
+        padding: 16px;
+    }
+    
+    .role-icon {
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+    
+    .role-card h3 {
+        font-size: 1.2rem;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 10px 16px;
+        font-size: 0.85rem;
+    }
+    
+    .tab-btn {
+        padding: 10px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .ad-card-title {
+        font-size: 1rem;
+    }
+    
+    .ad-card-price {
+        font-size: 1.1rem;
+    }
+    
+    /* Уменьшаем размеры значков */
+    .logo i {
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
+    }
+    
+    /* Корректируем отображение иконок в меню */
+    .nav-btn i {
+        font-size: 1.1rem;
+    }
+    
+    /* Адаптируем профиль */
+    .avatar {
+        width: 70px;
+        height: 70px;
+        font-size: 2rem;
+    }
+    
+    .profile-info h3 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Портретная ориентация для маленьких экранов */
+@media (max-width: 360px) and (orientation: portrait) {
+    /* Дополнительные стили для портретного режима */
+    .role-cards {
+        gap: 12px;
+    }
+    
+    .filter-bar {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .ad-card-footer {
+        flex-direction: column;
+        gap: 10px;
+        align-items: flex-start;
+    }
+    
+    .ad-card-actions {
+        width: 100%;
+        flex-direction: row;
+    }
+    
+    .ad-card-action-btn {
+        flex: 1;
+        text-align: center;
+    }
+}
+
+/* Горизонтальная ориентация для маленьких экранов */
+@media (max-height: 480px) and (orientation: landscape) {
+    /* Адаптация для ландшафтного режима */
+    .app-header {
+        padding: 8px 12px;
+    }
+    
+    .logo h1 {
+        font-size: 1rem;
+    }
+    
+    .welcome-container {
+        padding: 20px;
+    }
+    
+    .role-cards {
+        flex-direction: row;
+        align-items: stretch;
+    }
+    
+    .role-card {
+        flex: 1;
+    }
+    
+    .bottom-nav {
+        padding: 6px 12px;
+    }
+    
+    .nav-btn span {
+        display: none;
+    }
+    
+    .nav-btn i {
+        margin: 0;
+        font-size: 1.4rem;
+    }
+    
+    main {
+        padding: 0 0 70px;
+    }
+}
+
+/* Поддержка высокой плотности пикселей */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .app-header,
+    .bottom-nav {
+        backdrop-filter: blur(30px);
+        -webkit-backdrop-filter: blur(30px);
+    }
+    
+    .modal {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+}
