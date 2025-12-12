@@ -846,16 +846,6 @@ function setupEventListeners() {
             setUserRole(role);
         });
     });
-    
-    // Кнопка назад в деталях объявления (в заголовке)
-    document.getElementById('backFromAdBtn').addEventListener('click', function() {
-        const user = getUser();
-        if (user.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
 
     // Кнопки навигации
     document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
@@ -1344,6 +1334,16 @@ function showAdDetail(adId) {
         });
     }
     
+    // Кнопка назад в деталях объявления (в заголовке)
+    document.getElementById('backFromAdBtn').addEventListener('click', function() {
+    const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+
     if (!isEmployer && ad.status === 'active') {
         document.getElementById('acceptAdDetailBtn').addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
