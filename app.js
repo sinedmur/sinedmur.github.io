@@ -863,6 +863,16 @@ function setupEventListeners() {
         });
     });
     
+    // Кнопка назад в деталях объявления (в заголовке)
+    document.getElementById('backFromAdBtn').addEventListener('click', function() {
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+
     // Кнопка создания объявления в навигации
     document.getElementById('addAdBtn').addEventListener('click', function() {
         const user = getUser();
@@ -1333,16 +1343,6 @@ function showAdDetail(adId) {
             }
         });
     }
-    
-    // Кнопка назад в деталях объявления (в заголовке)
-    document.getElementById('backFromAdBtn').addEventListener('click', function() {
-    const user = getUser();
-        if (user.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
 
     if (!isEmployer && ad.status === 'active') {
         document.getElementById('acceptAdDetailBtn').addEventListener('click', function() {
