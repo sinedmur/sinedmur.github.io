@@ -881,6 +881,7 @@ main {
     border-radius: var(--border-radius);
     padding: 25px;
     box-shadow: var(--box-shadow);
+    margin: 12px;
 }
 
 .ad-detail-header {
