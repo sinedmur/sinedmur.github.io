@@ -838,24 +838,6 @@ function updateHeaderInfo() {
 
 // Настройка обработчиков событий
 function setupEventListeners() {
-    // Кнопка назад в деталях объявления (в заголовке)
-    document.getElementById('backFromAdBtn').addEventListener('click', function() {
-        const user = getUser();
-        if (user.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
-        // Добавим обработчики для аукциона
-    document.getElementById('auctionToggle')?.addEventListener('change', function() {
-        const settings = document.getElementById('auctionSettings');
-        if (this.checked) {
-            settings.classList.add('active');
-        } else {
-            settings.classList.remove('active');
-        }
-    });
 
     // Выбор роли
     document.querySelectorAll('.role-card').forEach(card => {
@@ -1067,6 +1049,25 @@ function setupEventListeners() {
         }
         if (!e.target.closest('#chatMenu') && !e.target.closest('#chatMenuBtn')) {
             hideChatMenu();
+        }
+    });
+        // Кнопка назад в деталях объявления (в заголовке)
+    document.getElementById('backFromAdBtn').addEventListener('click', function() {
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+
+            // Добавим обработчики для аукциона
+    document.getElementById('auctionToggle')?.addEventListener('change', function() {
+        const settings = document.getElementById('auctionSettings');
+        if (this.checked) {
+            settings.classList.add('active');
+        } else {
+            settings.classList.remove('active');
         }
     });
 }
