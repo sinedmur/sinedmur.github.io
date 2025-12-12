@@ -600,21 +600,6 @@ function acceptAd(adId) {
     // [Существующий код функции acceptAd]
 }
 
-// Обновим setupEventListeners для добавления аукциона
-function setupEventListeners() {
-    // Существующий код...
-    
-    // Добавим обработчики для аукциона
-    document.getElementById('auctionToggle')?.addEventListener('change', function() {
-        const settings = document.getElementById('auctionSettings');
-        if (this.checked) {
-            settings.classList.add('active');
-        } else {
-            settings.classList.remove('active');
-        }
-    });
-}
-
 // Добавим проверку завершенных аукционов при загрузке
 setInterval(() => {
     const activeAuctions = ads.filter(ad => 
@@ -853,6 +838,25 @@ function updateHeaderInfo() {
 
 // Настройка обработчиков событий
 function setupEventListeners() {
+    // Кнопка назад в деталях объявления (в заголовке)
+    document.getElementById('backFromAdBtn').addEventListener('click', function() {
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+        // Добавим обработчики для аукциона
+    document.getElementById('auctionToggle')?.addEventListener('change', function() {
+        const settings = document.getElementById('auctionSettings');
+        if (this.checked) {
+            settings.classList.add('active');
+        } else {
+            settings.classList.remove('active');
+        }
+    });
+
     // Выбор роли
     document.querySelectorAll('.role-card').forEach(card => {
         card.addEventListener('click', function() {
@@ -1326,14 +1330,17 @@ function showAdDetail(adId) {
     `;
     
     // Обработчики событий для кнопок на экране деталей
-    document.getElementById('backToListBtn').addEventListener('click', function() {
-        const user = getUser();
-        if (user.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
+    const backBtn = container.querySelector('#backToListBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', function() {
+            const user = getUser();
+            if (user.role === 'employer') {
+                showScreen('employerScreen');
+            } else {
+                showScreen('workerScreen');
+            }
+        });
+    }
     
     if (!isEmployer && ad.status === 'active') {
         document.getElementById('acceptAdDetailBtn').addEventListener('click', function() {
