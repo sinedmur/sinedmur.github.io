@@ -600,6 +600,21 @@ function acceptAd(adId) {
     // [Существующий код функции acceptAd]
 }
 
+// Обновим setupEventListeners для добавления аукциона
+function setupEventListeners() {
+    // Существующий код...
+    
+    // Добавим обработчики для аукциона
+    document.getElementById('auctionToggle')?.addEventListener('change', function() {
+        const settings = document.getElementById('auctionSettings');
+        if (this.checked) {
+            settings.classList.add('active');
+        } else {
+            settings.classList.remove('active');
+        }
+    });
+}
+
 // Добавим проверку завершенных аукционов при загрузке
 setInterval(() => {
     const activeAuctions = ads.filter(ad => 
@@ -838,7 +853,6 @@ function updateHeaderInfo() {
 
 // Настройка обработчиков событий
 function setupEventListeners() {
-
     // Выбор роли
     document.querySelectorAll('.role-card').forEach(card => {
         card.addEventListener('click', function() {
@@ -846,7 +860,7 @@ function setupEventListeners() {
             setUserRole(role);
         });
     });
-
+    
     // Кнопки навигации
     document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -863,16 +877,6 @@ function setupEventListeners() {
         });
     });
     
-    // Кнопка назад в деталях объявления (в заголовке)
-    document.getElementById('backFromAdBtn').addEventListener('click', function() {
-        const user = getUser();
-        if (user.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
-
     // Кнопка создания объявления в навигации
     document.getElementById('addAdBtn').addEventListener('click', function() {
         const user = getUser();
@@ -1064,16 +1068,6 @@ function setupEventListeners() {
         }
         if (!e.target.closest('#chatMenu') && !e.target.closest('#chatMenuBtn')) {
             hideChatMenu();
-        }
-    });
-
-            // Добавим обработчики для аукциона
-    document.getElementById('auctionToggle')?.addEventListener('change', function() {
-        const settings = document.getElementById('auctionSettings');
-        if (this.checked) {
-            settings.classList.add('active');
-        } else {
-            settings.classList.remove('active');
         }
     });
 }
@@ -1337,18 +1331,15 @@ function showAdDetail(adId) {
     `;
     
     // Обработчики событий для кнопок на экране деталей
-    const backBtn = container.querySelector('#backToListBtn');
-    if (backBtn) {
-        backBtn.addEventListener('click', function() {
-            const user = getUser();
-            if (user.role === 'employer') {
-                showScreen('employerScreen');
-            } else {
-                showScreen('workerScreen');
-            }
-        });
-    }
-
+    document.getElementById('backToListBtn').addEventListener('click', function() {
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+    
     if (!isEmployer && ad.status === 'active') {
         document.getElementById('acceptAdDetailBtn').addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
