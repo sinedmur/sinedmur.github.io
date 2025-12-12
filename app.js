@@ -847,6 +847,16 @@ function setupEventListeners() {
         });
     });
     
+    // Кнопка назад в деталях объявления (в заголовке)
+    document.getElementById('backFromAdBtn').addEventListener('click', function() {
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('employerScreen');
+        } else {
+            showScreen('workerScreen');
+        }
+    });
+
     // Кнопки навигации
     document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1049,15 +1059,6 @@ function setupEventListeners() {
         }
         if (!e.target.closest('#chatMenu') && !e.target.closest('#chatMenuBtn')) {
             hideChatMenu();
-        }
-    });
-        // Кнопка назад в деталях объявления (в заголовке)
-    document.getElementById('backFromAdBtn').addEventListener('click', function() {
-        const user = getUser();
-        if (user.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
         }
     });
 
