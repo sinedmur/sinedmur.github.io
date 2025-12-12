@@ -923,10 +923,28 @@ function setupEventListeners() {
         showScreen('employerScreen');
     });
     
-    // Кнопка обновления объявлений
     document.getElementById('refreshAdsBtn').addEventListener('click', function() {
-        loadWorkerAds();
-        showNotification('Список обновлен');
+        const icon = this.querySelector('i');
+        const button = this;
+        
+        // Если уже обновляется, не делаем ничего
+        if (button.classList.contains('loading')) return;
+        
+        // Добавляем состояние загрузки
+        button.classList.add('loading');
+        button.disabled = true;
+        icon.classList.add('spinning');
+        
+        // Имитация загрузки данных
+        setTimeout(() => {
+            loadWorkerAds();
+            showNotification('Список обновлен');
+            
+            // Убираем состояние загрузки
+            button.classList.remove('loading');
+            button.disabled = false;
+            icon.classList.remove('spinning');
+        }, 800);
     });
     
     // Кнопка публикации объявления
