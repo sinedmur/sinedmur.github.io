@@ -901,7 +901,12 @@ function setupEventListeners() {
     
     // Кнопка создания объявления (на экране работодателя)
     document.getElementById('createAdBtn').addEventListener('click', function() {
-        showScreen('createAdScreen');
+        const user = getUser();
+        if (user.role === 'employer') {
+            showScreen('createAdScreen');
+        } else {
+            showNotification('Только работодатели могут создавать объявления');
+        }
     });
     
     // Кнопка создания первого объявления
