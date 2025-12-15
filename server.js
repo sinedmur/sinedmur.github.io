@@ -110,23 +110,54 @@ app.get('/api/user', authenticate, async (req, res) => {
 });
 
 // Обновить роль пользователя
+// Проверьте этот маршрут в server.js:
 app.post('/api/user/role', authenticate, async (req, res) => {
-  try {
-    const { role } = req.body;
-    
-    const { data: user, error } = await supabase
-      .from('users')
-      .update({ role })
-      .eq('id', req.user.id)
-      .select()
-      .single();
-    
-    if (error) throw error;
-    res.json({ user });
-  } catch (error) {
-    console.error('Update role error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
+    try {
+        const { role } = req.body;
+        const user = req.user; // пользователь из middleware
+        
+        if (!user) {
+            return res.status(404).json({ 
+                error: 'User not found',
+                code: 'USER_NOT_FOUND' 
+            });
+        }
+        
+        // Обновляем роль
+        const { data: updatedUser, error } = await supabase
+            .from('users')
+            .update({ 
+                role: role,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id)
+            .select()
+            .single(); // Убедитесь, что используете .single()
+        
+        if (error) {
+            console.error('Supabase error:', error);
+            throw error;
+        }
+        
+        if (!updatedUser) {
+            return res.status(404).json({ 
+                error: 'User not found after update',
+                code: 'UPDATE_FAILED' 
+            });
+        }
+        
+        res.json({ 
+            success: true,
+            user: updatedUser 
+        });
+        
+    } catch (error) {
+        console.error('Update role error:', error);
+        res.status(500).json({ 
+            error: 'Server error',
+            details: error.message 
+        });
+    }
 });
 
 // Получить объявления
