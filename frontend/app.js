@@ -7,7 +7,7 @@ tg.enableClosingConfirmation();
 
 // Конфигурация API
 const API_BASE_URL = 'https://telegram-job-backend-lnkb.onrender.com/api';
-const SOCKET_URL = 'http://localhost:3000';
+const SOCKET_URL = 'https://telegram-job-backend-lnkb.onrender.com';
 
 // Глобальные переменные
 let currentUser = null;
@@ -1779,4 +1779,5 @@ async function initApp() {
         showScreen('roleScreen');
     }
 }
+
 
