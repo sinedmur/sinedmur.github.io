@@ -6,8 +6,8 @@ tg.expand();
 tg.enableClosingConfirmation();
 
 // Конфигурация API
-const API_BASE_URL = 'https://telegram-job-backend-lnkb.onrender.com/api';
-const SOCKET_URL = 'https://telegram-job-backend-lnkb.onrender.com';
+const API_BASE_URL = 'http://localhost:3000/api';
+const SOCKET_URL = 'http://localhost:3000';
 
 // Глобальные переменные
 let currentUser = null;
@@ -76,53 +76,69 @@ async function initUserFromTelegram() {
     try {
         const telegramId = tg.initDataUnsafe.user?.id;
         if (!telegramId) {
-            console.error('Telegram user ID not found');
-            // Создаем тестового пользователя для разработки
-            currentUser = {
-                id: 1,
-                telegram_id: 123456789,
-                username: 'testuser',
-                first_name: 'Тестовый',
-                last_name: 'Пользователь',
-                balance: 1000,
-                role: null,
-                subscription_until: null
-            };
-            return;
+            throw new Error('Telegram user ID not found');
         }
-
-        // Загружаем пользователя
-        const response = await fetch(`${API_BASE_URL}/user`, {
-            headers: {
-                'Authorization': telegramId.toString()
+        
+        console.log('Initializing user with telegramId:', telegramId);
+        
+        // 1. Пытаемся получить пользователя с сервера
+        try {
+            const response = await fetch(`${API_BASE_URL}/user`, {
+                headers: {
+                    'Authorization': telegramId.toString()
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                currentUser = data.user;
+                console.log('User loaded from server:', currentUser);
+            } else if (response.status === 404) {
+                // Пользователь не найден, создаем нового
+                console.log('User not found on server, creating new...');
+                currentUser = {
+                    telegram_id: telegramId,
+                    username: tg.initDataUnsafe.user?.username,
+                    first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
+                    last_name: tg.initDataUnsafe.user?.last_name || `#${telegramId}`,
+                    role: null,
+                    balance: 0
+                };
+                
+                await createOrUpdateUserOnServer();
+            } else {
+                throw new Error(`Server error: ${response.status}`);
             }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            currentUser = data.user;
-        } else {
-            // Создаем нового пользователя
-            await createNewUser(telegramId);
+        } catch (fetchError) {
+            console.error('Error fetching user from server:', fetchError);
+            throw new Error('Не удалось подключиться к серверу. Проверьте соединение.');
         }
-
+        
+        // 2. Инициализируем WebSocket
         if (currentUser) {
-            // Инициализируем WebSocket
             initWebSocket();
         }
+        
     } catch (error) {
         console.error('Error initializing user:', error);
-        // Резервный пользователь для разработки
-        currentUser = {
-            id: 1,
-            telegram_id: tg.initDataUnsafe.user?.id || 123456789,
-            username: tg.initDataUnsafe.user?.username || 'testuser',
-            first_name: tg.initDataUnsafe.user?.first_name || 'Тестовый',
-            last_name: tg.initDataUnsafe.user?.last_name || 'Пользователь',
-            balance: 1000,
-            role: null,
-            subscription_until: null
-        };
+        showNotification(`Ошибка инициализации: ${error.message}`);
+        
+        // Блокируем приложение при ошибке сервера
+        document.getElementById('app').innerHTML = `
+            <div style="text-align: center; padding: 50px 20px;">
+                <h2>Ошибка соединения с сервером</h2>
+                <p>${error.message}</p>
+                <p>Пожалуйста, проверьте:</p>
+                <ul style="text-align: left; display: inline-block;">
+                    <li>Подключение к интернету</li>
+                    <li>Что сервер запущен</li>
+                    <li>Правильность URL сервера</li>
+                </ul>
+                <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px;">
+                    Перезагрузить
+                </button>
+            </div>
+        `;
     }
 }
 
@@ -151,6 +167,62 @@ async function createNewUser(telegramId) {
         console.error('Error creating user:', error);
     }
 }
+
+// Добавим функцию проверки сервера
+async function checkServerHealth() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/health`, {
+            timeout: 5000
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Server health check failed: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('Server health:', data);
+        return true;
+    } catch (error) {
+        console.error('Server is not available:', error);
+        return false;
+    }
+}
+
+// Обновим основную инициализацию
+document.addEventListener('DOMContentLoaded', async function() {
+    // Проверяем сервер перед началом работы
+    const serverAvailable = await checkServerHealth();
+    
+    if (!serverAvailable) {
+        showNotification('Сервер недоступен. Проверьте соединение.');
+        return;
+    }
+    
+    // Инициализируем пользователя
+    await initUserFromTelegram();
+    
+    // Настройка обработчиков
+    setupEventListeners();
+    
+    // Показываем нужный экран
+    if (currentUser) {
+        if (currentUser.role) {
+            if (currentUser.role === 'employer') {
+                showScreen('employerScreen');
+                await loadEmployerAds();
+                updateEmployerStats();
+            } else {
+                showScreen('workerScreen');
+                await loadWorkerAds();
+                updateWorkerStats();
+            }
+        } else {
+            showScreen('roleScreen');
+        }
+        
+        updateHeaderInfo();
+    }
+});
 
 // ============ WEBSOCKET ============
 
@@ -1161,22 +1233,62 @@ async function loadProfileScreen() {
 
 async function updateUserRole(role) {
     try {
+        if (!currentUser) {
+            showNotification('Пользователь не найден. Пожалуйста, перезагрузите приложение.');
+            return;
+        }
+
+        console.log('Changing role to:', role);
+        
+        // Получаем telegram_id
+        const telegramId = currentUser.telegram_id;
+        if (!telegramId) {
+            showNotification('Ошибка: отсутствует идентификатор пользователя');
+            return;
+        }
+        
+        // Показываем индикатор загрузки
+        showNotification('Изменение роли...');
+        
+        // Отправляем запрос на сервер
         const response = await fetch(`${API_BASE_URL}/user/role`, {
             method: 'POST',
             headers: {
-                'Authorization': currentUser.telegram_id.toString(),
+                'Authorization': telegramId.toString(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ role })
         });
         
-        if (!response.ok) throw new Error('Failed to update role');
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Server error:', errorData);
+            
+            // Проверяем, может быть пользователь не существует на сервере
+            if (errorData.code === 'PGRST116' || response.status === 404) {
+                // Создаем пользователя сначала
+                await createOrUpdateUserOnServer();
+                // Пробуем снова
+                return updateUserRole(role);
+            }
+            
+            throw new Error(`Server returned ${response.status}: ${errorData.message || 'Unknown error'}`);
+        }
         
         const data = await response.json();
-        currentUser = data.user;
+        console.log('Role updated successfully:', data);
         
+        // Обновляем текущего пользователя
+        if (data.user) {
+            currentUser = data.user;
+        } else {
+            currentUser.role = role;
+        }
+        
+        // Показываем успешное сообщение
         showNotification(`Роль изменена на: ${role === 'employer' ? 'работодатель' : 'работник'}`);
         
+        // Обновляем интерфейс
         if (role === 'employer') {
             showScreen('employerScreen');
             await loadEmployerAds();
@@ -1191,7 +1303,50 @@ async function updateUserRole(role) {
         
     } catch (error) {
         console.error('Error updating role:', error);
-        showNotification('Ошибка при изменении роли');
+        showNotification(`Ошибка при изменении роли: ${error.message}`);
+    }
+}
+
+async function createOrUpdateUserOnServer() {
+    try {
+        const telegramId = currentUser.telegram_id || tg.initDataUnsafe.user?.id;
+        if (!telegramId) {
+            throw new Error('No telegram ID found');
+        }
+        
+        const userData = {
+            username: currentUser.username || tg.initDataUnsafe.user?.username,
+            first_name: currentUser.first_name || tg.initDataUnsafe.user?.first_name || 'Пользователь',
+            last_name: currentUser.last_name || tg.initDataUnsafe.user?.last_name || ''
+        };
+        
+        console.log('Creating/updating user on server:', userData);
+        
+        const response = await fetch(`${API_BASE_URL}/user/init`, {
+            method: 'POST',
+            headers: {
+                'Authorization': telegramId.toString(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(userData)
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Failed to create user: ${error.message || response.status}`);
+        }
+        
+        const data = await response.json();
+        currentUser = data.user;
+        console.log('User created/updated on server:', currentUser);
+        
+        showNotification('Пользователь создан на сервере');
+        
+        return currentUser;
+        
+    } catch (error) {
+        console.error('Error creating/updating user:', error);
+        throw error;
     }
 }
 
@@ -1534,10 +1689,25 @@ function showModal(title, message, confirmCallback) {
 
 function setupEventListeners() {
     // Выбор роли
-    document.querySelectorAll('.role-card').forEach(card => {
-        card.addEventListener('click', function() {
+        document.querySelectorAll('.role-card').forEach(card => {
+        card.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
             const role = this.getAttribute('data-role');
-            updateUserRole(role);
+            console.log('Selected role:', role);
+            
+            // Блокируем кнопку во время запроса
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<div class="loading-spinner"></div>';
+            this.style.pointerEvents = 'none';
+            
+            try {
+                await updateUserRole(role);
+            } finally {
+                // Восстанавливаем кнопку
+                this.innerHTML = originalHTML;
+                this.style.pointerEvents = 'auto';
+            }
         });
     });
     
@@ -1659,14 +1829,31 @@ function setupEventListeners() {
         showPaymentScreen('deposit', 1000, 'Пополнение баланса');
     });
     
-    // Кнопка смены роли
+    // Смена роли в профиле
     document.getElementById('changeRoleBtn')?.addEventListener('click', function() {
+        if (!currentUser) {
+            showNotification('Пользователь не найден');
+            return;
+        }
+        
+        const currentRole = currentUser.role;
+        if (!currentRole) {
+            showNotification('Сначала выберите роль');
+            showScreen('roleScreen');
+            return;
+        }
+        
+        const newRole = currentRole === 'employer' ? 'worker' : 'employer';
+        
         showModal(
             'Смена роли',
-            'Вы уверены, что хотите сменить роль? При смене роли история ваших объявлений и заданий сохранится.',
-            () => {
-                const newRole = currentUser.role === 'employer' ? 'worker' : 'employer';
-                updateUserRole(newRole);
+            `Вы уверены, что хотите сменить роль с "${currentRole === 'employer' ? 'работодатель' : 'работник'}" на "${newRole === 'employer' ? 'работодатель' : 'работник'}"?`,
+            async () => {
+                try {
+                    await updateUserRole(newRole);
+                } catch (error) {
+                    showNotification('Ошибка при смене роли');
+                }
             }
         );
     });
@@ -1779,5 +1966,3 @@ async function initApp() {
         showScreen('roleScreen');
     }
 }
-
-
