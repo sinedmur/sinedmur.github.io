@@ -1286,29 +1286,25 @@ async function updateUserRole(role) {
         }
 
         console.log('Changing role to:', role, 'for user:', currentUser);
-        
-        // Получаем telegram_id
-        const telegramId = currentUser.telegram_id;
-        if (!telegramId) {
-            showNotification('Ошибка: отсутствует идентификатор пользователя');
-            return;
-        }
+        console.log('Telegram ID:', currentUser.telegram_id);
         
         // Показываем индикатор загрузки
         showNotification('Изменение роли...', 5000);
         
         // Отправляем запрос на сервер
+        console.log('Sending request to server...');
         const response = await fetch(`${API_BASE_URL}/user/role`, {
             method: 'POST',
             headers: {
-                'Authorization': telegramId.toString(),
+                'Authorization': currentUser.telegram_id.toString(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ role })
         });
         
-        const responseText = await response.text();
         console.log('Response status:', response.status);
+        
+        const responseText = await response.text();
         console.log('Response text:', responseText);
         
         if (!response.ok) {
@@ -1316,13 +1312,13 @@ async function updateUserRole(role) {
             try {
                 errorData = JSON.parse(responseText);
             } catch {
-                errorData = { error: 'Unknown server error' };
+                errorData = { error: `Server error: ${response.status}` };
             }
             
             console.error('Server error response:', errorData);
             
             // Если пользователь не найден, создаем его
-            if (response.status === 404 || errorData.code === 'USER_NOT_FOUND') {
+            if (response.status === 404) {
                 console.log('User not found, creating first...');
                 await createOrUpdateUserOnServer();
                 // Пробуем снова
