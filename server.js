@@ -31,8 +31,8 @@ const authenticate = async (req, res, next) => {
   }
   
   try {
-    // Получаем пользователя по telegram_id
-    const { data: user, error } = await supabase
+    // Пытаемся найти пользователя
+    let { data: user, error } = await supabase
       .from('users')
       .select('*')
       .eq('telegram_id', telegramId)
@@ -40,16 +40,24 @@ const authenticate = async (req, res, next) => {
     
     if (error || !user) {
       // Если пользователь не найден, создаем нового
-      const { data: newUser } = await supabase
+      const { data: newUser, error: createError } = await supabase
         .from('users')
         .insert({
           telegram_id: telegramId,
           first_name: 'Пользователь',
           last_name: `#${telegramId}`,
-          balance: 1000
+          balance: 1000,
+          role: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         })
         .select()
         .single();
+      
+      if (createError) {
+        console.error('Create user error:', createError);
+        return res.status(500).json({ error: 'Failed to create user' });
+      }
       
       req.user = newUser;
     } else {
