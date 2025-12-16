@@ -26,62 +26,87 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const authenticate = async (req, res, next) => {
   const telegramId = req.headers.authorization;
   
+  console.log('Auth request for telegramId:', telegramId);
+  
   if (!telegramId) {
+    console.log('No telegramId provided');
     return res.status(401).json({ error: 'No Telegram ID provided' });
   }
   
   try {
     // Ищем пользователя
+    console.log('Searching user with telegram_id:', telegramId);
     const { data: users, error } = await supabase
       .from('users')
       .select('*')
       .eq('telegram_id', telegramId);
     
+    console.log('Supabase response:', { users, error });
+    
     let user;
     
     if (error) {
       console.error('Auth query error:', error);
-      return res.status(500).json({ error: 'Database error' });
+      // Не прерываем, пробуем создать пользователя
     }
     
     if (users && users.length > 0) {
       // Пользователь найден
       user = users[0];
+      console.log('User found:', user.id);
     } else {
       // Пользователь не найден, создаем нового
+      console.log('User not found, creating new...');
+      
+      const newUserData = {
+        telegram_id: telegramId,
+        first_name: 'Пользователь',
+        last_name: `#${telegramId}`,
+        balance: 1000,
+        role: null,
+        created_at: new Date().toISOString()
+      };
+      
+      console.log('Creating user with data:', newUserData);
+      
       const { data: newUsers, error: createError } = await supabase
         .from('users')
-        .insert({
-          telegram_id: telegramId,
-          first_name: 'Пользователь',
-          last_name: `#${telegramId}`,
-          balance: 1000,
-          role: null,
-          created_at: new Date().toISOString()
-        })
+        .insert(newUserData)
         .select();
       
       if (createError) {
         console.error('Create user error:', createError);
-        return res.status(500).json({ error: 'Failed to create user' });
+        return res.status(500).json({ 
+          error: 'Failed to create user',
+          details: createError.message 
+        });
       }
+      
+      console.log('Create response:', { newUsers, createError });
       
       if (newUsers && newUsers.length > 0) {
         user = newUsers[0];
+        console.log('User created successfully:', user.id);
       } else {
+        console.error('No data returned from create');
         return res.status(500).json({ error: 'Failed to create user - no data returned' });
       }
     }
     
     if (!user) {
+      console.error('User is null after all attempts');
       return res.status(404).json({ error: 'User not found' });
     }
     
+    console.log('Auth successful, user:', user.id);
     req.user = user;
     next();
   } catch (error) {
     console.error('Auth error:', error);
-    res.status(401).json({ error: 'Authentication failed' });
+    res.status(500).json({ 
+      error: 'Authentication failed',
+      details: error.message 
+    });
   }
 };
 
@@ -128,11 +153,40 @@ app.post('/api/user/init', authenticate, async (req, res) => {
   }
 });
 
+// Дебаг endpoint для проверки пользователей
+app.get('/api/debug/users', async (req, res) => {
+  try {
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    
+    if (error) {
+      console.error('Debug error:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    
+    res.json({ 
+      total: users?.length || 0,
+      users: users || []
+    });
+  } catch (error) {
+    console.error('Debug endpoint error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Получить пользователя
 app.get('/api/user', authenticate, async (req, res) => {
   try {
+    console.log('GET /api/user called, user:', req.user?.id);
+    if (!req.user) {
+      return res.status(404).json({ error: 'User not found in request' });
+    }
     res.json({ user: req.user });
   } catch (error) {
+    console.error('Get user error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
