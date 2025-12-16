@@ -80,36 +80,63 @@ async function initUserFromTelegram() {
         }
         
         console.log('Initializing user with telegramId:', telegramId);
+        console.log('Telegram user data:', tg.initDataUnsafe.user);
         
         // 1. Пытаемся получить пользователя с сервера
         try {
+            console.log('Fetching user from server...');
             const response = await fetch(`${API_BASE_URL}/user`, {
                 headers: {
                     'Authorization': telegramId.toString()
                 }
             });
             
+            console.log('Server response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
                 currentUser = data.user;
                 console.log('User loaded from server:', currentUser);
-            } else if (response.status === 404 || response.status === 401) {
-                // Пользователь не найден, создаем нового через middleware
-                console.log('User not found, will be created by middleware...');
-                // Просто продолжаем - middleware создаст пользователя при следующем запросе
-                currentUser = {
-                    telegram_id: telegramId,
-                    username: tg.initDataUnsafe.user?.username,
-                    first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-                    last_name: tg.initDataUnsafe.user?.last_name || '',
-                    role: null,
-                    balance: 0
-                };
             } else {
-                throw new Error(`Server error: ${response.status}`);
+                const errorText = await response.text();
+                console.error('Server error response:', errorText);
+                
+                if (response.status === 404 || response.status === 401) {
+                    // Пользователь не найден, создаем через init endpoint
+                    console.log('User not found, creating via init...');
+                    
+                    const userData = {
+                        username: tg.initDataUnsafe.user?.username,
+                        first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
+                        last_name: tg.initDataUnsafe.user?.last_name || ''
+                    };
+                    
+                    console.log('Creating user with data:', userData);
+                    
+                    const initResponse = await fetch(`${API_BASE_URL}/user/init`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': telegramId.toString(),
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(userData)
+                    });
+                    
+                    if (initResponse.ok) {
+                        const initData = await initResponse.json();
+                        currentUser = initData.user;
+                        console.log('User created via init:', currentUser);
+                    } else {
+                        const initError = await initResponse.text();
+                        console.error('Init error:', initError);
+                        throw new Error(`Failed to create user: ${initError}`);
+                    }
+                } else {
+                    throw new Error(`Server error: ${response.status}`);
+                }
             }
         } catch (fetchError) {
-            console.error('Error fetching user from server:', fetchError);
+            console.error('Error in user initialization:', fetchError);
             // Создаем временного пользователя для работы offline
             currentUser = {
                 telegram_id: telegramId,
@@ -122,31 +149,43 @@ async function initUserFromTelegram() {
             showNotification('Используется локальный режим. Некоторые функции могут быть недоступны.');
         }
         
-        // 2. Инициализируем WebSocket
+        // 2. Инициализируем WebSocket если пользователь есть
         if (currentUser) {
+            console.log('User initialized, ID:', currentUser.id);
             initWebSocket();
+        } else {
+            console.error('User initialization failed - currentUser is null');
         }
         
     } catch (error) {
         console.error('Error initializing user:', error);
         showNotification(`Ошибка инициализации: ${error.message}`);
         
-        // Блокируем приложение при ошибке сервера
+        // Показываем более информативное сообщение об ошибке
         document.getElementById('app').innerHTML = `
             <div style="text-align: center; padding: 50px 20px;">
-                <h2>Ошибка соединения с сервером</h2>
+                <h2>Ошибка инициализации</h2>
                 <p>${error.message}</p>
-                <p>Пожалуйста, проверьте:</p>
-                <ul style="text-align: left; display: inline-block;">
-                    <li>Подключение к интернету</li>
-                    <li>Что сервер запущен</li>
-                    <li>Правильность URL сервера</li>
-                </ul>
+                <p>Проверьте консоль для подробностей</p>
                 <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px;">
                     Перезагрузить
                 </button>
+                <button onclick="checkServerStatus()" style="margin-top: 10px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">
+                    Проверить сервер
+                </button>
             </div>
         `;
+    }
+}
+
+// Добавьте эту функцию для проверки сервера
+async function checkServerStatus() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+        const data = await response.json();
+        alert(`Сервер работает: ${data.status}\nВремя: ${data.timestamp}`);
+    } catch (error) {
+        alert(`Сервер недоступен: ${error.message}`);
     }
 }
 
