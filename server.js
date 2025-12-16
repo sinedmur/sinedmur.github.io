@@ -110,7 +110,6 @@ app.get('/api/user', authenticate, async (req, res) => {
 });
 
 // Обновить роль пользователя
-// Проверьте этот маршрут в server.js:
 app.post('/api/user/role', authenticate, async (req, res) => {
     try {
         const { role } = req.body;
@@ -123,6 +122,17 @@ app.post('/api/user/role', authenticate, async (req, res) => {
             });
         }
         
+        // Проверяем валидность роли
+        const validRoles = ['employer', 'worker', 'admin'];
+        if (!role || !validRoles.includes(role)) {
+            return res.status(400).json({ 
+                error: 'Invalid role',
+                valid_roles: validRoles 
+            });
+        }
+        
+        console.log(`Updating role for user ${user.id} to ${role}`);
+        
         // Обновляем роль
         const { data: updatedUser, error } = await supabase
             .from('users')
@@ -132,11 +142,14 @@ app.post('/api/user/role', authenticate, async (req, res) => {
             })
             .eq('id', user.id)
             .select()
-            .single(); // Убедитесь, что используете .single()
+            .single();
         
         if (error) {
-            console.error('Supabase error:', error);
-            throw error;
+            console.error('Supabase update error:', error);
+            return res.status(500).json({ 
+                error: 'Database error',
+                details: error.message 
+            });
         }
         
         if (!updatedUser) {
@@ -148,7 +161,8 @@ app.post('/api/user/role', authenticate, async (req, res) => {
         
         res.json({ 
             success: true,
-            user: updatedUser 
+            user: updatedUser,
+            message: `Role updated to ${role}`
         });
         
     } catch (error) {
