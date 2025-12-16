@@ -224,28 +224,43 @@ app.post('/api/user/role', authenticate, async (req, res) => {
     
     console.log(`Updating role for user ${user.id} to ${role}`);
     
-    // Обновляем роль
-    const { data: updatedUsers, error } = await supabase
+    // Шаг 1: Обновляем роль
+    const { error: updateError } = await supabase
       .from('users')
       .update({ 
         role: role,
         updated_at: new Date().toISOString()
       })
-      .eq('id', user.id)
-      .select();
+      .eq('id', user.id);
     
-    if (error) {
-      console.error('Supabase update error:', error);
+    if (updateError) {
+      console.error('Supabase update error:', updateError);
       return res.status(500).json({ 
         error: 'Database error',
-        details: error.message 
+        details: updateError.message 
       });
     }
     
-    console.log('Update response:', { updatedUsers, error });
+    console.log('Update successful, now fetching updated user...');
+    
+    // Шаг 2: Получаем обновленного пользователя
+    const { data: updatedUsers, error: fetchError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id);
+    
+    if (fetchError) {
+      console.error('Supabase fetch error:', fetchError);
+      return res.status(500).json({ 
+        error: 'Failed to fetch updated user',
+        details: fetchError.message 
+      });
+    }
+    
+    console.log('Fetch response:', { updatedUsers, fetchError });
     
     if (!updatedUsers || updatedUsers.length === 0) {
-      console.error('No users returned after update');
+      console.error('No users returned after fetch');
       return res.status(404).json({ 
         error: 'User not found after update',
         code: 'UPDATE_FAILED' 
