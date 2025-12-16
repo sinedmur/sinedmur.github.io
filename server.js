@@ -153,6 +153,7 @@ app.post('/api/user/init', authenticate, async (req, res) => {
   }
 });
 
+
 // Дебаг endpoint для проверки пользователей
 app.get('/api/debug/users', async (req, res) => {
   try {
@@ -197,7 +198,15 @@ app.post('/api/user/role', authenticate, async (req, res) => {
     const { role } = req.body;
     const user = req.user;
     
+    console.log('Update role request:', {
+      userId: user.id,
+      currentRole: user.role,
+      newRole: role,
+      telegramId: user.telegram_id
+    });
+    
     if (!user) {
+      console.error('User not found in request');
       return res.status(404).json({ 
         error: 'User not found',
         code: 'USER_NOT_FOUND' 
@@ -219,7 +228,8 @@ app.post('/api/user/role', authenticate, async (req, res) => {
     const { data: updatedUsers, error } = await supabase
       .from('users')
       .update({ 
-        role: role
+        role: role,
+        updated_at: new Date().toISOString()
       })
       .eq('id', user.id)
       .select();
@@ -232,7 +242,10 @@ app.post('/api/user/role', authenticate, async (req, res) => {
       });
     }
     
+    console.log('Update response:', { updatedUsers, error });
+    
     if (!updatedUsers || updatedUsers.length === 0) {
+      console.error('No users returned after update');
       return res.status(404).json({ 
         error: 'User not found after update',
         code: 'UPDATE_FAILED' 
@@ -240,6 +253,7 @@ app.post('/api/user/role', authenticate, async (req, res) => {
     }
     
     const updatedUser = updatedUsers[0];
+    console.log('User updated successfully:', updatedUser);
     
     res.json({ 
       success: true,
