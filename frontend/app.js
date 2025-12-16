@@ -93,25 +93,33 @@ async function initUserFromTelegram() {
                 const data = await response.json();
                 currentUser = data.user;
                 console.log('User loaded from server:', currentUser);
-            } else if (response.status === 404) {
-                // Пользователь не найден, создаем нового
-                console.log('User not found on server, creating new...');
+            } else if (response.status === 404 || response.status === 401) {
+                // Пользователь не найден, создаем нового через middleware
+                console.log('User not found, will be created by middleware...');
+                // Просто продолжаем - middleware создаст пользователя при следующем запросе
                 currentUser = {
                     telegram_id: telegramId,
                     username: tg.initDataUnsafe.user?.username,
                     first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-                    last_name: tg.initDataUnsafe.user?.last_name || `#${telegramId}`,
+                    last_name: tg.initDataUnsafe.user?.last_name || '',
                     role: null,
                     balance: 0
                 };
-                
-                await createOrUpdateUserOnServer();
             } else {
                 throw new Error(`Server error: ${response.status}`);
             }
         } catch (fetchError) {
             console.error('Error fetching user from server:', fetchError);
-            throw new Error('Не удалось подключиться к серверу. Проверьте соединение.');
+            // Создаем временного пользователя для работы offline
+            currentUser = {
+                telegram_id: telegramId,
+                username: tg.initDataUnsafe.user?.username,
+                first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
+                last_name: tg.initDataUnsafe.user?.last_name || '',
+                role: null,
+                balance: 0
+            };
+            showNotification('Используется локальный режим. Некоторые функции могут быть недоступны.');
         }
         
         // 2. Инициализируем WebSocket
@@ -1238,7 +1246,7 @@ async function updateUserRole(role) {
             return;
         }
 
-        console.log('Changing role to:', role);
+        console.log('Changing role to:', role, 'for user:', currentUser);
         
         // Получаем telegram_id
         const telegramId = currentUser.telegram_id;
@@ -1248,7 +1256,7 @@ async function updateUserRole(role) {
         }
         
         // Показываем индикатор загрузки
-        showNotification('Изменение роли...');
+        showNotification('Изменение роли...', 5000);
         
         // Отправляем запрос на сервер
         const response = await fetch(`${API_BASE_URL}/user/role`, {
@@ -1260,35 +1268,42 @@ async function updateUserRole(role) {
             body: JSON.stringify({ role })
         });
         
+        const responseText = await response.text();
+        console.log('Response status:', response.status);
+        console.log('Response text:', responseText);
+        
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Server error:', errorData);
+            let errorData;
+            try {
+                errorData = JSON.parse(responseText);
+            } catch {
+                errorData = { error: 'Unknown server error' };
+            }
             
-            // Проверяем, может быть пользователь не существует на сервере
-            if (errorData.code === 'PGRST116' || response.status === 404) {
-                // Создаем пользователя сначала
+            console.error('Server error response:', errorData);
+            
+            // Если пользователь не найден, создаем его
+            if (response.status === 404 || errorData.code === 'USER_NOT_FOUND') {
+                console.log('User not found, creating first...');
                 await createOrUpdateUserOnServer();
                 // Пробуем снова
                 return updateUserRole(role);
             }
             
-            throw new Error(`Server returned ${response.status}: ${errorData.message || 'Unknown error'}`);
+            throw new Error(errorData.error || `Server error: ${response.status}`);
         }
         
-        const data = await response.json();
+        // Парсим успешный ответ
+        const data = JSON.parse(responseText);
         console.log('Role updated successfully:', data);
         
-        // Обновляем текущего пользователя
-        if (data.user) {
-            currentUser = data.user;
-        } else {
-            currentUser.role = role;
-        }
+        // Обновляем объект пользователя данными с сервера
+        currentUser = data.user;
         
         // Показываем успешное сообщение
-        showNotification(`Роль изменена на: ${role === 'employer' ? 'работодатель' : 'работник'}`);
+        showNotification(`Вы теперь ${role === 'employer' ? 'работодатель' : 'работник'}!`);
         
-        // Обновляем интерфейс
+        // Обновляем интерфейс в зависимости от роли
         if (role === 'employer') {
             showScreen('employerScreen');
             await loadEmployerAds();
@@ -1320,7 +1335,7 @@ async function createOrUpdateUserOnServer() {
             last_name: currentUser.last_name || tg.initDataUnsafe.user?.last_name || ''
         };
         
-        console.log('Creating/updating user on server:', userData);
+        console.log('Creating/updating user on server with data:', userData);
         
         const response = await fetch(`${API_BASE_URL}/user/init`, {
             method: 'POST',
@@ -1333,7 +1348,7 @@ async function createOrUpdateUserOnServer() {
         
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(`Failed to create user: ${error.message || response.status}`);
+            throw new Error(error.error || `Failed to create user: ${response.status}`);
         }
         
         const data = await response.json();
