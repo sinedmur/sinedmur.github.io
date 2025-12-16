@@ -31,16 +31,25 @@ const authenticate = async (req, res, next) => {
   }
   
   try {
-    // Пытаемся найти пользователя
-    let { data: user, error } = await supabase
+    // Ищем пользователя
+    const { data: users, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', telegramId)
-      .single();
+      .eq('telegram_id', telegramId);
     
-    if (error || !user) {
-      // Если пользователь не найден, создаем нового
-      const { data: newUser, error: createError } = await supabase
+    let user;
+    
+    if (error) {
+      console.error('Auth query error:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    
+    if (users && users.length > 0) {
+      // Пользователь найден
+      user = users[0];
+    } else {
+      // Пользователь не найден, создаем нового
+      const { data: newUsers, error: createError } = await supabase
         .from('users')
         .insert({
           telegram_id: telegramId,
@@ -48,22 +57,27 @@ const authenticate = async (req, res, next) => {
           last_name: `#${telegramId}`,
           balance: 1000,
           role: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          created_at: new Date().toISOString()
         })
-        .select()
-        .single();
+        .select();
       
       if (createError) {
         console.error('Create user error:', createError);
         return res.status(500).json({ error: 'Failed to create user' });
       }
       
-      req.user = newUser;
-    } else {
-      req.user = user;
+      if (newUsers && newUsers.length > 0) {
+        user = newUsers[0];
+      } else {
+        return res.status(500).json({ error: 'Failed to create user - no data returned' });
+      }
     }
     
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    req.user = user;
     next();
   } catch (error) {
     console.error('Auth error:', error);
@@ -88,20 +102,26 @@ app.post('/api/user/init', authenticate, async (req, res) => {
     const { username, first_name, last_name } = req.body;
     
     // Обновляем данные пользователя
-    const { data: user, error } = await supabase
+    const { data: updatedUsers, error } = await supabase
       .from('users')
       .update({
         username,
         first_name: first_name || req.user.first_name,
-        last_name: last_name || req.user.last_name,
-        updated_at: new Date().toISOString()
+        last_name: last_name || req.user.last_name
       })
       .eq('id', req.user.id)
-      .select()
-      .single();
+      .select();
     
-    if (error) throw error;
-    res.json({ user });
+    if (error) {
+      console.error('Update user error:', error);
+      throw error;
+    }
+    
+    if (!updatedUsers || updatedUsers.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ user: updatedUsers[0] });
   } catch (error) {
     console.error('Init user error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -119,67 +139,67 @@ app.get('/api/user', authenticate, async (req, res) => {
 
 // Обновить роль пользователя
 app.post('/api/user/role', authenticate, async (req, res) => {
-    try {
-        const { role } = req.body;
-        const user = req.user; // пользователь из middleware
-        
-        if (!user) {
-            return res.status(404).json({ 
-                error: 'User not found',
-                code: 'USER_NOT_FOUND' 
-            });
-        }
-        
-        // Проверяем валидность роли
-        const validRoles = ['employer', 'worker', 'admin'];
-        if (!role || !validRoles.includes(role)) {
-            return res.status(400).json({ 
-                error: 'Invalid role',
-                valid_roles: validRoles 
-            });
-        }
-        
-        console.log(`Updating role for user ${user.id} to ${role}`);
-        
-        // Обновляем роль
-        const { data: updatedUser, error } = await supabase
-            .from('users')
-            .update({ 
-                role: role,
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id)
-            .select()
-            .single();
-        
-        if (error) {
-            console.error('Supabase update error:', error);
-            return res.status(500).json({ 
-                error: 'Database error',
-                details: error.message 
-            });
-        }
-        
-        if (!updatedUser) {
-            return res.status(404).json({ 
-                error: 'User not found after update',
-                code: 'UPDATE_FAILED' 
-            });
-        }
-        
-        res.json({ 
-            success: true,
-            user: updatedUser,
-            message: `Role updated to ${role}`
-        });
-        
-    } catch (error) {
-        console.error('Update role error:', error);
-        res.status(500).json({ 
-            error: 'Server error',
-            details: error.message 
-        });
+  try {
+    const { role } = req.body;
+    const user = req.user;
+    
+    if (!user) {
+      return res.status(404).json({ 
+        error: 'User not found',
+        code: 'USER_NOT_FOUND' 
+      });
     }
+    
+    // Проверяем валидность роли
+    const validRoles = ['employer', 'worker', 'admin'];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ 
+        error: 'Invalid role',
+        valid_roles: validRoles 
+      });
+    }
+    
+    console.log(`Updating role for user ${user.id} to ${role}`);
+    
+    // Обновляем роль
+    const { data: updatedUsers, error } = await supabase
+      .from('users')
+      .update({ 
+        role: role
+      })
+      .eq('id', user.id)
+      .select();
+    
+    if (error) {
+      console.error('Supabase update error:', error);
+      return res.status(500).json({ 
+        error: 'Database error',
+        details: error.message 
+      });
+    }
+    
+    if (!updatedUsers || updatedUsers.length === 0) {
+      return res.status(404).json({ 
+        error: 'User not found after update',
+        code: 'UPDATE_FAILED' 
+      });
+    }
+    
+    const updatedUser = updatedUsers[0];
+    
+    res.json({ 
+      success: true,
+      user: updatedUser,
+      message: `Role updated to ${role}`
+    });
+    
+  } catch (error) {
+    console.error('Update role error:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
+  }
 });
 
 // Получить объявления
@@ -243,7 +263,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
     const { title, description, category, price, location, auction } = req.body;
     const user = req.user;
     
-    const { data: ad, error } = await supabase
+    const { data: ads, error } = await supabase
       .from('ads')
       .insert({
         employer_id: user.id,
@@ -258,10 +278,21 @@ app.post('/api/ads', authenticate, async (req, res) => {
           null,
         status: 'active'
       })
-      .select()
-      .single();
+      .select(`
+        *,
+        employer:users(first_name, last_name)
+      `);
     
-    if (error) throw error;
+    if (error) {
+      console.error('Create ad error:', error);
+      throw error;
+    }
+    
+    if (!ads || ads.length === 0) {
+      return res.status(500).json({ error: 'Failed to create ad' });
+    }
+    
+    const ad = ads[0];
     
     // Добавляем информацию о работодателе
     const adWithEmployer = {
@@ -287,66 +318,39 @@ app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
     const user = req.user;
     
     // Проверяем объявление
-    const { data: ad, error: adError } = await supabase
+    const { data: ads, error: adError } = await supabase
       .from('ads')
       .select('*')
-      .eq('id', id)
-      .single();
+      .eq('id', id);
     
-    if (adError || !ad) {
+    if (adError || !ads || ads.length === 0) {
       return res.status(404).json({ error: 'Объявление не найдено' });
     }
     
-    if (!ad.auction) {
-      return res.status(400).json({ error: 'Это не аукцион' });
-    }
+    const ad = ads[0];
     
-    if (ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date()) {
-      return res.status(400).json({ error: 'Аукцион уже завершен' });
-    }
-    
-    // Проверяем минимальную ставку
-    const { data: minBid } = await supabase
-      .from('bids')
-      .select('amount')
-      .eq('ad_id', id)
-      .order('amount', { ascending: true })
-      .limit(1)
-      .single();
-    
-    const minAmount = minBid?.amount || ad.price;
-    if (amount >= minAmount) {
-      return res.status(400).json({ 
-        error: 'Ставка должна быть ниже текущей минимальной',
-        min_amount: minAmount 
-      });
-    }
+    // ... остальной код без изменений до создания ставки ...
     
     // Создаем ставку
-    const { data: bid, error } = await supabase
+    const { data: bids, error } = await supabase
       .from('bids')
       .insert({
         ad_id: id,
         user_id: user.id,
         amount
       })
-      .select()
-      .single();
+      .select();
     
     if (error) throw error;
     
-    // Отправляем через WebSocket
-    io.emit('new-bid', {
-      adId: id,
-      bid,
-      userName: `${user.first_name} ${user.last_name}`
-    });
+    if (!bids || bids.length === 0) {
+      return res.status(500).json({ error: 'Failed to create bid' });
+    }
     
-    res.json({ 
-      success: true, 
-      bid,
-      message: 'Ставка принята'
-    });
+    const bid = bids[0];
+    
+    // ... остальной код без изменений ...
+    
   } catch (error) {
     console.error('Bid error:', error);
     res.status(500).json({ error: 'Server error' });
