@@ -18,10 +18,8 @@
                 <h1>Шабашка</h1>
             </div>
             <div class="user-info" id="userInfo">
-                <span id="userBalance">0 ₽</span>
                 <button id="notificationsBtn" class="btn-icon">
                     <i class="fas fa-bell"></i>
-                    <span id="unreadCount" class="notification-badge" style="display: none;">0</span>
                 </button>
                 <button id="profileBtn">
                     <i class="fas fa-user"></i>
@@ -31,96 +29,18 @@
 
         <!-- Основной контент -->
         <main>
-            <!-- Экран выбора роли (первый экран) -->
-            <section id="roleScreen" class="screen active">
-                <div class="welcome-container">
-                    <h2>Добро пожаловать!</h2>
-                    <p>Выберите вашу роль в приложении:</p>
-                    
-                    <div class="role-cards">
-                        <div class="role-card employer-card" data-role="employer">
-                            <div class="role-icon">
-                                <i class="fas fa-user-tie"></i>
-                            </div>
-                            <h3>Работодатель</h3>
-                            <p>Создавайте объявления о подработке для других пользователей</p>
-                            <ul class="role-features">
-                                <li><i class="fas fa-check"></i> Размещение объявлений</li>
-                                <li><i class="fas fa-check"></i> Поиск исполнителей</li>
-                                <li><i class="fas fa-check"></i> Управление заданиями</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="role-card worker-card" data-role="worker">
-                            <div class="role-icon">
-                                <i class="fas fa-hard-hat"></i>
-                            </div>
-                            <h3>Работник</h3>
-                            <p>Находите подработку и выполняйте задания</p>
-                            <ul class="role-features">
-                                <li><i class="fas fa-check"></i> Поиск подработки</li>
-                                <li><i class="fas fa-check"></i> Выполнение заданий</li>
-                                <li><i class="fas fa-check"></i> Заработок денег</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="role-note">
-                        <p><i class="fas fa-info-circle"></i> Вы сможете изменить роль позже в настройках профиля</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Главный экран для работодателя -->
-            <section id="employerScreen" class="screen">
+            <!-- Главный экран -->
+            <section id="mainScreen" class="screen active">
                 <div class="screen-header">
-                    <h2><i class="fas fa-user-tie"></i> Панель работодателя</h2>
-                    <button id="createAdBtn" class="btn-primary">
-                        <i class="fas fa-plus"></i> Новое объявление
-                    </button>
-                </div>
-                
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="myAds">Мои объявления</button>
-                    <button class="tab-btn" data-tab="activeAds">Активные</button>
-                    <button class="tab-btn" data-tab="completedAds">Завершенные</button>
-                </div>
-                
-                <div class="tab-content active" id="myAdsTab">
-                    <div class="ads-list" id="employerAdsList">
-                        <!-- Объявления будут загружены через JS -->
-                        <div class="empty-state">
-                            <i class="fas fa-clipboard-list"></i>
-                            <h3>У вас пока нет объявлений</h3>
-                            <p>Создайте первое объявление, чтобы найти исполнителей</p>
-                            <button id="createFirstAdBtn" class="btn-primary">Создать объявление</button>
-                        </div>
+                    <h2><i class="fas fa-list-alt"></i> Доступные задания</h2>
+                    <div class="header-actions">
+                        <button id="refreshAdsBtn" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button id="createAdBtn" class="btn-primary">
+                            <i class="fas fa-plus"></i> Создать
+                        </button>
                     </div>
-                </div>
-        
-                <div class="stats">
-                    <div class="stat-card">
-                        <h4>Баланс</h4>
-                        <p class="stat-value" id="employerBalance">0 ₽</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Подписка</h4>
-                        <p class="stat-value" id="employerSubscription">Не активна</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Объявления</h4>
-                        <p class="stat-value" id="employerAdsCount">0</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Главный экран для работника -->
-            <section id="workerScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-hard-hat"></i> Доступные задания</h2>
-                    <button id="refreshAdsBtn" class="btn-secondary">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
                 </div>
                 
                 <div class="filter-bar">
@@ -133,35 +53,20 @@
                         <option value="other">Другое</option>
                     </select>
                     
-                    <select id="priceFilter">
-                        <option value="all">Любая цена</option>
-                        <option value="low">До 1000 ₽</option>
-                        <option value="medium">1000-5000 ₽</option>
-                        <option value="high">От 5000 ₽</option>
+                    <select id="sortFilter">
+                        <option value="newest">Сначала новые</option>
+                        <option value="price_high">Цена по убыванию</option>
+                        <option value="price_low">Цена по возрастанию</option>
                     </select>
                 </div>
                 
-                <div class="ads-list" id="workerAdsList">
+                <div class="ads-list" id="adsList">
                     <!-- Объявления будут загружены через JS -->
                     <div class="empty-state">
                         <i class="fas fa-search"></i>
                         <h3>Нет доступных заданий</h3>
-                        <p>Попробуйте обновить список или изменить фильтры</p>
-                    </div>
-                </div>
-                
-                <div class="stats">
-                    <div class="stat-card">
-                        <h4>Баланс</h4>
-                        <p class="stat-value" id="workerBalance">0 ₽</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Подписка</h4>
-                        <p class="stat-value" id="workerSubscription">Не активна</p>
-                    </div>
-                    <div class="stat-card">
-                        <h4>Выполнено</h4>
-                        <p class="stat-value" id="workerCompleted">0</p>
+                        <p>Попробуйте обновить список или создайте первое задание</p>
+                        <button id="createFirstAdBtn" class="btn-primary">Создать задание</button>
                     </div>
                 </div>
             </section>
@@ -169,21 +74,21 @@
             <!-- Экран создания объявления -->
             <section id="createAdScreen" class="screen">
                 <div class="screen-header">
-                    <h2><i class="fas fa-plus-circle"></i> Создание объявления</h2>
-                    <button id="backToEmployerBtn" class="btn-secondary">
+                    <h2><i class="fas fa-plus-circle"></i> Создание задания</h2>
+                    <button id="backToMainBtn" class="btn-secondary">
                         <i class="fas fa-arrow-left"></i> Назад
                     </button>
                 </div>
                 
                 <div class="form-container">
                     <div class="form-group">
-                        <label for="adTitle">Заголовок объявления</label>
-                        <input type="text" id="adTitle" placeholder="Например: Нужно помочь с переездом">
+                        <label for="adTitle">Название задания *</label>
+                        <input type="text" id="adTitle" placeholder="Например: Нужно помочь с переездом" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="adCategory">Категория</label>
-                        <select id="adCategory">
+                        <label for="adCategory">Категория *</label>
+                        <select id="adCategory" required>
                             <option value="delivery">Доставка</option>
                             <option value="cleaning">Уборка</option>
                             <option value="repair">Ремонт</option>
@@ -193,20 +98,25 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="adDescription">Описание задачи</label>
-                        <textarea id="adDescription" rows="4" placeholder="Опишите задачу подробно..."></textarea>
+                        <label for="adDescription">Описание задачи *</label>
+                        <textarea id="adDescription" rows="4" placeholder="Опишите задачу подробно..." required></textarea>
                     </div>
                     
                     <div class="form-group">
-                        <label for="adPrice">Стоимость работы (₽)</label>
-                        <input type="number" id="adPrice" min="100" max="100000" value="1000">
+                        <label for="adPrice">Стоимость работы (₽) *</label>
+                        <input type="number" id="adPrice" min="100" max="100000" value="1000" required>
                     </div>
                     
                     <div class="form-group">
-                        <label for="adLocation">Местоположение</label>
-                        <input type="text" id="adLocation" placeholder="Город или район">
+                        <label for="adLocation">Местоположение *</label>
+                        <input type="text" id="adLocation" placeholder="Город или район" required>
                     </div>
-                                        <!-- В разделе createAdScreen добавьте после поля location: -->
+                    
+                    <div class="form-group">
+                        <label for="adContacts">Контакты для связи *</label>
+                        <input type="text" id="adContacts" placeholder="Телефон, Telegram или другой способ связи" required>
+                    </div>
+                    
                     <div class="auction-control">
                         <div class="auction-toggle">
                             <label class="switch">
@@ -217,19 +127,17 @@
                         </div>
                         
                         <div class="auction-settings" id="auctionSettings">
-                            <p>Работники смогут предлагать цены ниже вашей. Задание получит тот, кто предложит меньше.</p>
+                            <p>Исполнители смогут предлагать цены ниже вашей. Задание получит тот, кто предложит меньше.</p>
                             
                             <div class="form-group">
                                 <label for="auctionDuration">Продолжительность торгов</label>
                                 <div class="auction-timer">
-                                    <input type="number" id="auctionHours" min="0" max="72" value="1" style="width: 80px;">
+                                    <input type="number" id="auctionHours" min="1" max="72" value="24">
                                     <span>часов</span>
-                                    <input type="number" id="auctionMinutes" min="0" max="59" value="0" style="width: 80px;">
-                                    <span>минут</span>
                                 </div>
                             </div>
                             
-                            <div class="payment-warning" style="margin-top: 15px;">
+                            <div class="payment-warning">
                                 <i class="fas fa-info-circle"></i>
                                 <div>
                                     <h4>Важно!</h4>
@@ -238,132 +146,31 @@
                             </div>
                         </div>
                     </div>
-
-                    <div class="payment-info">
-                        <div class="payment-warning">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <div>
-                                <h4>Стоимость размещения: <span id="createPrice">50 ₽</span></h4>
-                                <p>При наличии активной подписки плата не взимается</p>
-                            </div>
-                        </div>
-                        
-                        <div class="subscription-offer" id="subscriptionOfferCreate">
-                            <h4><i class="fas fa-crown"></i> Экономьте с подпиской!</h4>
-                            <p>Всего 300 ₽ в месяц за неограниченное количество объявлений</p>
-                            <button id="buySubscriptionBtn" class="btn-secondary">Купить подписку</button>
-                        </div>
-                    </div>
                     
                     <button id="publishAdBtn" class="btn-primary btn-large">
-                        <i class="fas fa-paper-plane"></i> Опубликовать объявление
+                        <i class="fas fa-paper-plane"></i> Опубликовать задание
                     </button>
+                    
+                    <p class="form-note">
+                        <i class="fas fa-info-circle"></i>
+                        Все задания бесплатны для публикации. Контакты будут видны только выбранному исполнителю.
+                    </p>
                 </div>
             </section>
 
             <!-- Экран просмотра объявления -->
             <section id="adDetailScreen" class="screen">
-                <div class="screen-header"></div>
+                <div class="screen-header">
+                    <button id="backFromDetailBtn" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2>Детали задания</h2>
+                </div>
                 
                 <div class="ad-detail-container" id="adDetailContainer">
                     <!-- Детали объявления будут загружены через JS -->
                 </div>
             </section>
-
-            <!-- Экран профиля и настроек -->
-            <section id="profileScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-user-cog"></i> Профиль и настройки</h2>
-                    <button id="closeProfileBtn" class="btn-secondary">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="profile-container">
-                    <div class="profile-header">
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="profile-info">
-                            <h3 id="profileUserName">Пользователь</h3>
-                            <p class="role-badge" id="profileUserRole">Работодатель</p>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <span class="stat-label">Баланс</span>
-                            <span class="stat-value" id="profileBalance">0 ₽</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Подписка</span>
-                            <span class="stat-value" id="profileSubscriptionStatus">Не активна</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Объявления</span>
-                            <span class="stat-value" id="profileAdsCount">0</span>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-actions">
-                        <h3>Управление аккаунтом</h3>
-                        
-                        <button class="profile-action-btn" id="changeRoleBtn">
-                            <i class="fas fa-exchange-alt"></i>
-                            <span>Сменить роль</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        
-                        <button class="profile-action-btn" id="buySubscriptionProfileBtn">
-                            <i class="fas fa-crown"></i>
-                            <span>Купить подписку</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        
-                        <button class="profile-action-btn" id="depositBtn">
-                            <i class="fas fa-wallet"></i>
-                            <span>Пополнить баланс</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        
-                        <button class="profile-action-btn" id="historyBtn">
-                            <i class="fas fa-history"></i>
-                            <span>История операций</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="subscription-section">
-                        <h3><i class="fas fa-crown"></i> Преимущества подписки</h3>
-                        <ul class="subscription-benefits">
-                            <li><i class="fas fa-check"></i> Бесплатное размещение объявлений</li>
-                            <li><i class="fas fa-check"></i> Бесплатное принятие заданий</li>
-                            <li><i class="fas fa-check"></i> Приоритет в поиске</li>
-                            <li><i class="fas fa-check"></i> Поддержка 24/7</li>
-                        </ul>
-                        
-                        <div class="subscription-price">
-                            <h4>Всего 300 ₽/месяц</h4>
-                            <button id="buySubscriptionMainBtn" class="btn-primary">Активировать подписку</button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран оплаты -->
-            <section id="paymentScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-credit-card"></i> Оплата</h2>
-                    <button id="cancelPaymentBtn" class="btn-secondary">
-                        <i class="fas fa-times"></i> Отмена
-                    </button>
-                </div>
-                
-                <div class="payment-container" id="paymentContainer">
-                    <!-- Содержимое оплаты будет загружено через JS -->
-                </div>
-            </section>
-            <!-- Добавьте эти новые экраны после существующего paymentScreen -->
 
             <!-- Экран чата -->
             <section id="chatScreen" class="screen">
@@ -372,18 +179,13 @@
                         <i class="fas fa-arrow-left"></i>
                     </button>
                     <div class="chat-user-info">
-                        <div class="chat-avatar" id="chatAvatar">
+                        <div class="chat-avatar">
                             <i class="fas fa-user"></i>
                         </div>
                         <div>
-                            <h4 id="chatUserName">Имя пользователя</h4>
+                            <h4 id="chatUserName">Пользователь</h4>
                             <p id="chatUserStatus" class="status-online">online</p>
                         </div>
-                    </div>
-                    <div class="chat-actions">
-                        <button id="chatMenuBtn" class="btn-icon">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
                     </div>
                 </div>
                 
@@ -398,9 +200,6 @@
                 </div>
                 
                 <div class="chat-input-container">
-                    <button class="btn-icon" id="attachFileBtn">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
                     <input type="text" id="chatInput" placeholder="Введите сообщение...">
                     <button class="btn-icon btn-primary" id="sendMessageBtn">
                         <i class="fas fa-paper-plane"></i>
@@ -408,26 +207,107 @@
                 </div>
             </section>
 
-            <!-- Экран отзывов и рейтинга -->
-            <section id="ratingScreen" class="screen">
+            <!-- Экран моих заданий -->
+            <section id="myAdsScreen" class="screen">
                 <div class="screen-header">
-                    <button id="backFromRatingBtn" class="btn-secondary">
+                    <button id="backFromMyAdsBtn" class="btn-secondary">
                         <i class="fas fa-arrow-left"></i> Назад
                     </button>
-                    <h2><i class="fas fa-star"></i> Оставить отзыв</h2>
+                    <h2><i class="fas fa-clipboard-list"></i> Мои задания</h2>
                 </div>
                 
-                <div class="rating-container" id="ratingContainer">
-                    <!-- Форма отзыва будет загружена через JS -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="active">Активные</button>
+                    <button class="tab-btn" data-tab="inProgress">В работе</button>
+                    <button class="tab-btn" data-tab="completed">Завершенные</button>
+                </div>
+                
+                <div class="my-ads-list" id="myAdsList">
+                    <!-- Мои задания будут загружены через JS -->
+                    <div class="empty-state">
+                        <i class="fas fa-clipboard"></i>
+                        <h3>У вас пока нет заданий</h3>
+                        <p>Создайте первое задание</p>
+                        <button id="createFromMyAdsBtn" class="btn-primary">Создать задание</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Экран профиля -->
+            <section id="profileScreen" class="screen">
+                <div class="screen-header">
+                    <button id="closeProfileBtn" class="btn-secondary">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <h2><i class="fas fa-user-cog"></i> Профиль</h2>
+                </div>
+                
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="profile-info">
+                            <h3 id="profileUserName">Пользователь</h3>
+                            <p id="profileUserStats">0 заданий создано</p>
+                        </div>
+                    </div>
+                    
+                    <div class="profile-actions">
+                        <button class="profile-action-btn" id="myAdsBtn">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Мои задания</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <button class="profile-action-btn" id="myBidsBtn">
+                            <i class="fas fa-gavel"></i>
+                            <span>Мои ставки</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <button class="profile-action-btn" id="settingsBtn">
+                            <i class="fas fa-cog"></i>
+                            <span>Настройки</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        
+                        <button class="profile-action-btn" id="helpBtn">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Помощь</span>
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="profile-stats">
+                        <h3>Статистика</h3>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value" id="profileCreatedCount">0</div>
+                                <div class="stat-label">Создано</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="profileTakenCount">0</div>
+                                <div class="stat-label">Выполнено</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="profileRating">0.0</div>
+                                <div class="stat-label">Рейтинг</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             <!-- Экран уведомлений -->
             <section id="notificationsScreen" class="screen">
                 <div class="screen-header">
+                    <button id="backFromNotificationsBtn" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </button>
                     <h2><i class="fas fa-bell"></i> Уведомления</h2>
                     <button id="clearNotificationsBtn" class="btn-secondary">
-                        <i class="fas fa-trash"></i> Очистить все
+                        <i class="fas fa-trash"></i>
                     </button>
                 </div>
                 
@@ -435,71 +315,21 @@
                     <!-- Уведомления будут загружены через JS -->
                 </div>
             </section>
-
-            <!-- Экран модерации (для админов) -->
-            <section id="moderationScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-shield-alt"></i> Модерация объявлений</h2>
-                    <button id="backFromModerationBtn" class="btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Назад
-                    </button>
-                </div>
-                
-                <div class="moderation-tabs">
-                    <button class="tab-btn active" data-tab="pending">Ожидают (3)</button>
-                    <button class="tab-btn" data-tab="approved">Одобрены</button>
-                    <button class="tab-btn" data-tab="rejected">Отклонены</button>
-                </div>
-                
-                <div class="moderation-list" id="moderationList">
-                    <!-- Объявления для модерации будут загружены через JS -->
-                </div>
-            </section>
-
-            <!-- Меню чата (выпадающее) -->
-            <div id="chatMenu" class="dropdown-menu">
-                <button class="dropdown-item" id="viewProfileBtn">
-                    <i class="fas fa-user"></i> Профиль пользователя
-                </button>
-                <button class="dropdown-item" id="viewAdDetailsBtn">
-                    <i class="fas fa-clipboard-list"></i> Детали объявления
-                </button>
-                <button class="dropdown-item" id="reportUserBtn">
-                    <i class="fas fa-flag"></i> Пожаловаться
-                </button>
-                <button class="dropdown-item" id="clearChatBtn">
-                    <i class="fas fa-trash"></i> Очистить историю
-                </button>
-            </div>
-
-            <!-- Меню уведомлений в шапке -->
-            <div id="notificationsDropdown" class="dropdown-menu notifications-dropdown">
-                <div class="dropdown-header">
-                    <h4>Уведомления</h4>
-                    <span class="badge" id="unreadCount">0</span>
-                </div>
-                <div class="dropdown-body" id="notificationsDropdownList">
-                    <!-- Список уведомлений -->
-                </div>
-                <div class="dropdown-footer">
-                    <button id="viewAllNotificationsBtn">Все уведомления</button>
-                </div>
-            </div>
         </main>
 
         <!-- Нижняя навигация -->
         <nav class="bottom-nav" id="bottomNav">
-            <button class="nav-btn active" data-screen="employerScreen">
+            <button class="nav-btn active" data-screen="mainScreen">
                 <i class="fas fa-home"></i>
                 <span>Главная</span>
             </button>
-            <button class="nav-btn" data-screen="workerScreen">
-                <i class="fas fa-search"></i>
-                <span>Поиск</span>
-            </button>
-            <button class="nav-btn" id="addAdBtn">
+            <button class="nav-btn" id="createNavBtn">
                 <i class="fas fa-plus-circle"></i>
                 <span>Создать</span>
+            </button>
+            <button class="nav-btn" data-screen="myAdsScreen">
+                <i class="fas fa-clipboard-list"></i>
+                <span>Мои задания</span>
             </button>
             <button class="nav-btn" data-screen="profileScreen">
                 <i class="fas fa-user"></i>
@@ -533,18 +363,5 @@
     </div>
 
     <script src="app.js"></script>
-    <!-- Добавьте в конец body перед закрывающим тегом -->
-<button id="clearStorageBtn" style="position: fixed; bottom: 10px; right: 10px; z-index: 9999; padding: 10px; background: red; color: white; border: none; border-radius: 5px;">
-    Очистить данные
-</button>
-
-<script>
-document.getElementById('clearStorageBtn').addEventListener('click', function() {
-    if (confirm('Очистить все данные приложения?')) {
-        localStorage.clear();
-        location.reload();
-    }
-});
-</script>
 </body>
 </html>
