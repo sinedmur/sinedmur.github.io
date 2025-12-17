@@ -1,4 +1,4 @@
-// app.js - полная версия с интеграцией бэкенда
+// app.js - упрощенная версия без ролей и баланса
 
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
@@ -13,10 +13,8 @@ const SOCKET_URL = 'https://telegram-job-backend-lnkb.onrender.com';
 let currentUser = null;
 let currentChat = null;
 let socket = null;
-let userCache = {};
 let ads = [];
 let notifications = [];
-let chats = [];
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
@@ -24,24 +22,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     setTimeout(() => {
         document.body.classList.add('loaded');
     }, 500);
-
-    // Предотвращаем зум на iOS при фокусе
-    document.addEventListener('touchstart', function(e) {
-        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-            e.target.style.fontSize = '16px';
-        }
-    });
-    
-    // Исправляем отступы для iOS
-    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
-        document.documentElement.style.setProperty('--safe-area-inset-top', 'env(safe-area-inset-top)');
-        document.documentElement.style.setProperty('--safe-area-inset-bottom', 'env(safe-area-inset-bottom)');
-    }
-    
-    // Делаем прокрутку более плавной
-    document.querySelectorAll('.chat-container, .modal-content').forEach(el => {
-        el.style.webkitOverflowScrolling = 'touch';
-    });
 
     // Инициализация пользователя
     await initUserFromTelegram();
@@ -51,22 +31,10 @@ document.addEventListener('DOMContentLoaded', async function() {
     
     // Загрузка данных
     if (currentUser) {
-        if (currentUser.role) {
-            if (currentUser.role === 'employer') {
-                showScreen('employerScreen');
-                await loadEmployerAds();
-                updateEmployerStats();
-            } else {
-                showScreen('workerScreen');
-                await loadWorkerAds();
-                updateWorkerStats();
-            }
-        } else {
-            showScreen('roleScreen');
-        }
-        
-        updateHeaderInfo();
+        showScreen('mainScreen');
+        await loadAds();
         await loadNotifications();
+        updateProfileStats();
     }
 });
 
@@ -80,59 +48,42 @@ async function initUserFromTelegram() {
         }
         
         console.log('Initializing user with telegramId:', telegramId);
-        console.log('Telegram user data:', tg.initDataUnsafe.user);
         
-        // 1. Пытаемся получить пользователя с сервера
+        // Пытаемся получить пользователя с сервера
         try {
-            console.log('Fetching user from server...');
             const response = await fetch(`${API_BASE_URL}/user`, {
                 headers: {
                     'Authorization': telegramId.toString()
                 }
             });
             
-            console.log('Server response status:', response.status);
-            
             if (response.ok) {
                 const data = await response.json();
                 currentUser = data.user;
                 console.log('User loaded from server:', currentUser);
             } else {
-                const errorText = await response.text();
-                console.error('Server error response:', errorText);
+                // Пользователь не найден, создаем через init endpoint
+                const userData = {
+                    username: tg.initDataUnsafe.user?.username,
+                    first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
+                    last_name: tg.initDataUnsafe.user?.last_name || ''
+                };
                 
-                if (response.status === 404 || response.status === 401) {
-                    // Пользователь не найден, создаем через init endpoint
-                    console.log('User not found, creating via init...');
-                    
-                    const userData = {
-                        username: tg.initDataUnsafe.user?.username,
-                        first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-                        last_name: tg.initDataUnsafe.user?.last_name || ''
-                    };
-                    
-                    console.log('Creating user with data:', userData);
-                    
-                    const initResponse = await fetch(`${API_BASE_URL}/user/init`, {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': telegramId.toString(),
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify(userData)
-                    });
-                    
-                    if (initResponse.ok) {
-                        const initData = await initResponse.json();
-                        currentUser = initData.user;
-                        console.log('User created via init:', currentUser);
-                    } else {
-                        const initError = await initResponse.text();
-                        console.error('Init error:', initError);
-                        throw new Error(`Failed to create user: ${initError}`);
-                    }
+                const initResponse = await fetch(`${API_BASE_URL}/user/init`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': telegramId.toString(),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+                
+                if (initResponse.ok) {
+                    const initData = await initResponse.json();
+                    currentUser = initData.user;
+                    console.log('User created via init:', currentUser);
                 } else {
-                    throw new Error(`Server error: ${response.status}`);
+                    throw new Error('Failed to create user');
                 }
             }
         } catch (fetchError) {
@@ -142,134 +93,22 @@ async function initUserFromTelegram() {
                 telegram_id: telegramId,
                 username: tg.initDataUnsafe.user?.username,
                 first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-                last_name: tg.initDataUnsafe.user?.last_name || '',
-                role: null,
-                balance: 0
+                last_name: tg.initDataUnsafe.user?.last_name || ''
             };
             showNotification('Используется локальный режим. Некоторые функции могут быть недоступны.');
         }
         
-        // 2. Инициализируем WebSocket если пользователь есть
+        // Инициализируем WebSocket если пользователь есть
         if (currentUser) {
             console.log('User initialized, ID:', currentUser.id);
             initWebSocket();
-        } else {
-            console.error('User initialization failed - currentUser is null');
         }
         
     } catch (error) {
         console.error('Error initializing user:', error);
         showNotification(`Ошибка инициализации: ${error.message}`);
-        
-        // Показываем более информативное сообщение об ошибке
-        document.getElementById('app').innerHTML = `
-            <div style="text-align: center; padding: 50px 20px;">
-                <h2>Ошибка инициализации</h2>
-                <p>${error.message}</p>
-                <p>Проверьте консоль для подробностей</p>
-                <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px;">
-                    Перезагрузить
-                </button>
-                <button onclick="checkServerStatus()" style="margin-top: 10px; padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">
-                    Проверить сервер
-                </button>
-            </div>
-        `;
     }
 }
-
-// Добавьте эту функцию для проверки сервера
-async function checkServerStatus() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/health`);
-        const data = await response.json();
-        alert(`Сервер работает: ${data.status}\nВремя: ${data.timestamp}`);
-    } catch (error) {
-        alert(`Сервер недоступен: ${error.message}`);
-    }
-}
-
-async function createNewUser(telegramId) {
-    try {
-        const userData = {
-            username: tg.initDataUnsafe.user?.username,
-            first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-            last_name: tg.initDataUnsafe.user?.last_name || `#${telegramId}`
-        };
-
-        const response = await fetch(`${API_BASE_URL}/user/init`, {
-            method: 'POST',
-            headers: {
-                'Authorization': telegramId.toString(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            currentUser = data.user;
-        }
-    } catch (error) {
-        console.error('Error creating user:', error);
-    }
-}
-
-// Добавим функцию проверки сервера
-async function checkServerHealth() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/health`, {
-            timeout: 5000
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Server health check failed: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('Server health:', data);
-        return true;
-    } catch (error) {
-        console.error('Server is not available:', error);
-        return false;
-    }
-}
-
-// Обновим основную инициализацию
-document.addEventListener('DOMContentLoaded', async function() {
-    // Проверяем сервер перед началом работы
-    const serverAvailable = await checkServerHealth();
-    
-    if (!serverAvailable) {
-        showNotification('Сервер недоступен. Проверьте соединение.');
-        return;
-    }
-    
-    // Инициализируем пользователя
-    await initUserFromTelegram();
-    
-    // Настройка обработчиков
-    setupEventListeners();
-    
-    // Показываем нужный экран
-    if (currentUser) {
-        if (currentUser.role) {
-            if (currentUser.role === 'employer') {
-                showScreen('employerScreen');
-                await loadEmployerAds();
-                updateEmployerStats();
-            } else {
-                showScreen('workerScreen');
-                await loadWorkerAds();
-                updateWorkerStats();
-            }
-        } else {
-            showScreen('roleScreen');
-        }
-        
-        updateHeaderInfo();
-    }
-});
 
 // ============ WEBSOCKET ============
 
@@ -298,14 +137,12 @@ function initWebSocket() {
     });
     
     socket.on('new-bid', (data) => {
-        if (currentUser.role === 'employer') {
-            showNotification(`Новая ставка на ваше объявление: ${data.bid.amount} ₽`);
-            addNotification({
-                type: 'system',
-                title: 'Новая ставка',
-                message: `Пользователь ${data.userName} сделал ставку ${data.bid.amount} ₽`
-            });
-        }
+        showNotification(`Новая ставка на ваше задание: ${data.bid.amount} ₽`);
+        addNotification({
+            type: 'system',
+            title: 'Новая ставка',
+            message: `Пользователь ${data.userName} сделал ставку ${data.bid.amount} ₽`
+        });
     });
     
     socket.on('disconnect', () => {
@@ -325,21 +162,19 @@ function showScreen(screenId) {
         screen.classList.add('active');
     }
     
-    if (screenId === 'employerScreen' || screenId === 'workerScreen') {
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.getAttribute('data-screen') === screenId) {
-                btn.classList.add('active');
-            }
-        });
-    }
+    // Обновляем активную кнопку в навигации
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-screen') === screenId) {
+            btn.classList.add('active');
+        }
+    });
     
+    // Скрываем навигацию на некоторых экранах
     const bottomNav = document.getElementById('bottomNav');
-    if (screenId === 'roleScreen' || screenId === 'createAdScreen' || 
-        screenId === 'adDetailScreen' || screenId === 'profileScreen' || 
-        screenId === 'paymentScreen' || screenId === 'chatScreen' ||
-        screenId === 'ratingScreen' || screenId === 'notificationsScreen' ||
-        screenId === 'moderationScreen') {
+    if (screenId === 'createAdScreen' || screenId === 'adDetailScreen' || 
+        screenId === 'chatScreen' || screenId === 'profileScreen' || 
+        screenId === 'notificationsScreen' || screenId === 'myAdsScreen') {
         bottomNav.style.display = 'none';
     } else {
         bottomNav.style.display = 'flex';
@@ -358,17 +193,20 @@ function showNotification(message, duration = 3000) {
     }, duration);
 }
 
-function updateHeaderInfo() {
-    if (currentUser) {
-        document.getElementById('userBalance').textContent = `${currentUser.balance || 0} ₽`;
-    }
-}
-
 // ============ РАБОТА С ОБЪЯВЛЕНИЯМИ ============
 
-async function loadEmployerAds() {
+async function loadAds() {
     try {
-        const response = await fetch(`${API_BASE_URL}/ads?type=employer&user_id=${currentUser.id}`, {
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const sortFilter = document.getElementById('sortFilter').value;
+        
+        let url = `${API_BASE_URL}/ads?status=active`;
+        
+        if (categoryFilter !== 'all') {
+            url += `&category=${categoryFilter}`;
+        }
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
             }
@@ -378,117 +216,50 @@ async function loadEmployerAds() {
         
         const data = await response.json();
         ads = data.ads || [];
-        displayEmployerAds();
+        
+        // Сортировка
+        if (sortFilter === 'price_high') {
+            ads.sort((a, b) => b.price - a.price);
+        } else if (sortFilter === 'price_low') {
+            ads.sort((a, b) => a.price - b.price);
+        } else {
+            ads.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        }
+        
+        displayAds();
     } catch (error) {
-        console.error('Error loading employer ads:', error);
-        showNotification('Ошибка при загрузке объявлений');
+        console.error('Error loading ads:', error);
+        showNotification('Ошибка при загрузке заданий');
     }
 }
 
-function displayEmployerAds() {
-    const adsList = document.getElementById('employerAdsList');
-    const activeTab = document.querySelector('.tab-btn.active')?.getAttribute('data-tab') || 'myAds';
+function displayAds() {
+    const container = document.getElementById('adsList');
     
-    let filteredAds = ads.filter(ad => ad.employer_id === currentUser.id);
-    
-    if (activeTab === 'activeAds') {
-        filteredAds = filteredAds.filter(ad => ad.status === 'active');
-    } else if (activeTab === 'completedAds') {
-        filteredAds = filteredAds.filter(ad => ad.status === 'completed');
-    }
-    
-    if (filteredAds.length === 0) {
-        adsList.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clipboard-list"></i>
-                <h3>${activeTab === 'myAds' ? 'У вас пока нет объявлений' : 
-                     activeTab === 'activeAds' ? 'Нет активных объявлений' : 
-                     'Нет завершенных объявлений'}</h3>
-                <p>${activeTab === 'myAds' ? 'Создайте первое объявление, чтобы найти исполнителей' : 
-                     activeTab === 'activeAds' ? 'Все ваши объявления находятся в работе или завершены' : 
-                     'У вас нет завершенных объявлений'}</p>
-                ${activeTab === 'myAds' ? '<button id="createFirstAdBtn" class="btn-primary">Создать объявление</button>' : ''}
-            </div>
-        `;
-        
-        if (activeTab === 'myAds') {
-            document.getElementById('createFirstAdBtn').addEventListener('click', function() {
-                showScreen('createAdScreen');
-            });
-        }
-        return;
-    }
-    
-    adsList.innerHTML = '';
-    filteredAds.forEach(ad => {
-        const adElement = createAdElement(ad, true);
-        adsList.appendChild(adElement);
-    });
-}
-
-async function loadWorkerAds() {
-    try {
-        const categoryFilter = document.getElementById('categoryFilter').value;
-        const priceFilter = document.getElementById('priceFilter').value;
-        
-        const params = new URLSearchParams({
-            type: 'worker',
-            user_id: currentUser.id
-        });
-        
-        if (categoryFilter !== 'all') {
-            params.append('category', categoryFilter);
-        }
-        
-        const response = await fetch(`${API_BASE_URL}/ads?${params}`, {
-            headers: {
-                'Authorization': currentUser.telegram_id.toString()
-            }
-        });
-        
-        if (!response.ok) throw new Error('Failed to load ads');
-        
-        const data = await response.json();
-        displayWorkerAds(data.ads || [], priceFilter);
-    } catch (error) {
-        console.error('Error loading worker ads:', error);
-        showNotification('Ошибка при загрузке объявлений');
-    }
-}
-
-function displayWorkerAds(adsList, priceFilter) {
-    const container = document.getElementById('workerAdsList');
-    let filteredAds = adsList;
-    
-    if (priceFilter !== 'all') {
-        if (priceFilter === 'low') {
-            filteredAds = filteredAds.filter(ad => ad.price <= 1000);
-        } else if (priceFilter === 'medium') {
-            filteredAds = filteredAds.filter(ad => ad.price > 1000 && ad.price <= 5000);
-        } else if (priceFilter === 'high') {
-            filteredAds = filteredAds.filter(ad => ad.price > 5000);
-        }
-    }
-    
-    if (filteredAds.length === 0) {
+    if (!ads || ads.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <i class="fas fa-search"></i>
                 <h3>Нет доступных заданий</h3>
-                <p>Попробуйте обновить список или изменить фильтры</p>
+                <p>Попробуйте обновить список или создайте первое задание</p>
+                <button id="createFirstAdBtn" class="btn-primary">Создать задание</button>
             </div>
         `;
+        
+        document.getElementById('createFirstAdBtn')?.addEventListener('click', function() {
+            showScreen('createAdScreen');
+        });
         return;
     }
     
     container.innerHTML = '';
-    filteredAds.forEach(ad => {
-        const adElement = createAdElement(ad, false);
+    ads.forEach(ad => {
+        const adElement = createAdElement(ad);
         container.appendChild(adElement);
     });
 }
 
-function createAdElement(ad, isEmployerView) {
+function createAdElement(ad) {
     const adElement = document.createElement('div');
     adElement.className = `ad-card ${ad.auction ? 'ad-card-auction' : ''}`;
     
@@ -510,9 +281,12 @@ function createAdElement(ad, isEmployerView) {
     
     const currentBid = ad.min_bid || ad.price;
     const auctionEnded = ad.auction && new Date(ad.auction_ends_at) < new Date();
+    const isMyAd = ad.employer_id === currentUser.id;
     
     let statusBadge = '';
-    if (ad.status === 'taken') {
+    if (isMyAd) {
+        statusBadge = '<span class="ad-card-status" style="color: #007bff; font-weight: 600;">Мое</span>';
+    } else if (ad.status === 'taken') {
         statusBadge = '<span class="ad-card-status" style="color: #ffc107; font-weight: 600;">В работе</span>';
     } else if (ad.status === 'completed') {
         statusBadge = '<span class="ad-card-status" style="color: #28a745; font-weight: 600;">Завершено</span>';
@@ -521,11 +295,10 @@ function createAdElement(ad, isEmployerView) {
     }
     
     let auctionInfo = '';
-    if (ad.auction && !isEmployerView) {
+    if (ad.auction && !isMyAd) {
         const timeLeft = getTimeLeft(ad.auction_ends_at);
         auctionInfo = `
             <div class="auction-info">
-                <h4>${auctionEnded ? 'Аукцион завершен' : 'Идет аукцион'}</h4>
                 <div class="auction-stats">
                     <span class="auction-current-bid">Текущая ставка: ${currentBid ? currentBid + ' ₽' : 'Нет ставок'}</span>
                     <span class="auction-time-left">${auctionEnded ? 'Завершен' : 'Осталось: ' + timeLeft}</span>
@@ -559,14 +332,14 @@ function createAdElement(ad, isEmployerView) {
             ${statusBadge}
         </div>
         <div class="ad-card-actions">
-            ${isEmployerView ? 
-                `<button class="ad-card-action-btn details" data-ad-id="${ad.id}">Детали</button>
-                 ${ad.status === 'active' ? `<button class="ad-card-action-btn edit" data-ad-id="${ad.id}">Изменить</button>` : ''}` : 
-                `<button class="ad-card-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
-                 ${ad.auction && !auctionEnded ? 
-                    `<button class="ad-card-action-btn accept" onclick="showAuctionScreen(${ad.id})">Участвовать</button>` : 
-                    `<button class="ad-card-action-btn accept" data-ad-id="${ad.id}">Принять</button>`
-                 }`
+            <button class="ad-card-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
+            ${!isMyAd && ad.status === 'active' && !ad.auction ? 
+                `<button class="ad-card-action-btn accept" data-ad-id="${ad.id}">Откликнуться</button>` : 
+                ''
+            }
+            ${ad.auction && !auctionEnded && !isMyAd ? 
+                `<button class="ad-card-action-btn accept" onclick="showAuctionScreen(${ad.id})">Участвовать</button>` : 
+                ''
             }
         </div>
     `;
@@ -577,11 +350,120 @@ function createAdElement(ad, isEmployerView) {
         showAdDetail(adId);
     });
     
-    if (!isEmployerView && !ad.auction) {
+    if (!isMyAd && ad.status === 'active' && !ad.auction) {
         const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
         acceptBtn.addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
-            acceptAd(adId);
+            respondToAd(adId);
+        });
+    }
+    
+    return adElement;
+}
+
+async function loadMyAds(filter = 'active') {
+    try {
+        const response = await fetch(`${API_BASE_URL}/ads?type=my&user_id=${currentUser.id}`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
+        
+        if (!response.ok) throw new Error('Failed to load my ads');
+        
+        const data = await response.json();
+        const myAds = data.ads || [];
+        
+        let filteredAds = myAds;
+        if (filter === 'active') {
+            filteredAds = myAds.filter(ad => ad.status === 'active');
+        } else if (filter === 'inProgress') {
+            filteredAds = myAds.filter(ad => ad.status === 'taken');
+        } else if (filter === 'completed') {
+            filteredAds = myAds.filter(ad => ad.status === 'completed');
+        }
+        
+        displayMyAds(filteredAds);
+    } catch (error) {
+        console.error('Error loading my ads:', error);
+        showNotification('Ошибка при загрузке ваших заданий');
+    }
+}
+
+function displayMyAds(adsList) {
+    const container = document.getElementById('myAdsList');
+    
+    if (!adsList || adsList.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-clipboard"></i>
+                <h3>У вас пока нет заданий</h3>
+                <p>Создайте первое задание</p>
+                <button id="createFromMyAdsBtn" class="btn-primary">Создать задание</button>
+            </div>
+        `;
+        
+        document.getElementById('createFromMyAdsBtn')?.addEventListener('click', function() {
+            showScreen('createAdScreen');
+        });
+        return;
+    }
+    
+    container.innerHTML = '';
+    adsList.forEach(ad => {
+        const adElement = createMyAdElement(ad);
+        container.appendChild(adElement);
+    });
+}
+
+function createMyAdElement(ad) {
+    const adElement = document.createElement('div');
+    adElement.className = `my-ad-card`;
+    
+    const categoryNames = {
+        delivery: 'Доставка',
+        cleaning: 'Уборка',
+        repair: 'Ремонт',
+        computer: 'Компьютерная помощь',
+        other: 'Другое'
+    };
+    
+    const statusText = getStatusText(ad.status);
+    const statusColor = ad.status === 'active' ? '#28a745' : 
+                       ad.status === 'taken' ? '#ffc107' : 
+                       ad.status === 'completed' ? '#6c757d' : '#dc3545';
+    
+    adElement.innerHTML = `
+        <div class="my-ad-header">
+            <div class="my-ad-title">${ad.title}</div>
+            <div class="my-ad-price">${ad.price} ₽</div>
+        </div>
+        <div class="my-ad-meta">
+            <span class="my-ad-category">${categoryNames[ad.category]}</span>
+            <span class="my-ad-status" style="color: ${statusColor}">${statusText}</span>
+        </div>
+        <div class="my-ad-description">${ad.description?.substring(0, 80) || ''}${ad.description?.length > 80 ? '...' : ''}</div>
+        <div class="my-ad-footer">
+            <div class="my-ad-location">
+                <i class="fas fa-map-marker-alt"></i>
+                <span>${ad.location}</span>
+            </div>
+            <div class="my-ad-actions">
+                <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
+                ${ad.status === 'active' ? `<button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>` : ''}
+            </div>
+        </div>
+    `;
+    
+    adElement.querySelector('.details').addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        showAdDetail(adId);
+    });
+    
+    if (ad.status === 'active') {
+        adElement.querySelector('.edit')?.addEventListener('click', function() {
+            const adId = parseInt(this.getAttribute('data-ad-id'));
+            editAd(adId);
         });
     }
     
@@ -590,7 +472,7 @@ function createAdElement(ad, isEmployerView) {
 
 async function showAdDetail(adId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/ads?type=detail&ad_id=${adId}`, {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
             }
@@ -599,17 +481,17 @@ async function showAdDetail(adId) {
         if (!response.ok) throw new Error('Failed to load ad details');
         
         const data = await response.json();
-        const ad = data.ads[0];
+        const ad = data.ad;
         
         if (!ad) {
-            showNotification('Объявление не найдено');
+            showNotification('Задание не найдено');
             return;
         }
         
         displayAdDetail(ad);
     } catch (error) {
         console.error('Error loading ad details:', error);
-        showNotification('Ошибка при загрузке объявления');
+        showNotification('Ошибка при загрузке задания');
     }
 }
 
@@ -624,8 +506,8 @@ function displayAdDetail(ad) {
         other: 'Другое'
     };
     
-    const isEmployer = currentUser.role === 'employer';
-    const employerName = ad.employer ? `${ad.employer.first_name} ${ad.employer.last_name}` : 'Работодатель';
+    const isMyAd = ad.employer_id === currentUser.id;
+    const employerName = ad.employer ? `${ad.employer.first_name} ${ad.employer.last_name}` : 'Пользователь';
     
     container.innerHTML = `
         <div class="ad-detail-header">
@@ -648,12 +530,18 @@ function displayAdDetail(ad) {
             </div>
             <div class="meta-item">
                 <i class="fas fa-user"></i>
-                <span><strong>Работодатель:</strong> ${employerName}</span>
+                <span><strong>Автор:</strong> ${employerName}</span>
             </div>
             <div class="meta-item">
                 <i class="fas fa-calendar-alt"></i>
                 <span><strong>Дата публикации:</strong> ${new Date(ad.created_at).toLocaleDateString('ru-RU')}</span>
             </div>
+            ${ad.contacts && isMyAd ? `
+                <div class="meta-item">
+                    <i class="fas fa-phone"></i>
+                    <span><strong>Контакты автора:</strong> ${ad.contacts}</span>
+                </div>
+            ` : ''}
             ${ad.auction_ends_at ? `
                 <div class="meta-item">
                     <i class="fas fa-clock"></i>
@@ -680,18 +568,21 @@ function displayAdDetail(ad) {
                 <i class="fas fa-arrow-left"></i> Назад к списку
             </button>
             
-            ${!isEmployer && ad.status === 'active' && !ad.auction ? `
-                <button id="acceptAdDetailBtn" class="btn-primary" data-ad-id="${ad.id}">
-                    <i class="fas fa-check"></i> Принять задание
+            ${!isMyAd && ad.status === 'active' && !ad.auction ? `
+                <button id="respondAdBtn" class="btn-primary" data-ad-id="${ad.id}">
+                    <i class="fas fa-check"></i> Откликнуться
                 </button>
                 <button id="openChatBtn" class="btn-secondary" data-ad-id="${ad.id}" data-user-id="${ad.employer_id}">
                     <i class="fas fa-comment"></i> Написать
                 </button>
             ` : ''}
             
-            ${isEmployer && ad.status === 'active' ? `
+            ${isMyAd && ad.status === 'active' ? `
                 <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
                     <i class="fas fa-edit"></i> Редактировать
+                </button>
+                <button id="closeAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
+                    <i class="fas fa-times"></i> Закрыть
                 </button>
             ` : ''}
         </div>
@@ -704,17 +595,13 @@ function displayAdDetail(ad) {
     
     // Настройка обработчиков
     document.getElementById('backToListBtn').addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
+        showScreen('mainScreen');
     });
     
-    if (!isEmployer && ad.status === 'active' && !ad.auction) {
-        document.getElementById('acceptAdDetailBtn').addEventListener('click', function() {
+    if (!isMyAd && ad.status === 'active' && !ad.auction) {
+        document.getElementById('respondAdBtn').addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
-            acceptAd(adId);
+            respondToAd(adId);
         });
         
         document.getElementById('openChatBtn').addEventListener('click', function() {
@@ -724,28 +611,50 @@ function displayAdDetail(ad) {
         });
     }
     
+    if (isMyAd && ad.status === 'active') {
+        document.getElementById('editAdBtn').addEventListener('click', function() {
+            const adId = parseInt(this.getAttribute('data-ad-id'));
+            editAd(adId);
+        });
+        
+        document.getElementById('closeAdBtn').addEventListener('click', function() {
+            const adId = parseInt(this.getAttribute('data-ad-id'));
+            closeAd(adId);
+        });
+    }
+    
     showScreen('adDetailScreen');
 }
 
-async function acceptAd(adId) {
+async function respondToAd(adId) {
     try {
         showModal(
-            'Принятие задания',
-            'Вы уверены, что хотите принять это задание? После принятия вы сможете обсудить детали с работодателем.',
+            'Отклик на задание',
+            'Вы уверены, что хотите откликнуться на это задание? После отклика вы сможете обсудить детали с автором.',
             async () => {
-                // Здесь должен быть API для принятия задания
-                // Пока используем заглушку
-                showNotification('Задание принято! Теперь вы можете связаться с работодателем в чате.');
+                // Загружаем детали задания чтобы получить контакты автора
+                const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+                    headers: {
+                        'Authorization': currentUser.telegram_id.toString()
+                    }
+                });
                 
-                if (currentUser.role === 'worker') {
-                    showScreen('workerScreen');
-                    await loadWorkerAds();
+                if (response.ok) {
+                    const data = await response.json();
+                    const ad = data.ad;
+                    
+                    showNotification(`Отклик отправлен! Контакты автора: ${ad.contacts || 'не указаны'}`);
+                    
+                    // Открываем чат с автором
+                    openChat(adId, ad.employer_id);
+                } else {
+                    showNotification('Задание отправлено автору на рассмотрение');
                 }
             }
         );
     } catch (error) {
-        console.error('Error accepting ad:', error);
-        showNotification('Ошибка при принятии задания');
+        console.error('Error responding to ad:', error);
+        showNotification('Ошибка при отклике на задание');
     }
 }
 
@@ -756,19 +665,20 @@ async function publishAd() {
         const description = document.getElementById('adDescription').value.trim();
         const price = parseInt(document.getElementById('adPrice').value);
         const location = document.getElementById('adLocation').value.trim();
+        const contacts = document.getElementById('adContacts').value.trim();
         const auctionEnabled = document.getElementById('auctionToggle').checked;
         
-        if (!title || !description || !location || price < 100) {
-            showNotification('Заполните все поля корректно. Минимальная цена - 100 ₽');
+        // Валидация
+        if (!title || !description || !location || !contacts || price < 100) {
+            showNotification('Заполните все обязательные поля. Минимальная цена - 100 ₽');
             return;
         }
         
         if (auctionEnabled) {
             const auctionHours = parseInt(document.getElementById('auctionHours').value) || 0;
-            const auctionMinutes = parseInt(document.getElementById('auctionMinutes').value) || 0;
             
-            if (auctionHours === 0 && auctionMinutes === 0) {
-                showNotification('Укажите время проведения аукциона');
+            if (auctionHours < 1) {
+                showNotification('Укажите время проведения аукциона (минимум 1 час)');
                 return;
             }
         }
@@ -779,8 +689,14 @@ async function publishAd() {
             category,
             price,
             location,
+            contacts,
             auction: auctionEnabled
         };
+        
+        if (auctionEnabled) {
+            const auctionHours = parseInt(document.getElementById('auctionHours').value) || 24;
+            adData.auction_hours = auctionHours;
+        }
         
         const response = await fetch(`${API_BASE_URL}/ads`, {
             method: 'POST',
@@ -800,16 +716,40 @@ async function publishAd() {
         document.getElementById('adDescription').value = '';
         document.getElementById('adPrice').value = '1000';
         document.getElementById('adLocation').value = '';
+        document.getElementById('adContacts').value = '';
         document.getElementById('auctionToggle').checked = false;
         
-        showNotification(`Объявление "${title}" успешно опубликовано!`);
-        showScreen('employerScreen');
-        await loadEmployerAds();
-        updateHeaderInfo();
+        showNotification(`Задание "${title}" успешно опубликовано!`);
+        showScreen('mainScreen');
+        await loadAds();
+        updateProfileStats();
         
     } catch (error) {
         console.error('Error publishing ad:', error);
-        showNotification('Ошибка при создании объявления');
+        showNotification('Ошибка при создании задания');
+    }
+}
+
+async function editAd(adId) {
+    // Реализация редактирования задания
+    showNotification('Редактирование задания (в разработке)');
+}
+
+async function closeAd(adId) {
+    try {
+        showModal(
+            'Закрытие задания',
+            'Вы уверены, что хотите закрыть это задание? После закрытия новые отклики не будут приниматься.',
+            async () => {
+                // Здесь должен быть API для закрытия задания
+                showNotification('Задание закрыто');
+                await loadAds();
+                showScreen('mainScreen');
+            }
+        );
+    } catch (error) {
+        console.error('Error closing ad:', error);
+        showNotification('Ошибка при закрытии задания');
     }
 }
 
@@ -817,7 +757,7 @@ async function publishAd() {
 
 async function showAuctionScreen(adId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/ads?type=detail&ad_id=${adId}`, {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
             }
@@ -826,7 +766,7 @@ async function showAuctionScreen(adId) {
         if (!response.ok) throw new Error('Failed to load ad');
         
         const data = await response.json();
-        const ad = data.ads[0];
+        const ad = data.ad;
         
         if (!ad || !ad.auction) {
             showNotification('Аукцион не найден');
@@ -844,6 +784,7 @@ function displayAuctionScreen(ad) {
     const container = document.getElementById('adDetailContainer');
     const currentBid = ad.min_bid || ad.price;
     const auctionEnded = new Date(ad.auction_ends_at) < new Date();
+    const isMyAd = ad.employer_id === currentUser.id;
     
     container.innerHTML = `
         <div class="auction-screen">
@@ -867,7 +808,7 @@ function displayAuctionScreen(ad) {
                 </div>
             </div>
             
-            ${!auctionEnded ? `
+            ${!auctionEnded && !isMyAd ? `
                 <div class="auction-bid-container">
                     <h4>Ваше предложение</h4>
                     <p>Предложите цену ниже текущей ставки</p>
@@ -894,12 +835,17 @@ function displayAuctionScreen(ad) {
                         <i class="fas fa-gavel"></i> Сделать ставку
                     </button>
                 </div>
-            ` : `
+            ` : auctionEnded ? `
                 <div class="auction-ended">
                     <h4><i class="fas fa-flag-checkered"></i> Аукцион завершен</h4>
-                    <p>Победитель будет определен автоматически</p>
+                    <p>${isMyAd ? 'Победитель определен' : 'Победитель будет определен автоматически'}</p>
                 </div>
-            `}
+            ` : isMyAd ? `
+                <div class="auction-owner">
+                    <h4><i class="fas fa-user-tie"></i> Вы автор аукциона</h4>
+                    <p>Дождитесь окончания торгов для выбора победителя</p>
+                </div>
+            ` : ''}
             
             <div class="bids-history">
                 <h5>История ставок</h5>
@@ -914,7 +860,7 @@ function displayAuctionScreen(ad) {
     loadBidsForAd(ad.id);
     
     // Настройка обработчиков
-    if (!auctionEnded) {
+    if (!auctionEnded && !isMyAd) {
         const bidInput = document.getElementById('auctionBidInput');
         bidInput.addEventListener('input', updateBidHint);
         
@@ -1058,7 +1004,7 @@ function displayBidsHistory(bids) {
 async function openChat(adId, otherUserId) {
     const ad = ads.find(a => a.id === adId);
     if (!ad) {
-        showNotification('Объявление не найдено');
+        showNotification('Задание не найдено');
         return;
     }
     
@@ -1104,26 +1050,15 @@ async function openChat(adId, otherUserId) {
 }
 
 async function getUserById(userId) {
-    if (userCache[userId]) {
-        return userCache[userId];
-    }
+    // В реальном приложении здесь был бы запрос к API
+    // Пока используем заглушку
+    const user = {
+        id: userId,
+        first_name: 'Пользователь',
+        last_name: `#${userId}`
+    };
     
-    try {
-        // В реальном приложении здесь был бы запрос к API
-        // Пока используем заглушку
-        const user = {
-            id: userId,
-            first_name: userId === 2 ? 'Иван' : 'Мария',
-            last_name: userId === 2 ? 'Петров' : 'Сидорова',
-            role: userId === 2 ? 'employer' : 'worker'
-        };
-        
-        userCache[userId] = user;
-        return user;
-    } catch (error) {
-        console.error('Error getting user:', error);
-        return null;
-    }
+    return user;
 }
 
 async function loadChatMessages(adId, otherUserId) {
@@ -1151,7 +1086,7 @@ function displayChatMessages(messages) {
         const welcomeMessage = document.createElement('div');
         welcomeMessage.className = 'message message-incoming';
         welcomeMessage.innerHTML = `
-            <p>Здравствуйте! Это начало вашего чата по объявлению.</p>
+            <p>Здравствуйте! Это начало вашего чата по заданию.</p>
             <div class="message-time">${new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
         `;
         container.appendChild(welcomeMessage);
@@ -1177,9 +1112,6 @@ function createMessageElement(message) {
         <p>${message.text}</p>
         <div class="message-time">
             ${new Date(message.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}
-            ${isOutgoing ? `<span class="message-status ${message.read ? 'status-read' : 'status-unread'}">
-                ${message.read ? '✓✓' : '✓'}
-            </span>` : ''}
         </div>
     `;
     
@@ -1234,194 +1166,41 @@ function addMessageToChat(message) {
     }, 100);
 }
 
-// ============ ПРОФИЛЬ И НАСТРОЙКИ ============
+// ============ ПРОФИЛЬ ============
 
-async function loadProfileScreen() {
+function loadProfileScreen() {
     if (!currentUser) return;
     
     document.getElementById('profileUserName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
-    document.getElementById('profileUserRole').textContent = currentUser.role === 'employer' ? 'Работодатель' : 'Работник';
-    document.getElementById('profileBalance').textContent = `${currentUser.balance || 0} ₽`;
     
-    // Загружаем количество объявлений
-    try {
-        const response = await fetch(`${API_BASE_URL}/ads?type=employer&user_id=${currentUser.id}`, {
-            headers: {
-                'Authorization': currentUser.telegram_id.toString()
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            document.getElementById('profileAdsCount').textContent = data.ads?.length || 0;
-        }
-    } catch (error) {
-        console.error('Error loading ads count:', error);
-    }
-    
-    const subscriptionStatus = currentUser.subscription_until && new Date(currentUser.subscription_until) > new Date() ? 
-        `Активна до ${new Date(currentUser.subscription_until).toLocaleDateString('ru-RU')}` : 
-        'Не активна';
-    document.getElementById('profileSubscriptionStatus').textContent = subscriptionStatus;
-    
-    // Добавляем кнопку модерации для админов
-    if (currentUser.role === 'admin') {
-        document.querySelector('.profile-actions').innerHTML += `
-            <button class="profile-action-btn" id="moderationBtn">
-                <i class="fas fa-shield-alt"></i>
-                <span>Модерация</span>
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        `;
-        
-        document.getElementById('moderationBtn')?.addEventListener('click', showModerationScreen);
-    }
+    updateProfileStats();
 }
 
-async function updateUserRole(role) {
-    try {
-        if (!currentUser) {
-            showNotification('Пользователь не найден. Пожалуйста, перезагрузите приложение.');
-            return;
-        }
-
-        console.log('Changing role to:', role, 'for user:', currentUser);
-        console.log('Telegram ID:', currentUser.telegram_id);
-        
-        // Показываем индикатор загрузки
-        showNotification('Изменение роли...', 5000);
-        
-        // Отправляем запрос на сервер
-        console.log('Sending request to server...');
-        const response = await fetch(`${API_BASE_URL}/user/role`, {
-            method: 'POST',
-            headers: {
-                'Authorization': currentUser.telegram_id.toString(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ role })
-        });
-        
-        console.log('Response status:', response.status);
-        
-        const responseText = await response.text();
-        console.log('Response text:', responseText);
-        
-        if (!response.ok) {
-            let errorData;
-            try {
-                errorData = JSON.parse(responseText);
-            } catch {
-                errorData = { error: `Server error: ${response.status}` };
-            }
-            
-            console.error('Server error response:', errorData);
-            
-            // Если пользователь не найден, создаем его
-            if (response.status === 404) {
-                console.log('User not found, creating first...');
-                await createOrUpdateUserOnServer();
-                // Пробуем снова
-                return updateUserRole(role);
-            }
-            
-            throw new Error(errorData.error || `Server error: ${response.status}`);
-        }
-        
-        // Парсим успешный ответ
-        const data = JSON.parse(responseText);
-        console.log('Role updated successfully:', data);
-        
-        // Обновляем объект пользователя данными с сервера
-        currentUser = data.user;
-        
-        // Показываем успешное сообщение
-        showNotification(`Вы теперь ${role === 'employer' ? 'работодатель' : 'работник'}!`);
-        
-        // Обновляем интерфейс в зависимости от роли
-        if (role === 'employer') {
-            showScreen('employerScreen');
-            await loadEmployerAds();
-            updateEmployerStats();
-        } else {
-            showScreen('workerScreen');
-            await loadWorkerAds();
-            updateWorkerStats();
-        }
-        
-        updateHeaderInfo();
-        
-    } catch (error) {
-        console.error('Error updating role:', error);
-        showNotification(`Ошибка при изменении роли: ${error.message}`);
-    }
-}
-
-async function createOrUpdateUserOnServer() {
-    try {
-        const telegramId = currentUser.telegram_id || tg.initDataUnsafe.user?.id;
-        if (!telegramId) {
-            throw new Error('No telegram ID found');
-        }
-        
-        const userData = {
-            username: currentUser.username || tg.initDataUnsafe.user?.username,
-            first_name: currentUser.first_name || tg.initDataUnsafe.user?.first_name || 'Пользователь',
-            last_name: currentUser.last_name || tg.initDataUnsafe.user?.last_name || ''
-        };
-        
-        console.log('Creating/updating user on server with data:', userData);
-        
-        const response = await fetch(`${API_BASE_URL}/user/init`, {
-            method: 'POST',
-            headers: {
-                'Authorization': telegramId.toString(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || `Failed to create user: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        currentUser = data.user;
-        console.log('User created/updated on server:', currentUser);
-        
-        showNotification('Пользователь создан на сервере');
-        
-        return currentUser;
-        
-    } catch (error) {
-        console.error('Error creating/updating user:', error);
-        throw error;
-    }
+function updateProfileStats() {
+    if (!currentUser) return;
+    
+    // В реальном приложении здесь был бы запрос к API для статистики
+    const createdCount = ads.filter(ad => ad.employer_id === currentUser.id).length;
+    const takenCount = 0; // В реальном приложении нужно считать выполненные задания
+    
+    document.getElementById('profileUserStats').textContent = `${createdCount} заданий создано`;
+    document.getElementById('profileCreatedCount').textContent = createdCount;
+    document.getElementById('profileTakenCount').textContent = takenCount;
+    document.getElementById('profileRating').textContent = '5.0';
 }
 
 // ============ УВЕДОМЛЕНИЯ ============
 
 async function loadNotifications() {
     // В реальном приложении здесь был бы запрос к API
-    // Пока используем тестовые уведомления
     notifications = [
         {
             id: 1,
             type: 'system',
             title: 'Добро пожаловать!',
-            message: 'Спасибо за регистрацию в Шабашка. Начните использовать все возможности приложения.',
+            message: 'Спасибо за использование Шабашка. Начните создавать задания или откликайтесь на существующие.',
             read: true,
             created_at: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-            id: 2,
-            type: 'message',
-            title: 'Новое сообщение',
-            message: 'Работодатель ответил на ваше предложение',
-            read: false,
-            created_at: new Date(Date.now() - 3600000).toISOString(),
-            data: { chatId: 1, adId: 1 }
         }
     ];
     
@@ -1441,7 +1220,7 @@ function addNotification(notification) {
 
 function updateNotificationBadge() {
     const unreadCount = notifications.filter(n => !n.read).length;
-    const badge = document.getElementById('unreadCount');
+    const badge = document.querySelector('#notificationsBtn .badge');
     if (badge) {
         badge.textContent = unreadCount;
         badge.style.display = unreadCount > 0 ? 'block' : 'none';
@@ -1497,10 +1276,8 @@ function createNotificationElement(notification) {
 function getNotificationIcon(type) {
     const icons = {
         'message': 'comments',
-        'rating': 'star',
         'system': 'info-circle',
-        'warning': 'exclamation-triangle',
-        'moderation': 'shield-alt'
+        'warning': 'exclamation-triangle'
     };
     return icons[type] || 'bell';
 }
@@ -1518,15 +1295,6 @@ function timeAgo(date) {
 function handleNotificationClick(notification) {
     notification.read = true;
     updateNotificationBadge();
-    
-    // Обрабатываем клик в зависимости от типа уведомления
-    switch (notification.type) {
-        case 'message':
-            if (notification.data?.adId && notification.data?.chatId) {
-                openChat(notification.data.adId, getOtherUserId(notification.data.chatId));
-            }
-            break;
-    }
 }
 
 function clearAllNotifications() {
@@ -1534,130 +1302,6 @@ function clearAllNotifications() {
     updateNotificationBadge();
     showNotificationsScreen();
     showNotification('Все уведомления отмечены как прочитанные');
-}
-
-// ============ МОДЕРАЦИЯ ============
-
-async function showModerationScreen() {
-    if (currentUser.role !== 'admin') {
-        showNotification('У вас нет доступа к модерации');
-        return;
-    }
-    
-    // Загружаем объявления для модерации
-    try {
-        const response = await fetch(`${API_BASE_URL}/ads?type=moderation`, {
-            headers: {
-                'Authorization': currentUser.telegram_id.toString()
-            }
-        });
-        
-        if (!response.ok) throw new Error('Failed to load moderation ads');
-        
-        const data = await response.json();
-        displayModerationList(data.ads || []);
-    } catch (error) {
-        console.error('Error loading moderation ads:', error);
-        showNotification('Ошибка при загрузке объявлений для модерации');
-    }
-    
-    showScreen('moderationScreen');
-}
-
-function displayModerationList(adsList) {
-    const list = document.getElementById('moderationList');
-    
-    if (!adsList || adsList.length === 0) {
-        list.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-clipboard-check"></i>
-                <h3>Нет объявлений для модерации</h3>
-                <p>Все объявления обработаны</p>
-            </div>
-        `;
-        return;
-    }
-    
-    list.innerHTML = '';
-    adsList.forEach(ad => {
-        const item = createModerationItem(ad);
-        list.appendChild(item);
-    });
-}
-
-function createModerationItem(ad) {
-    const item = document.createElement('div');
-    item.className = 'moderation-item';
-    
-    const employerName = ad.employer ? `${ad.employer.first_name} ${ad.employer.last_name}` : 'Неизвестный';
-    
-    item.innerHTML = `
-        <div class="moderation-item-header">
-            <div class="moderation-item-title">${ad.title}</div>
-            <div class="moderation-item-price">${ad.price} ₽</div>
-        </div>
-        
-        <div class="moderation-item-user">
-            <div class="moderation-user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="moderation-user-info">
-                <h4>${employerName}</h4>
-                <p>Работодатель</p>
-            </div>
-        </div>
-        
-        <div class="moderation-item-description">
-            ${ad.description}
-        </div>
-        
-        <div class="moderation-item-meta">
-            <div style="display: flex; gap: 15px; margin-bottom: 15px; font-size: 0.9rem;">
-                <span><i class="fas fa-map-marker-alt"></i> ${ad.location}</span>
-                <span><i class="fas fa-calendar"></i> ${new Date(ad.created_at).toLocaleDateString('ru-RU')}</span>
-            </div>
-        </div>
-        
-        <div class="moderation-item-actions">
-            <button class="moderation-btn approve" data-ad-id="${ad.id}">
-                <i class="fas fa-check"></i> Одобрить
-            </button>
-            <button class="moderation-btn reject" data-ad-id="${ad.id}">
-                <i class="fas fa-times"></i> Отклонить
-            </button>
-            <button class="moderation-btn view" data-ad-id="${ad.id}">
-                <i class="fas fa-eye"></i> Подробнее
-            </button>
-        </div>
-    `;
-    
-    item.querySelector('.moderation-btn.approve').addEventListener('click', function() {
-        moderateAd(ad.id, true);
-    });
-    
-    item.querySelector('.moderation-btn.reject').addEventListener('click', function() {
-        moderateAd(ad.id, false);
-    });
-    
-    item.querySelector('.moderation-btn.view').addEventListener('click', function() {
-        showAdDetail(ad.id);
-    });
-    
-    return item;
-}
-
-async function moderateAd(adId, approve) {
-    try {
-        // В реальном приложении здесь был бы запрос к API
-        showNotification(approve ? 'Объявление одобрено' : 'Объявление отклонено');
-        
-        // Обновляем список
-        await showModerationScreen();
-        
-    } catch (error) {
-        console.error('Error moderating ad:', error);
-        showNotification('Ошибка при модерации объявления');
-    }
 }
 
 // ============ ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ============
@@ -1671,34 +1315,6 @@ function getStatusText(status) {
         'rejected': 'Отклонено'
     };
     return statusMap[status] || status;
-}
-
-function updateEmployerStats() {
-    if (!currentUser) return;
-    
-    const userAds = ads.filter(ad => ad.employer_id === currentUser.id);
-    
-    document.getElementById('employerBalance').textContent = `${currentUser.balance || 0} ₽`;
-    document.getElementById('employerAdsCount').textContent = userAds.length;
-    
-    const subscriptionStatus = currentUser.subscription_until && new Date(currentUser.subscription_until) > new Date() ? 
-        `До ${new Date(currentUser.subscription_until).toLocaleDateString('ru-RU')}` : 
-        'Не активна';
-    document.getElementById('employerSubscription').textContent = subscriptionStatus;
-}
-
-function updateWorkerStats() {
-    if (!currentUser) return;
-    
-    const completedAds = ads.filter(ad => ad.taken_by === currentUser.id && ad.status === 'completed');
-    
-    document.getElementById('workerBalance').textContent = `${currentUser.balance || 0} ₽`;
-    document.getElementById('workerCompleted').textContent = completedAds.length;
-    
-    const subscriptionStatus = currentUser.subscription_until && new Date(currentUser.subscription_until) > new Date() ? 
-        `До ${new Date(currentUser.subscription_until).toLocaleDateString('ru-RU')}` : 
-        'Не активна';
-    document.getElementById('workerSubscription').textContent = subscriptionStatus;
 }
 
 // ============ МОДАЛЬНЫЕ ОКНА ============
@@ -1738,89 +1354,73 @@ function showModal(title, message, confirmCallback) {
 // ============ ОБРАБОТЧИКИ СОБЫТИЙ ============
 
 function setupEventListeners() {
-    // Выбор роли
-        document.querySelectorAll('.role-card').forEach(card => {
-        card.addEventListener('click', async function(e) {
-            e.preventDefault();
-            
-            const role = this.getAttribute('data-role');
-            console.log('Selected role:', role);
-            
-            // Блокируем кнопку во время запроса
-            const originalHTML = this.innerHTML;
-            this.innerHTML = '<div class="loading-spinner"></div>';
-            this.style.pointerEvents = 'none';
-            
-            try {
-                await updateUserRole(role);
-            } finally {
-                // Восстанавливаем кнопку
-                this.innerHTML = originalHTML;
-                this.style.pointerEvents = 'auto';
-            }
-        });
-    });
-    
-    // Кнопки навигации
+    // Навигация
     document.querySelectorAll('.nav-btn[data-screen]').forEach(btn => {
         btn.addEventListener('click', function() {
             const screenId = this.getAttribute('data-screen');
             showScreen(screenId);
             
-            if (screenId === 'employerScreen') {
-                loadEmployerAds();
-                updateEmployerStats();
-            } else if (screenId === 'workerScreen') {
-                loadWorkerAds();
-                updateWorkerStats();
+            if (screenId === 'mainScreen') {
+                loadAds();
+            } else if (screenId === 'myAdsScreen') {
+                loadMyAds('active');
+            } else if (screenId === 'profileScreen') {
+                loadProfileScreen();
             }
         });
     });
     
-    // Кнопка создания объявления в навигации
-    document.getElementById('addAdBtn').addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('createAdScreen');
-        } else {
-            showNotification('Только работодатели могут создавать объявления');
-        }
+    // Кнопка создания в навигации
+    document.getElementById('createNavBtn').addEventListener('click', function() {
+        showScreen('createAdScreen');
     });
     
-    // Кнопка профиля
-    document.getElementById('profileBtn').addEventListener('click', function() {
-        loadProfileScreen();
-        showScreen('profileScreen');
-    });
-    
-    // Кнопка закрытия профиля
-    document.getElementById('closeProfileBtn').addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
-    
-    // Кнопка создания объявления
+    // Кнопка создания в главном экране
     document.getElementById('createAdBtn')?.addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('createAdScreen');
-        } else {
-            showNotification('Только работодатели могут создавать объявления');
-        }
+        showScreen('createAdScreen');
     });
     
-    // Кнопка создания первого объявления
+    // Кнопка создания первого задания
     document.getElementById('createFirstAdBtn')?.addEventListener('click', function() {
         showScreen('createAdScreen');
     });
     
-    // Кнопка назад на экране создания объявления
-    document.getElementById('backToEmployerBtn')?.addEventListener('click', function() {
-        showScreen('employerScreen');
+    // Кнопка создания из моих заданий
+    document.getElementById('createFromMyAdsBtn')?.addEventListener('click', function() {
+        showScreen('createAdScreen');
     });
     
-    // Кнопка обновления объявлений
+    // Кнопка назад на экране создания
+    document.getElementById('backToMainBtn')?.addEventListener('click', function() {
+        showScreen('mainScreen');
+    });
+    
+    // Кнопка назад из деталей
+    document.getElementById('backFromDetailBtn')?.addEventListener('click', function() {
+        showScreen('mainScreen');
+    });
+    
+    // Кнопка назад из чата
+    document.getElementById('backFromChatBtn')?.addEventListener('click', function() {
+        showScreen('mainScreen');
+    });
+    
+    // Кнопка назад из моих заданий
+    document.getElementById('backFromMyAdsBtn')?.addEventListener('click', function() {
+        showScreen('mainScreen');
+    });
+    
+    // Кнопка назад из уведомлений
+    document.getElementById('backFromNotificationsBtn')?.addEventListener('click', function() {
+        showScreen('mainScreen');
+    });
+    
+    // Кнопка закрытия профиля
+    document.getElementById('closeProfileBtn').addEventListener('click', function() {
+        showScreen('mainScreen');
+    });
+    
+    // Кнопка обновления списка
     document.getElementById('refreshAdsBtn')?.addEventListener('click', async function() {
         const icon = this.querySelector('i');
         const button = this;
@@ -1832,11 +1432,7 @@ function setupEventListeners() {
         icon.classList.add('fa-spin');
         
         try {
-            if (currentUser.role === 'worker') {
-                await loadWorkerAds();
-            } else {
-                await loadEmployerAds();
-            }
+            await loadAds();
             showNotification('Список обновлен');
         } catch (error) {
             console.error('Error refreshing ads:', error);
@@ -1861,86 +1457,28 @@ function setupEventListeners() {
         }
     });
     
-    // Кнопки подписки
-    document.getElementById('buySubscriptionBtn')?.addEventListener('click', function() {
-        showPaymentScreen('subscription', 300, 'Оформление подписки на 30 дней');
-    });
+    // Фильтры
+    document.getElementById('categoryFilter')?.addEventListener('change', loadAds);
+    document.getElementById('sortFilter')?.addEventListener('change', loadAds);
     
-    document.getElementById('buySubscriptionProfileBtn')?.addEventListener('click', function() {
-        showPaymentScreen('subscription', 300, 'Оформление подписки на 30 дней');
-    });
-    
-    document.getElementById('buySubscriptionMainBtn')?.addEventListener('click', function() {
-        showPaymentScreen('subscription', 300, 'Оформление подписки на 30 дней');
-    });
-    
-    // Кнопка пополнения баланса
-    document.getElementById('depositBtn')?.addEventListener('click', function() {
-        showPaymentScreen('deposit', 1000, 'Пополнение баланса');
-    });
-    
-    // Смена роли в профиле
-    document.getElementById('changeRoleBtn')?.addEventListener('click', function() {
-        if (!currentUser) {
-            showNotification('Пользователь не найден');
-            return;
-        }
-        
-        const currentRole = currentUser.role;
-        if (!currentRole) {
-            showNotification('Сначала выберите роль');
-            showScreen('roleScreen');
-            return;
-        }
-        
-        const newRole = currentRole === 'employer' ? 'worker' : 'employer';
-        
-        showModal(
-            'Смена роли',
-            `Вы уверены, что хотите сменить роль с "${currentRole === 'employer' ? 'работодатель' : 'работник'}" на "${newRole === 'employer' ? 'работодатель' : 'работник'}"?`,
-            async () => {
-                try {
-                    await updateUserRole(newRole);
-                } catch (error) {
-                    showNotification('Ошибка при смене роли');
-                }
-            }
-        );
-    });
-    
-    // Кнопка отмены оплаты
-    document.getElementById('cancelPaymentBtn')?.addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
-    
-    // Табы на экране работодателя
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    // Табы в моих заданиях
+    document.querySelectorAll('#myAdsScreen .tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const tabId = this.getAttribute('data-tab');
+            const tab = this.getAttribute('data-tab');
             
-            document.querySelectorAll('.tab-btn').forEach(b => {
+            document.querySelectorAll('#myAdsScreen .tab-btn').forEach(b => {
                 b.classList.remove('active');
             });
             this.classList.add('active');
             
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${tabId}Tab`)?.classList.add('active');
-            
-            if (tabId === 'myAds') {
-                displayEmployerAds();
-            }
+            loadMyAds(tab);
         });
     });
     
-    // Фильтры на экране работника
-    document.getElementById('categoryFilter')?.addEventListener('change', loadWorkerAds);
-    document.getElementById('priceFilter')?.addEventListener('change', loadWorkerAds);
+    // Кнопки в профиле
+    document.getElementById('myAdsBtn')?.addEventListener('click', function() {
+        showScreen('myAdsScreen');
+    });
     
     // Кнопка отправки сообщения в чате
     document.getElementById('sendMessageBtn')?.addEventListener('click', sendMessage);
@@ -1952,34 +1490,11 @@ function setupEventListeners() {
         }
     });
     
-    // Кнопка назад из чата
-    document.getElementById('backFromChatBtn')?.addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
-    
     // Кнопка уведомлений
     document.getElementById('notificationsBtn')?.addEventListener('click', showNotificationsScreen);
     
     // Кнопка очистки уведомлений
     document.getElementById('clearNotificationsBtn')?.addEventListener('click', clearAllNotifications);
-    
-    // Кнопка назад из рейтинга
-    document.getElementById('backFromRatingBtn')?.addEventListener('click', function() {
-        if (currentUser.role === 'employer') {
-            showScreen('employerScreen');
-        } else {
-            showScreen('workerScreen');
-        }
-    });
-    
-    // Кнопка назад из модерации
-    document.getElementById('backFromModerationBtn')?.addEventListener('click', function() {
-        showScreen('profileScreen');
-    });
 }
 
 // Глобальные функции для использования в HTML
@@ -1988,26 +1503,19 @@ window.showAuctionScreen = showAuctionScreen;
 window.updateBid = updateBid;
 
 // Инициализация при загрузке
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
-} else {
-    initApp();
-}
-
 async function initApp() {
     await initUserFromTelegram();
     setupEventListeners();
     
-    if (currentUser && currentUser.role) {
-        if (currentUser.role === 'employer') {
-            showScreen('employerScreen');
-            await loadEmployerAds();
-        } else {
-            showScreen('workerScreen');
-            await loadWorkerAds();
-        }
-        updateHeaderInfo();
-    } else {
-        showScreen('roleScreen');
+    if (currentUser) {
+        showScreen('mainScreen');
+        await loadAds();
+        updateProfileStats();
     }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
 }
