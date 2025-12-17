@@ -1962,12 +1962,7 @@ function setupEventListeners() {
     });
     
     // Кнопка уведомлений
-    const notificationsBtn = document.createElement('button');
-    notificationsBtn.id = 'notificationsBtn';
-    notificationsBtn.className = 'btn-icon';
-    notificationsBtn.innerHTML = '<i class="fas fa-bell"></i>';
-    notificationsBtn.addEventListener('click', showNotificationsScreen);
-    document.querySelector('.user-info')?.appendChild(notificationsBtn);
+    document.getElementById('notificationsBtn')?.addEventListener('click', showNotificationsScreen);
     
     // Кнопка очистки уведомлений
     document.getElementById('clearNotificationsBtn')?.addEventListener('click', clearAllNotifications);
