@@ -545,7 +545,7 @@ function createAdElement(ad) {
     };
     
     const currentBid = ad.min_bid || ad.price;
-    const auctionEnded = ad.auction && new Date(ad.auction_ends_at) < new Date();
+    const auctionEnded = ad.auction && ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date();
     const isMyAd = ad.employer_id === currentUser.id;
     
     let statusBadge = '';
@@ -571,7 +571,7 @@ function createAdElement(ad) {
                 ${!auctionEnded ? `
                     <div class="auction-bid-form">
                         <input type="number" id="bidInput_${ad.id}" placeholder="Ваша ставка" min="1" max="${ad.price}">
-                        <button class="btn-secondary btn-small" onclick="placeBid(${ad.id})">Предложить</button>
+                        <button class="btn-secondary btn-small" onclick="placeBid('${ad.id}')">Предложить</button>
                     </div>
                 ` : ''}
             </div>
@@ -603,7 +603,7 @@ function createAdElement(ad) {
                 ''
             }
             ${ad.auction && !auctionEnded && !isMyAd ? 
-                `<button class="ad-card-action-btn accept" onclick="showAuctionScreen(${ad.id})">Участвовать</button>` : 
+                `<button class="ad-card-action-btn accept" onclick="showAuctionScreen('${ad.id}')">Участвовать</button>` : 
                 ''
             }
         </div>
@@ -611,15 +611,15 @@ function createAdElement(ad) {
     
     const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
     detailsBtn.addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
+        const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
         showAdDetail(adId);
     });
     
     if (!isMyAd && ad.status === 'active' && !ad.auction) {
         const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
         acceptBtn.addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            respondToAd(adId);
+            const adId = this.getAttribute('data-ad-id');
+            respondToAd(adId); // Нужно будет также обновить эту функцию
         });
     }
     
@@ -737,13 +737,20 @@ function createMyAdElement(ad) {
 
 async function showAdDetail(adId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+        // Преобразуем ID в строку для корректной работы с UUID
+        const adIdStr = adId.toString();
+        
+        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
             }
         });
         
-        if (!response.ok) throw new Error('Failed to load ad details');
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Failed to load ad details:', errorData);
+            throw new Error(errorData.error || 'Failed to load ad details');
+        }
         
         const data = await response.json();
         const ad = data.ad;
@@ -756,7 +763,7 @@ async function showAdDetail(adId) {
         displayAdDetail(ad);
     } catch (error) {
         console.error('Error loading ad details:', error);
-        showNotification('Ошибка при загрузке задания');
+        showNotification('Ошибка при загрузке задания: ' + error.message);
     }
 }
 
@@ -1227,6 +1234,8 @@ async function placeBid(adId, amount) {
         showNotification('Ошибка при размещении ставки');
     }
 }
+
+
 
 async function loadBidsForAd(adId) {
     try {
@@ -1797,7 +1806,14 @@ function setupTelegramNotifications() {
 }
 
 // Глобальные функции для использования в HTML
-window.placeBid = placeBid;
+window.placeBid = function(adId) {
+    const input = document.getElementById(`bidInput_${adId}`);
+    const amount = parseInt(input?.value);
+    if (amount) {
+        placeBid(adId, amount);
+    }
+};
+
 window.showAuctionScreen = showAuctionScreen;
 window.updateBid = updateBid;
 
