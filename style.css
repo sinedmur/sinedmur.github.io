@@ -206,18 +206,9 @@ body {
 
 /* Основной контент */
 main {
-    flex: 1;
-    padding: 0 0 90px;
+    padding: 0;
     overflow-y: auto;
-}
-
-.screen {
-    display: none;
-    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.screen.active {
-    display: block;
+    height: calc(100vh - 140px); /* Фиксированная высота с учетом шапки и навигации */
 }
 
 @keyframes slideIn {
@@ -407,11 +398,12 @@ main {
 
 /* Заголовок экрана */
 .screen-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 28px;
-    padding: 24px 12px 0;
+    margin-bottom: 0;
+    position: sticky;
+    top: 70px; /* Под шапкой */
+    background: var(--surface-color);
+    z-index: 90;
+    padding: 15px 12px;
 }
 
 .screen-header h2 {
@@ -1168,21 +1160,15 @@ main {
 /* Нижняя навигация с современным дизайном */
 .bottom-nav {
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 95%;
-    max-width: 560px;
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-radius: var(--border-radius-xl);
-    padding: 12px 12px;
-    box-shadow: var(--box-shadow-nav);
-    border: 1px solid var(--glass-border);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: none;
+    transform: none;
+    border-radius: 0;
+    border-top-left-radius: var(--border-radius-lg);
+    border-top-right-radius: var(--border-radius-lg);
     z-index: 100;
 }
 
@@ -4317,7 +4303,7 @@ input:checked + .slider:before {
     opacity: 0;
     transform: translateY(10px);
     transition: opacity 0.3s ease, transform 0.3s ease;
-    position: absolute;
+    position: relative;
     top: 0;
     left: 0;
     right: 0;
@@ -4325,6 +4311,29 @@ input:checked + .slider:before {
     overflow-y: auto;
     overflow-x: hidden;
     display: none;
+    animation: slideIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1;
+}
+
+/* Исправление отступов для всех экранов */
+.screen:not(#loadingScreen) {
+    padding-top: 70px; /* Отступ сверху для шапки */
+    min-height: calc(100vh - 120px); /* Учитываем шапку и навигацию */
+}
+
+#createAdScreen .form-container {
+    padding: 20px 12px 90px; /* 90px снизу для навигации */
+}
+
+/* Специальные отступы для списка объявлений */
+#mainScreen .ads-list {
+    padding: 0 12px 100px; /* 100px снизу для навигации */
+}
+
+/* Специальные отступы для деталей объявления */
+#adDetailScreen .ad-detail-container {
+    padding: 20px 12px 100px;
+    margin: 0;
 }
 
 .screen.active {
