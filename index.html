@@ -29,6 +29,43 @@
 
         <!-- Основной контент -->
         <main>
+            <!-- Экран загрузки -->
+            <section id="loadingScreen" class="screen active">
+                <div class="loading-container">
+                    <div class="loading-logo">
+                        <i class="fas fa-briefcase"></i>
+                        <h1>Шабашка</h1>
+                    </div>
+                    
+                    <div class="loading-spinner2">
+                        <div class="spinner"></div>
+                    </div>
+                    
+                    <div class="loading-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <div class="loading-steps">
+                            <div class="loading-step active">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Инициализация</span>
+                            </div>
+                            <div class="loading-step">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Загрузка данных</span>
+                            </div>
+                            <div class="loading-step">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Подготовка интерфейса</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="loading-hint" id="loadingHint">
+                        Загружаем задания для вас...
+                    </div>
+                </div>
+            </section>
             <!-- Главный экран -->
             <section id="mainScreen" class="screen active">
                 <div class="screen-header">
