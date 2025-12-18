@@ -23,6 +23,7 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Простой аутентификационный middleware
+// Обновите middleware authenticate
 const authenticate = async (req, res, next) => {
   const telegramId = req.headers.authorization;
   
@@ -31,23 +32,32 @@ const authenticate = async (req, res, next) => {
   }
   
   try {
+    // Используем сервисную роль для обхода RLS
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+    
     // Ищем пользователя
-    const { data: users, error } = await supabase
+    const { data: users, error } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('telegram_id', telegramId);
     
-    let user;
-    
     if (error) {
       console.error('Auth query error:', error);
+      return res.status(500).json({ error: 'Database error' });
     }
+    
+    let user;
     
     if (users && users.length > 0) {
       // Пользователь найден
       user = users[0];
     } else {
-      // Пользователь не найден, создаем нового
+      // Создаем нового пользователя с сервисной ролью
       const newUserData = {
         telegram_id: telegramId,
         first_name: 'Пользователь',
@@ -55,24 +65,20 @@ const authenticate = async (req, res, next) => {
         created_at: new Date().toISOString()
       };
       
-      const { data: newUsers, error: createError } = await supabase
+      const { data: newUsers, error: createError } = await supabaseAdmin
         .from('users')
         .insert(newUserData)
         .select();
       
-      if (createError) {
+      if (createError || !newUsers || newUsers.length === 0) {
         console.error('Create user error:', createError);
         return res.status(500).json({ 
           error: 'Failed to create user',
-          details: createError.message 
+          details: createError?.message 
         });
       }
       
-      if (newUsers && newUsers.length > 0) {
-        user = newUsers[0];
-      } else {
-        return res.status(500).json({ error: 'Failed to create user - no data returned' });
-      }
+      user = newUsers[0];
     }
     
     if (!user) {
