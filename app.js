@@ -15,9 +15,17 @@ let currentChat = null;
 let socket = null;
 let ads = [];
 let notifications = [];
+let isLoading = false;
+let loadingProgress = 0;
+let loadingStep = 0;
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
+    // Сразу показываем экран загрузки
+    showScreen('loadingScreen');
+    
+    // Начинаем процесс загрузки
+    await startLoading();
     // Добавляем класс loaded после загрузки
     setTimeout(() => {
         document.body.classList.add('loaded');
@@ -37,6 +45,220 @@ document.addEventListener('DOMContentLoaded', async function() {
         updateProfileStats();
     }
 });
+
+// Процесс загрузки приложения
+async function startLoading() {
+    isLoading = true;
+    loadingStep = 0;
+    loadingProgress = 0;
+    
+    try {
+        // Шаг 1: Инициализация
+        updateLoadingStep(0, 'Инициализация приложения...');
+        await updateProgress(20);
+        await sleep(500); // Имитация загрузки
+        
+        // Шаг 2: Инициализация пользователя
+        updateLoadingStep(1, 'Загрузка профиля...');
+        await updateProgress(40);
+        await initUserFromTelegram();
+        
+        // Шаг 3: Загрузка основных данных
+        updateLoadingStep(2, 'Загрузка заданий...');
+        await updateProgress(60);
+        
+        if (currentUser) {
+            // Параллельная загрузка данных
+            await Promise.all([
+                loadAds(),
+                loadNotifications()
+            ]);
+            
+            await updateProgress(80);
+        }
+        
+        // Шаг 4: Подготовка интерфейса
+        updateLoadingStep(3, 'Подготовка интерфейса...');
+        await updateProgress(100);
+        await sleep(300);
+        
+        // Загрузка завершена
+        completeLoading();
+        
+    } catch (error) {
+        console.error('Error during loading:', error);
+        // Даже при ошибке показываем основной интерфейс
+        completeLoading();
+        showNotification('Ошибка загрузки, некоторые данные могут быть недоступны');
+    }
+}
+
+// Обновление шага загрузки
+function updateLoadingStep(step, hint = '') {
+    loadingStep = step;
+    
+    // Обновляем иконки шагов
+    const steps = document.querySelectorAll('.loading-step');
+    steps.forEach((stepEl, index) => {
+        if (index < step) {
+            stepEl.classList.add('completed');
+            stepEl.classList.remove('active');
+        } else if (index === step) {
+            stepEl.classList.add('active');
+            stepEl.classList.remove('completed');
+        } else {
+            stepEl.classList.remove('active', 'completed');
+        }
+    });
+    
+    // Обновляем подсказку
+    if (hint) {
+        document.getElementById('loadingHint').textContent = hint;
+    }
+}
+
+// Обновление прогресса
+async function updateProgress(percent) {
+    loadingProgress = percent;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) {
+        progressFill.style.width = `${percent}%`;
+    }
+    await sleep(100); // Плавное обновление
+}
+
+// Завершение загрузки
+function completeLoading() {
+    isLoading = false;
+    
+    // Плавный переход на главный экран
+    setTimeout(() => {
+        if (currentUser) {
+            showScreen('mainScreen');
+            updateProfileStats();
+            
+            // Добавляем анимацию появления элементов
+            document.body.classList.add('loaded');
+        } else {
+            // Если пользователь не загрузился, остаемся на экране загрузки
+            document.getElementById('loadingHint').textContent = 'Ошибка загрузки. Обновите страницу.';
+        }
+    }, 500);
+}
+
+// Восстановление после спячки
+async function restoreAfterSleep() {
+    if (isLoading) return;
+    
+    // Показываем экран загрузки
+    showScreen('loadingScreen');
+    isLoading = true;
+    
+    try {
+        updateLoadingStep(0, 'Восстановление сессии...');
+        await updateProgress(20);
+        
+        // Восстанавливаем данные
+        if (currentUser) {
+            await initUserFromTelegram();
+        }
+        
+        await updateProgress(50);
+        updateLoadingStep(1, 'Обновление данных...');
+        
+        // Обновляем текущий экран
+        if (currentScreen === 'mainScreen') {
+            await loadAds();
+        } else if (currentScreen === 'myAdsScreen') {
+            await loadMyAds('active');
+        }
+        
+        await updateProgress(80);
+        updateLoadingStep(2, 'Завершение...');
+        
+        await updateProgress(100);
+        await sleep(300);
+        
+    } catch (error) {
+        console.error('Error during restoration:', error);
+    } finally {
+        completeLoading();
+    }
+}
+
+// Утилита для задержки
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Отслеживаем видимость страницы
+let visibilityChange, hidden;
+if (typeof document.hidden !== "undefined") {
+    hidden = "hidden";
+    visibilityChange = "visibilitychange";
+} else if (typeof document.msHidden !== "undefined") {
+    hidden = "msHidden";
+    visibilityChange = "msvisibilitychange";
+} else if (typeof document.webkitHidden !== "undefined") {
+    hidden = "webkitHidden";
+    visibilityChange = "webkitvisibilitychange";
+}
+
+// Обработчик изменения видимости
+let lastVisibleTime = Date.now();
+const SLEEP_THRESHOLD = 10000; // 10 секунд
+
+document.addEventListener(visibilityChange, handleVisibilityChange, false);
+
+function handleVisibilityChange() {
+    if (document[hidden]) {
+        // Страница скрыта - запоминаем время
+        lastVisibleTime = Date.now();
+    } else {
+        // Страница снова видна
+        const timeHidden = Date.now() - lastVisibleTime;
+        
+        // Если приложение было скрыто более порогового времени, восстанавливаем
+        if (timeHidden > SLEEP_THRESHOLD && !isLoading) {
+            restoreAfterSleep();
+        }
+    }
+}
+
+// Обновляем функцию showScreen для отслеживания текущего экрана
+let currentScreen = 'loadingScreen';
+
+function showScreen(screenId) {
+    currentScreen = screenId;
+    
+    document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+    });
+    
+    const screen = document.getElementById(screenId);
+    if (screen) {
+        screen.classList.add('active');
+    }
+    
+    // Обновляем активную кнопку в навигации
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.getAttribute('data-screen') === screenId) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Скрываем навигацию на некоторых экранах
+    const bottomNav = document.getElementById('bottomNav');
+    if (screenId === 'loadingScreen' || screenId === 'createAdScreen' || 
+        screenId === 'adDetailScreen' || screenId === 'chatScreen' || 
+        screenId === 'profileScreen' || screenId === 'notificationsScreen' || 
+        screenId === 'myAdsScreen') {
+        bottomNav.style.display = 'none';
+    } else {
+        bottomNav.style.display = 'flex';
+    }
+}
 
 // ============ ФУНКЦИИ АУТЕНТИФИКАЦИИ ============
 
@@ -195,6 +417,7 @@ function showNotification(message, duration = 3000) {
 
 // ============ РАБОТА С ОБЪЯВЛЕНИЯМИ ============
 
+// Добавляем небольшие анимации при загрузке данных
 async function loadAds() {
     try {
         const categoryFilter = document.getElementById('categoryFilter').value;
@@ -233,6 +456,7 @@ async function loadAds() {
     }
 }
 
+// Обновляем displayAds для анимации появления
 function displayAds() {
     const container = document.getElementById('adsList');
     
@@ -253,11 +477,22 @@ function displayAds() {
     }
     
     container.innerHTML = '';
-    ads.forEach(ad => {
+    ads.forEach((ad, index) => {
         const adElement = createAdElement(ad);
+        
+        // Добавляем задержку для анимации появления
+        adElement.style.opacity = '0';
+        adElement.style.transform = 'translateY(10px)';
         container.appendChild(adElement);
+        
+        setTimeout(() => {
+            adElement.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+            adElement.style.opacity = '1';
+            adElement.style.transform = 'translateY(0)';
+        }, index * 50); // Постепенное появление
     });
 }
+
 
 function createAdElement(ad) {
     const adElement = document.createElement('div');
@@ -1495,6 +1730,30 @@ function setupEventListeners() {
     
     // Кнопка очистки уведомлений
     document.getElementById('clearNotificationsBtn')?.addEventListener('click', clearAllNotifications);
+
+        // Кнопка принудительного обновления
+    document.getElementById('refreshAdsBtn')?.addEventListener('click', async function() {
+        const icon = this.querySelector('i');
+        const button = this;
+        
+        if (button.classList.contains('loading')) return;
+        
+        button.classList.add('loading');
+        button.disabled = true;
+        icon.classList.add('fa-spin');
+        
+        try {
+            await loadAds();
+            showNotification('Список обновлен');
+        } catch (error) {
+            console.error('Error refreshing ads:', error);
+            showNotification('Ошибка при обновлении');
+        } finally {
+            button.classList.remove('loading');
+            button.disabled = false;
+            icon.classList.remove('fa-spin');
+        }
+    });
 }
 
 // Глобальные функции для использования в HTML
@@ -1515,7 +1774,10 @@ async function initApp() {
 }
 
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initApp);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Экран загрузки уже показан в основном обработчике
+    });
 } else {
-    initApp();
+    // Если DOM уже загружен, запускаем загрузку
+    startLoading();
 }
