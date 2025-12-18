@@ -21,6 +21,7 @@ let loadingStep = 0;
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
+    setupTelegramBackButton();
     // Сразу показываем экран загрузки
     showScreen('loadingScreen');
     
@@ -228,48 +229,20 @@ function handleVisibilityChange() {
 // Обновляем функцию showScreen для отслеживания текущего экрана
 let currentScreen = 'loadingScreen';
 
-function showScreen(screenId) {
-    currentScreen = screenId;
-    
-    document.querySelectorAll('.screen').forEach(screen => {
-        screen.classList.remove('active');
-    });
-    
-    const screen = document.getElementById(screenId);
-    if (screen) {
-        screen.classList.add('active');
-    }
-    
-    // Обновляем активную кнопку в навигации
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.getAttribute('data-screen') === screenId) {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Скрываем навигацию на некоторых экранах
-    const bottomNav = document.getElementById('bottomNav');
-    if (screenId === 'loadingScreen' || screenId === 'createAdScreen' || 
-        screenId === 'adDetailScreen' || screenId === 'chatScreen' || 
-        screenId === 'profileScreen' || screenId === 'notificationsScreen' || 
-        screenId === 'myAdsScreen') {
-        bottomNav.style.display = 'none';
-    } else {
-        bottomNav.style.display = 'flex';
-    }
-}
-
 // ============ ФУНКЦИИ АУТЕНТИФИКАЦИИ ============
 
 async function initUserFromTelegram() {
     try {
-        const telegramId = tg.initDataUnsafe.user?.id;
-        if (!telegramId) {
-            throw new Error('Telegram user ID not found');
+        // Используем данные из Telegram Web App
+        const userData = tg.initDataUnsafe.user;
+        
+        if (!userData) {
+            throw new Error('Telegram user data not found');
         }
         
-        console.log('Initializing user with telegramId:', telegramId);
+        console.log('Initializing user with Telegram data:', userData);
+        
+        const telegramId = userData.id;
         
         // Пытаемся получить пользователя с сервера
         try {
@@ -285,19 +258,17 @@ async function initUserFromTelegram() {
                 console.log('User loaded from server:', currentUser);
             } else {
                 // Пользователь не найден, создаем через init endpoint
-                const userData = {
-                    username: tg.initDataUnsafe.user?.username,
-                    first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-                    last_name: tg.initDataUnsafe.user?.last_name || ''
-                };
-                
                 const initResponse = await fetch(`${API_BASE_URL}/user/init`, {
                     method: 'POST',
                     headers: {
                         'Authorization': telegramId.toString(),
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify(userData)
+                    body: JSON.stringify({
+                        username: userData.username,
+                        first_name: userData.first_name || 'Пользователь',
+                        last_name: userData.last_name || ''
+                    })
                 });
                 
                 if (initResponse.ok) {
@@ -310,14 +281,15 @@ async function initUserFromTelegram() {
             }
         } catch (fetchError) {
             console.error('Error in user initialization:', fetchError);
-            // Создаем временного пользователя для работы offline
+            // Создаем временного пользователя
             currentUser = {
                 telegram_id: telegramId,
-                username: tg.initDataUnsafe.user?.username,
-                first_name: tg.initDataUnsafe.user?.first_name || 'Пользователь',
-                last_name: tg.initDataUnsafe.user?.last_name || ''
+                username: userData.username,
+                first_name: userData.first_name || 'Пользователь',
+                last_name: userData.last_name || '',
+                photo_url: userData.photo_url // Добавляем фото из Telegram
             };
-            showNotification('Используется локальный режим. Некоторые функции могут быть недоступны.');
+            showNotification('Используется локальный режим');
         }
         
         // Инициализируем WebSocket если пользователь есть
@@ -375,6 +347,8 @@ function initWebSocket() {
 // ============ ОСНОВНЫЕ ФУНКЦИИ ============
 
 function showScreen(screenId) {
+    currentScreen = screenId;
+    
     document.querySelectorAll('.screen').forEach(screen => {
         screen.classList.remove('active');
     });
@@ -392,17 +366,22 @@ function showScreen(screenId) {
         }
     });
     
+    // Обновляем кнопку назад в Telegram
+    updateBackButtonForScreen(screenId);
+    
     // Скрываем навигацию на некоторых экранах
     const bottomNav = document.getElementById('bottomNav');
-    if (screenId === 'createAdScreen' || screenId === 'adDetailScreen' || 
-        screenId === 'chatScreen' || screenId === 'profileScreen' || 
-        screenId === 'notificationsScreen' || screenId === 'myAdsScreen') {
+    if (screenId === 'loadingScreen' || screenId === 'createAdScreen' || 
+        screenId === 'adDetailScreen' || screenId === 'chatScreen' || 
+        screenId === 'profileScreen' || screenId === 'notificationsScreen' || 
+        screenId === 'myAdsScreen') {
         bottomNav.style.display = 'none';
     } else {
         bottomNav.style.display = 'flex';
     }
 }
 
+// Обновляем функцию showNotification для использования виброотклика
 function showNotification(message, duration = 3000) {
     const notification = document.getElementById('notification');
     const notificationText = document.getElementById('notificationText');
@@ -410,9 +389,32 @@ function showNotification(message, duration = 3000) {
     notificationText.textContent = message;
     notification.classList.add('show');
     
+    // Виброотклик для уведомлений
+    if (window.vibrate) {
+        window.vibrate('light');
+    }
+    
     setTimeout(() => {
         notification.classList.remove('show');
     }, duration);
+}
+
+// Функция для закрытия приложения
+function closeApp() {
+    if (tg && tg.close) {
+        tg.close();
+    }
+}
+
+// Инициализация цвета темы Telegram
+function setupTelegramTheme() {
+    if (tg && tg.colorScheme) {
+        // Используем тему Telegram
+        document.documentElement.style.setProperty('--primary-color', tg.themeParams.bg_color || '#007bff');
+        document.documentElement.style.setProperty('--text-color', tg.themeParams.text_color || '#333333');
+        document.documentElement.style.setProperty('--bg-color', tg.themeParams.bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--secondary-bg-color', tg.themeParams.secondary_bg_color || '#f8f9fa');
+    }
 }
 
 // ============ РАБОТА С ОБЪЯВЛЕНИЯМИ ============
@@ -1625,31 +1627,6 @@ function setupEventListeners() {
         showScreen('createAdScreen');
     });
     
-    // Кнопка назад на экране создания
-    document.getElementById('backToMainBtn')?.addEventListener('click', function() {
-        showScreen('mainScreen');
-    });
-    
-    // Кнопка назад из деталей
-    document.getElementById('backFromDetailBtn')?.addEventListener('click', function() {
-        showScreen('mainScreen');
-    });
-    
-    // Кнопка назад из чата
-    document.getElementById('backFromChatBtn')?.addEventListener('click', function() {
-        showScreen('mainScreen');
-    });
-    
-    // Кнопка назад из моих заданий
-    document.getElementById('backFromMyAdsBtn')?.addEventListener('click', function() {
-        showScreen('mainScreen');
-    });
-    
-    // Кнопка назад из уведомлений
-    document.getElementById('backFromNotificationsBtn')?.addEventListener('click', function() {
-        showScreen('mainScreen');
-    });
-    
     // Кнопка закрытия профиля
     document.getElementById('closeProfileBtn').addEventListener('click', function() {
         showScreen('mainScreen');
@@ -1754,12 +1731,124 @@ function setupEventListeners() {
             icon.classList.remove('fa-spin');
         }
     });
+    // Уведомления в Telegram
+    setupTelegramNotifications();
+}
+
+// Настройка уведомлений в Telegram
+function setupTelegramNotifications() {
+    if (tg && tg.showAlert) {
+        // Пример использования алерта Telegram
+        window.showTelegramAlert = function(message) {
+            tg.showAlert(message);
+        };
+    }
+    
+    if (tg && tg.HapticFeedback) {
+        // Виброотклик для важных действий
+        window.vibrate = function(type = 'light') {
+            switch(type) {
+                case 'light':
+                    tg.HapticFeedback.impactOccurred('light');
+                    break;
+                case 'medium':
+                    tg.HapticFeedback.impactOccurred('medium');
+                    break;
+                case 'heavy':
+                    tg.HapticFeedback.impactOccurred('heavy');
+                    break;
+                case 'success':
+                    tg.HapticFeedback.notificationOccurred('success');
+                    break;
+                case 'error':
+                    tg.HapticFeedback.notificationOccurred('error');
+                    break;
+            }
+        };
+    }
 }
 
 // Глобальные функции для использования в HTML
 window.placeBid = placeBid;
 window.showAuctionScreen = showAuctionScreen;
 window.updateBid = updateBid;
+
+// ============ ТЕЛЕГРАМ КНОПКА НАЗАД ============
+
+let isTelegramBackButtonVisible = false;
+
+// Показываем кнопку назад в Telegram
+function showTelegramBackButton() {
+    if (tg && tg.BackButton && !isTelegramBackButtonVisible) {
+        tg.BackButton.show();
+        isTelegramBackButtonVisible = true;
+    }
+}
+
+// Скрываем кнопку назад в Telegram
+function hideTelegramBackButton() {
+    if (tg && tg.BackButton && isTelegramBackButtonVisible) {
+        tg.BackButton.hide();
+        isTelegramBackButtonVisible = false;
+    }
+}
+
+// Обновляем кнопку назад в зависимости от экрана
+function updateBackButtonForScreen(screenId) {
+    // Скрываем кнопку на главном экране и экране загрузки
+    if (screenId === 'mainScreen' || screenId === 'loadingScreen') {
+        hideTelegramBackButton();
+    } else {
+        showTelegramBackButton();
+    }
+}
+
+// Настройка обработчика кнопки назад
+function setupTelegramBackButton() {
+    if (tg && tg.BackButton) {
+        tg.BackButton.onClick(() => {
+            handleTelegramBackButton();
+        });
+    }
+}
+
+// Обработчик нажатия кнопки назад
+function handleTelegramBackButton() {
+    switch (currentScreen) {
+        case 'createAdScreen':
+            showScreen('mainScreen');
+            break;
+            
+        case 'adDetailScreen':
+            showScreen('mainScreen');
+            break;
+            
+        case 'chatScreen':
+            showScreen('mainScreen');
+            break;
+            
+        case 'profileScreen':
+            showScreen('mainScreen');
+            break;
+            
+        case 'notificationsScreen':
+            showScreen('mainScreen');
+            break;
+            
+        case 'myAdsScreen':
+            showScreen('mainScreen');
+            break;
+            
+        default:
+            // Если это вложенный экран, возвращаемся на предыдущий
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                showScreen('mainScreen');
+            }
+    }
+}
+
 
 // Инициализация при загрузке
 async function initApp() {
