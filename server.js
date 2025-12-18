@@ -152,7 +152,7 @@ app.get('/api/user', authenticate, async (req, res) => {
   }
 });
 
-// Получить объявления
+// Получить объявления - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.get('/api/ads', async (req, res) => {
   try {
     const { category, status, type, user_id } = req.query;
@@ -161,7 +161,7 @@ app.get('/api/ads', async (req, res) => {
       .from('ads')
       .select(`
         *,
-        employer:users!ads_employer_id_fkey(first_name, last_name)
+        employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
       `)
     
     if (status) {
@@ -182,8 +182,21 @@ app.get('/api/ads', async (req, res) => {
     
     if (error) throw error;
     
-    // Получаем минимальные ставки для аукционов
-    const adsWithBids = await Promise.all(ads.map(async (ad) => {
+    // Если в объявлениях есть taken_by, получаем данные исполнителей
+    const adsWithDetails = await Promise.all(ads.map(async (ad) => {
+      const adData = { ...ad };
+      
+      if (ad.taken_by) {
+        const { data: executor } = await supabase
+          .from('users')
+          .select('first_name, last_name, telegram_id')
+          .eq('id', ad.taken_by)
+          .single();
+        
+        adData.executor = executor;
+      }
+      
+      // Получаем минимальные ставки для аукционов
       if (ad.auction) {
         const { data: minBid } = await supabase
           .from('bids')
@@ -193,45 +206,55 @@ app.get('/api/ads', async (req, res) => {
           .limit(1)
           .single();
         
-        return {
-          ...ad,
-          min_bid: minBid?.amount || ad.price
-        };
+        adData.min_bid = minBid?.amount || ad.price;
       }
-      return ad;
+      
+      return adData;
     }));
     
-    res.json({ ads: adsWithBids });
+    res.json({ ads: adsWithDetails });
   } catch (error) {
     console.error('Get ads error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Получить конкретное объявление
+// Получить конкретное объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.get('/api/ads/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const { data: ads, error } = await supabase
+    // Используем явное указание связи
+    const { data: ad, error } = await supabase
       .from('ads')
       .select(`
         *,
-        employer:users(first_name, last_name)
+        employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
       `)
       .eq('id', id)
       .single();
     
     if (error) throw error;
     
-    res.json({ ad: ads });
+    // Если есть исполнитель, получаем и его данные
+    if (ad && ad.taken_by) {
+      const { data: executor } = await supabase
+        .from('users')
+        .select('first_name, last_name, telegram_id')
+        .eq('id', ad.taken_by)
+        .single();
+      
+      ad.executor = executor;
+    }
+    
+    res.json({ ad });
   } catch (error) {
     console.error('Get ad error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Создать объявление
+// Создать объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.post('/api/ads', authenticate, async (req, res) => {
   try {
     const { title, description, category, price, location, contacts, auction, auction_hours } = req.body;
@@ -258,7 +281,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
       })
       .select(`
         *,
-        employer:users!ads_employer_id_fkey(first_name, last_name)
+        employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
       `)
     
     if (error) {
@@ -278,6 +301,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // Сделать ставку
 app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
