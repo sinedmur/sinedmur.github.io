@@ -231,6 +231,7 @@ let currentScreen = 'loadingScreen';
 
 // ============ ФУНКЦИИ АУТЕНТИФИКАЦИИ ============
 
+// Функция initUserFromTelegram - упрощаем
 async function initUserFromTelegram() {
     try {
         // Используем данные из Telegram Web App
@@ -242,53 +243,30 @@ async function initUserFromTelegram() {
         
         console.log('Initializing user with Telegram data:', userData);
         
-        const telegramId = userData.id;
+        const telegramId = userData.id.toString();
         
         // Пытаемся получить пользователя с сервера
-        try {
-            const response = await fetch(`${API_BASE_URL}/user`, {
-                headers: {
-                    'Authorization': telegramId.toString()
-                }
-            });
-            
-            if (response.ok) {
-                const data = await response.json();
-                currentUser = data.user;
-                console.log('User loaded from server:', currentUser);
-            } else {
-                // Пользователь не найден, создаем через init endpoint
-                const initResponse = await fetch(`${API_BASE_URL}/user/init`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': telegramId.toString(),
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: userData.username,
-                        first_name: userData.first_name || 'Пользователь',
-                        last_name: userData.last_name || ''
-                    })
-                });
-                
-                if (initResponse.ok) {
-                    const initData = await initResponse.json();
-                    currentUser = initData.user;
-                    console.log('User created via init:', currentUser);
-                } else {
-                    throw new Error('Failed to create user');
-                }
+        const response = await fetch(`${API_BASE_URL}/user`, {
+            headers: {
+                'Authorization': telegramId
             }
-        } catch (fetchError) {
-            console.error('Error in user initialization:', fetchError);
-            // Создаем временного пользователя
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = data.user;
+            console.log('User loaded from server:', currentUser);
+        } else {
+            // Если сервер вернул ошибку, создаем временного пользователя
             currentUser = {
+                id: Date.now(), // временный ID
                 telegram_id: telegramId,
                 username: userData.username,
                 first_name: userData.first_name || 'Пользователь',
                 last_name: userData.last_name || '',
-                photo_url: userData.photo_url // Добавляем фото из Telegram
+                photo_url: userData.photo_url
             };
+            console.log('Using temporary user:', currentUser);
             showNotification('Используется локальный режим');
         }
         
@@ -300,6 +278,19 @@ async function initUserFromTelegram() {
         
     } catch (error) {
         console.error('Error initializing user:', error);
+        // Создаем временного пользователя при ошибке
+        const userData = tg.initDataUnsafe.user;
+        if (userData) {
+            currentUser = {
+                id: Date.now(),
+                telegram_id: userData.id.toString(),
+                username: userData.username,
+                first_name: userData.first_name || 'Пользователь',
+                last_name: userData.last_name || '',
+                photo_url: userData.photo_url
+            };
+            console.log('Created temporary user due to error:', currentUser);
+        }
         showNotification(`Ошибка инициализации: ${error.message}`);
     }
 }
@@ -1628,8 +1619,8 @@ function setupEventListeners() {
     });
     
     // Кнопка закрытия профиля
-    document.getElementById('closeProfileBtn').addEventListener('click', function() {
-        showScreen('mainScreen');
+    document.getElementById('profileBtn').addEventListener('click', function() {
+        showScreen('profileScreen');
     });
     
     // Кнопка обновления списка
