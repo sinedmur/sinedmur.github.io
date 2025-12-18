@@ -18,6 +18,8 @@ let notifications = [];
 let isLoading = false;
 let loadingProgress = 0;
 let loadingStep = 0;
+let isUserInitializing = false;
+let isUserInitialized = false;
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
@@ -62,8 +64,9 @@ async function startLoading() {
         // Шаг 2: Инициализация пользователя
         updateLoadingStep(1, 'Загрузка профиля...');
         await updateProgress(40);
-        await initUserFromTelegram();
-        
+        if (!isUserInitialized && !isUserInitializing) {
+            await initUserFromTelegram();
+        }
         // Шаг 3: Загрузка основных данных
         updateLoadingStep(2, 'Загрузка заданий...');
         await updateProgress(60);
@@ -233,6 +236,14 @@ let currentScreen = 'loadingScreen';
 
 // Функция initUserFromTelegram - упрощаем
 async function initUserFromTelegram() {
+    // Если уже инициализируемся или инициализированы - выходим
+    if (isUserInitializing || isUserInitialized) {
+        console.log('User initialization already in progress or completed');
+        return;
+    }
+    
+    isUserInitializing = true;
+    
     try {
         // Используем данные из Telegram Web App
         const userData = tg.initDataUnsafe.user;
@@ -245,6 +256,13 @@ async function initUserFromTelegram() {
         
         const telegramId = userData.id.toString();
         
+        // Проверяем, есть ли уже currentUser с таким telegram_id
+        if (currentUser && currentUser.telegram_id === telegramId) {
+            console.log('User already initialized:', currentUser);
+            isUserInitialized = true;
+            return;
+        }
+        
         // Пытаемся получить пользователя с сервера
         const response = await fetch(`${API_BASE_URL}/user`, {
             headers: {
@@ -256,6 +274,7 @@ async function initUserFromTelegram() {
             const data = await response.json();
             currentUser = data.user;
             console.log('User loaded from server:', currentUser);
+            isUserInitialized = true;
         } else {
             // Если сервер вернул ошибку, создаем временного пользователя
             currentUser = {
@@ -267,12 +286,13 @@ async function initUserFromTelegram() {
                 photo_url: userData.photo_url
             };
             console.log('Using temporary user:', currentUser);
+            isUserInitialized = true;
             showNotification('Используется локальный режим');
         }
         
-        // Инициализируем WebSocket если пользователь есть
-        if (currentUser) {
-            console.log('User initialized, ID:', currentUser.id);
+        // Инициализируем WebSocket только если он еще не инициализирован
+        if (currentUser && !socket) {
+            console.log('Initializing WebSocket for user ID:', currentUser.id);
             initWebSocket();
         }
         
@@ -290,24 +310,41 @@ async function initUserFromTelegram() {
                 photo_url: userData.photo_url
             };
             console.log('Created temporary user due to error:', currentUser);
+            isUserInitialized = true;
         }
         showNotification(`Ошибка инициализации: ${error.message}`);
+    } finally {
+        isUserInitializing = false;
     }
 }
 
 // ============ WEBSOCKET ============
 
 function initWebSocket() {
-    if (!currentUser) return;
+    if (!currentUser || socket) {
+        console.log('WebSocket already initialized or no user');
+        return;
+    }
+    
+    console.log('Initializing WebSocket connection for user:', currentUser.id);
     
     socket = io(SOCKET_URL, {
         query: {
-            userId: currentUser.id
-        }
+            userId: currentUser.id,
+            telegramId: currentUser.telegram_id
+        },
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000
     });
     
     socket.on('connect', () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected, ID:', socket.id);
+    });
+    
+    socket.on('connect_error', (error) => {
+        console.error('WebSocket connection error:', error);
     });
     
     socket.on('new-message', (data) => {
@@ -1853,11 +1890,11 @@ async function initApp() {
     }
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        // Экран загрузки уже показан в основном обработчике
-    });
-} else {
-    // Если DOM уже загружен, запускаем загрузку
-    startLoading();
-}
+// if (document.readyState === 'loading') {
+//     document.addEventListener('DOMContentLoaded', function() {
+//         // Экран загрузки уже показан в основном обработчике
+//     });
+// } else {
+//     // Если DOM уже загружен, запускаем загрузку
+//     startLoading();
+// }
