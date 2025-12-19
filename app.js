@@ -755,11 +755,6 @@ function createMyAdElement(ad) {
             const adId = parseInt(this.getAttribute('data-ad-id'));
             editAd(adId);
         });
-        
-        adElement.querySelector('.delete')?.addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            deleteAd(adId);
-        });
     }
     
     return adElement;
@@ -883,10 +878,7 @@ function displayAdDetail(ad) {
                 <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
                     <i class="fas fa-edit"></i> Редактировать
                 </button>
-                <button id="closeAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
-                    <i class="fas fa-times"></i> Закрыть
-                </button>
-                <button id="deleteAdBtn" class="btn-danger" data-ad-id="${ad.id}">
+                <button id="closeAdBtn" class="btn-danger" data-ad-id="${ad.id}">
                     <i class="fas fa-trash"></i> Удалить
                 </button>
             ` : ''}
@@ -925,11 +917,6 @@ function displayAdDetail(ad) {
         document.getElementById('closeAdBtn').addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
             closeAd(adId);
-        });
-
-        document.getElementById('deleteAdBtn').addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
-        deleteAd(adId);
         });
     }
     
@@ -1046,61 +1033,42 @@ async function editAd(adId) {
 }
 
 async function closeAd(adId) {
-    try {
-        showModal(
-            'Закрытие задания',
-            'Вы уверены, что хотите закрыть это задание? После закрытия новые отклики не будут приниматься.',
-            async () => {
-                // Здесь должен быть API для закрытия задания
-                showNotification('Задание закрыто');
-                await loadAds();
-                showScreen('mainScreen');
-            }
-        );
-    } catch (error) {
-        console.error('Error closing ad:', error);
-        showNotification('Ошибка при закрытии задания');
-    }
-}
-
-// Удалить объявление
-async function deleteAd(adId) {
   try {
     showModal(
       'Удаление задания',
-      'Вы уверены, что хотите удалить это задание? Это действие невозможно отменить. Все связанные ставки и сообщения также будут удалены.',
+      'Вы уверены, что хотите удалить это задание? Это действие нельзя отменить.',
       async () => {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': currentUser.telegram_id.toString()
+        try {
+          const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': currentUser.telegram_id.toString()
+            }
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Ошибка при удалении');
           }
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          showNotification(error.error || 'Ошибка при удалении задания');
-          return;
-        }
-        
-        const data = await response.json();
-        showNotification(data.message || 'Задание успешно удалено');
-        
-        // Обновляем данные
-        if (currentScreen === 'mainScreen') {
+          
+          const data = await response.json();
+          showNotification(data.message || 'Задание успешно удалено');
+          
+          // Обновляем данные
           await loadAds();
+          if (currentScreen === 'myAdsScreen') {
+            await loadMyAds('active');
+          }
           showScreen('mainScreen');
-        } else if (currentScreen === 'myAdsScreen') {
-          await loadMyAds('active');
-          showScreen('myAdsScreen');
-        } else {
-          showScreen('mainScreen');
-          await loadAds();
+          
+        } catch (error) {
+          console.error('Error deleting ad:', error);
+          showNotification(`Ошибка: ${error.message}`);
         }
       }
     );
   } catch (error) {
-    console.error('Error deleting ad:', error);
+    console.error('Error in closeAd:', error);
     showNotification('Ошибка при удалении задания');
   }
 }
