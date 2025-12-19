@@ -628,19 +628,20 @@ function createAdElement(ad) {
         </div>
     `;
     
-    const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
+        const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
         detailsBtn.addEventListener('click', function() {
-        const adId = ad.id; // Используем реальный ID из объекта ad
-        showAdDetail(adId);
+            const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
+            showAdDetail(adId);
         });
     
-    if (!isMyAd && ad.status === 'active' && !ad.auction) {
-        const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
-        acceptBtn.addEventListener('click', function() {
-            const adId = this.getAttribute('data-ad-id');
-            respondToAd(adId); // Нужно будет также обновить эту функцию
-        });
-    }
+        // Для кнопки отклика:
+        if (!isMyAd && ad.status === 'active' && !ad.auction) {
+            const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+            acceptBtn.addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
+                respondToAd(adId);
+            });
+        }
     
     return adElement;
 }
@@ -745,76 +746,52 @@ function createMyAdElement(ad) {
         </div>
     `;
     
-        // В createMyAdElement:
+        // В функции createMyAdElement измените обработчики:
         adElement.querySelector('.details').addEventListener('click', function() {
-        const adId = ad.id; // Используем реальный ID
-        showAdDetail(adId);
+            const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+            showAdDetail(adId);
         });
-    
-    if (ad.status === 'active') {
-        adElement.querySelector('.edit')?.addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            editAd(adId);
-        });
-    }
+
+        if (ad.status === 'active') {
+            adElement.querySelector('.edit')?.addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+                editAd(adId);
+            });
+        }
     
     return adElement;
 }
 
 async function showAdDetail(adId) {
-  try {
-    // Преобразуем ID в строку для корректной работы
-    const adIdStr = adId.toString();
-    
-    console.log('Loading ad details for ID:', adIdStr);
-    
-    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-      headers: {
-        'Authorization': currentUser.telegram_id.toString()
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('Failed to load ad details:', errorData);
-      
-      // Пробуем найти объявление в локальном кэше
-      const localAd = ads.find(a => a.id === adId || a.id.toString() === adIdStr);
-      if (localAd) {
-        console.log('Found ad in local cache:', localAd);
-        displayAdDetail(localAd);
-        return;
-      }
-      
-      throw new Error(errorData.error || 'Failed to load ad details');
+    try {
+        // Преобразуем ID в строку (не преобразуем в число!)
+        const adIdStr = adId.toString();
+        
+        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Failed to load ad details:', errorData);
+            throw new Error(errorData.error || 'Failed to load ad details');
+        }
+        
+        const data = await response.json();
+        const ad = data.ad;
+        
+        if (!ad) {
+            showNotification('Задание не найдено');
+            return;
+        }
+        
+        displayAdDetail(ad);
+    } catch (error) {
+        console.error('Error loading ad details:', error);
+        showNotification('Ошибка при загрузке задания: ' + error.message);
     }
-    
-    const data = await response.json();
-    const ad = data.ad;
-    
-    if (!ad) {
-      showNotification('Задание не найдено');
-      return;
-    }
-    
-    displayAdDetail(ad);
-  } catch (error) {
-    console.error('Error loading ad details:', error);
-    showNotification(`Ошибка при загрузке задания: ${error.message}`);
-    
-    // Показываем экран ошибки
-    document.getElementById('adDetailContainer').innerHTML = `
-      <div class="error-state">
-        <i class="fas fa-exclamation-triangle"></i>
-        <h3>Ошибка загрузки</h3>
-        <p>${error.message}</p>
-        <button onclick="showScreen('mainScreen')" class="btn-primary">
-          Вернуться к списку
-        </button>
-      </div>
-    `;
-    showScreen('adDetailScreen');
-  }
 }
 
 function displayAdDetail(ad) {
@@ -920,30 +897,30 @@ function displayAdDetail(ad) {
         showScreen('mainScreen');
     });
     
-    if (!isMyAd && ad.status === 'active' && !ad.auction) {
-        document.getElementById('respondAdBtn').addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            respondToAd(adId);
-        });
-        
-        document.getElementById('openChatBtn').addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            const userId = parseInt(this.getAttribute('data-user-id'));
-            openChat(adId, userId);
-        });
-    }
-    
-    if (isMyAd && ad.status === 'active') {
-        document.getElementById('editAdBtn').addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            editAd(adId);
-        });
-        
-        document.getElementById('closeAdBtn').addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            closeAd(adId);
-        });
-    }
+        if (!isMyAd && ad.status === 'active' && !ad.auction) {
+            document.getElementById('respondAdBtn').addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+                respondToAd(adId);
+            });
+            
+            document.getElementById('openChatBtn').addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+                const userId = this.getAttribute('data-user-id');
+                openChat(adId, userId);
+            });
+        }
+
+        if (isMyAd && ad.status === 'active') {
+            document.getElementById('editAdBtn').addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+                editAd(adId);
+            });
+            
+            document.getElementById('closeAdBtn').addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+                closeAd(adId);
+            });
+        }
     
     showScreen('adDetailScreen');
 }
@@ -954,8 +931,10 @@ async function respondToAd(adId) {
             'Отклик на задание',
             'Вы уверены, что хотите откликнуться на это задание? После отклика вы сможете обсудить детали с автором.',
             async () => {
-                // Загружаем детали задания чтобы получить контакты автора
-                const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+                // Используем строковый ID
+                const adIdStr = adId.toString();
+                
+                const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
                     headers: {
                         'Authorization': currentUser.telegram_id.toString()
                     }
@@ -968,7 +947,7 @@ async function respondToAd(adId) {
                     showNotification(`Отклик отправлен! Контакты автора: ${ad.contacts || 'не указаны'}`);
                     
                     // Открываем чат с автором
-                    openChat(adId, ad.employer_id);
+                    openChat(adIdStr, ad.employer_id); // employer_id тоже может быть UUID
                 } else {
                     showNotification('Задание отправлено автору на рассмотрение');
                 }
@@ -1150,7 +1129,9 @@ async function closeAd(adId) {
 
 async function showAuctionScreen(adId) {
     try {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+        const adIdStr = adId.toString(); // Преобразуем в строку
+        
+        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
             }
@@ -1259,7 +1240,7 @@ function displayAuctionScreen(ad) {
         
         document.getElementById('submitBidBtn').addEventListener('click', function() {
             const amount = parseInt(bidInput.value);
-            const adId = parseInt(this.getAttribute('data-ad-id'));
+            const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
             placeBid(adId, amount);
         });
     }
@@ -1397,7 +1378,7 @@ function displayBidsHistory(bids) {
 // ============ ЧАТ ============
 
 async function openChat(adId, otherUserId) {
-    const ad = ads.find(a => a.id === adId);
+    const ad = ads.find(a => a.id === adId); // UUID сравнение работает и со строками
     if (!ad) {
         showNotification('Задание не найдено');
         return;
