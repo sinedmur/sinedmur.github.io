@@ -107,38 +107,6 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Инициализация пользователя
-app.post('/api/user/init', authenticate, async (req, res) => {
-  try {
-    const { username, first_name, last_name } = req.body;
-    
-    // Обновляем данные пользователя
-    const { data: updatedUsers, error } = await supabase
-      .from('users')
-      .update({
-        username,
-        first_name: first_name || req.user.first_name,
-        last_name: last_name || req.user.last_name
-      })
-      .eq('id', req.user.id)
-      .select();
-    
-    if (error) {
-      console.error('Update user error:', error);
-      throw error;
-    }
-    
-    if (!updatedUsers || updatedUsers.length === 0) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    res.json({ user: updatedUsers[0] });
-  } catch (error) {
-    console.error('Init user error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
 // Получить пользователя
 app.get('/api/user', authenticate, async (req, res) => {
   try {
