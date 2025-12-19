@@ -367,9 +367,28 @@ function initWebSocket() {
         });
     });
     
+    socket.on('ad-deleted', (data) => {
+    if (data.userId === currentUser.id) {
+        showNotification('Ваше задание успешно удалено');
+    }
+    
+    // Если мы на экране удаленного задания - возвращаемся к списку
+    if (currentScreen === 'adDetailScreen') {
+        // Нужно проверить, какое задание сейчас просматривается
+        // Для простоты просто возвращаем к списку
+        showScreen('mainScreen');
+    }
+    
+    // Обновляем данные
+    if (currentScreen === 'mainScreen') {
+        loadAds();
+    }
+    });
+
     socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
     });
+
 }
 
 // ============ ОСНОВНЫЕ ФУНКЦИИ ============
@@ -698,6 +717,9 @@ function createMyAdElement(ad) {
                        ad.status === 'taken' ? '#ffc107' : 
                        ad.status === 'completed' ? '#6c757d' : '#dc3545';
     
+    // Разрешаем удаление только активных объявлений
+    const canDelete = ad.status === 'active';
+    
     adElement.innerHTML = `
         <div class="my-ad-header">
             <div class="my-ad-title">${ad.title}</div>
@@ -715,7 +737,10 @@ function createMyAdElement(ad) {
             </div>
             <div class="my-ad-actions">
                 <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
-                ${ad.status === 'active' ? `<button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>` : ''}
+                ${ad.status === 'active' ? `
+                    <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>
+                    <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">Удалить</button>
+                ` : ''}
             </div>
         </div>
     `;
@@ -729,6 +754,11 @@ function createMyAdElement(ad) {
         adElement.querySelector('.edit')?.addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
             editAd(adId);
+        });
+        
+        adElement.querySelector('.delete')?.addEventListener('click', function() {
+            const adId = parseInt(this.getAttribute('data-ad-id'));
+            deleteAd(adId);
         });
     }
     
@@ -849,12 +879,15 @@ function displayAdDetail(ad) {
                 </button>
             ` : ''}
             
-            ${isMyAd && ad.status === 'active' ? `
+                    ${isMyAd && ad.status === 'active' ? `
                 <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
                     <i class="fas fa-edit"></i> Редактировать
                 </button>
                 <button id="closeAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
                     <i class="fas fa-times"></i> Закрыть
+                </button>
+                <button id="deleteAdBtn" class="btn-danger" data-ad-id="${ad.id}">
+                    <i class="fas fa-trash"></i> Удалить
                 </button>
             ` : ''}
         </div>
@@ -892,6 +925,11 @@ function displayAdDetail(ad) {
         document.getElementById('closeAdBtn').addEventListener('click', function() {
             const adId = parseInt(this.getAttribute('data-ad-id'));
             closeAd(adId);
+        });
+
+        document.getElementById('deleteAdBtn').addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        deleteAd(adId);
         });
     }
     
@@ -1023,6 +1061,48 @@ async function closeAd(adId) {
         console.error('Error closing ad:', error);
         showNotification('Ошибка при закрытии задания');
     }
+}
+
+// Удалить объявление
+async function deleteAd(adId) {
+  try {
+    showModal(
+      'Удаление задания',
+      'Вы уверены, что хотите удалить это задание? Это действие невозможно отменить. Все связанные ставки и сообщения также будут удалены.',
+      async () => {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': currentUser.telegram_id.toString()
+          }
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          showNotification(error.error || 'Ошибка при удалении задания');
+          return;
+        }
+        
+        const data = await response.json();
+        showNotification(data.message || 'Задание успешно удалено');
+        
+        // Обновляем данные
+        if (currentScreen === 'mainScreen') {
+          await loadAds();
+          showScreen('mainScreen');
+        } else if (currentScreen === 'myAdsScreen') {
+          await loadMyAds('active');
+          showScreen('myAdsScreen');
+        } else {
+          showScreen('mainScreen');
+          await loadAds();
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Error deleting ad:', error);
+    showNotification('Ошибка при удалении задания');
+  }
 }
 
 // ============ АУКЦИОНЫ ============
@@ -1667,6 +1747,10 @@ function setupEventListeners() {
     // Кнопка закрытия профиля
     document.getElementById('profileBtn').addEventListener('click', function() {
         showScreen('profileScreen');
+    });
+
+    document.getElementById('closeProfileBtn')?.addEventListener('click', function() {
+        showScreen('mainScreen');
     });
     
     // Кнопка обновления списка
