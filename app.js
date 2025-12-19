@@ -1034,42 +1034,90 @@ async function editAd(adId) {
 
 async function closeAd(adId) {
   try {
+    // Преобразуем ID в строку для избежания проблем с типами
+    const adIdStr = adId.toString();
+    
+    console.log('Attempting to delete ad:', {
+      adId: adIdStr,
+      userId: currentUser?.id,
+      userName: currentUser?.first_name
+    });
+    
+    // Сначала загрузим детали объявления для проверки
+    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+      headers: {
+        'Authorization': currentUser.telegram_id.toString()
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Не удалось загрузить данные объявления');
+    }
+    
+    const data = await response.json();
+    const ad = data.ad;
+    
+    if (!ad) {
+      showNotification('Объявление не найдено');
+      return;
+    }
+    
+    // Проверяем, является ли пользователь автором
+    if (ad.employer_id !== currentUser.id) {
+      showNotification('Вы не являетесь автором этого объявления');
+      return;
+    }
+    
+    // Проверяем статус
+    if (ad.status === 'taken' || ad.status === 'completed') {
+      showNotification(`Нельзя удалить задание со статусом "${getStatusText(ad.status)}"`);
+      return;
+    }
+    
     showModal(
       'Удаление задания',
-      'Вы уверены, что хотите удалить это задание? Это действие нельзя отменить.',
+      `Вы уверены, что хотите удалить задание "${ad.title}"?`,
       async () => {
         try {
-          const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+          const deleteResponse = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             method: 'DELETE',
             headers: {
               'Authorization': currentUser.telegram_id.toString()
             }
           });
           
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Ошибка при удалении');
+          const result = await deleteResponse.json();
+          
+          if (!deleteResponse.ok) {
+            console.error('Delete API error:', result);
+            throw new Error(result.error || `Ошибка ${deleteResponse.status}`);
           }
           
-          const data = await response.json();
-          showNotification(data.message || 'Задание успешно удалено');
+          showNotification(result.message || 'Задание успешно удалено');
           
-          // Обновляем данные
+          // Обновляем интерфейс
           await loadAds();
+          
+          // Если мы на экране моих заданий, обновляем и его
           if (currentScreen === 'myAdsScreen') {
             await loadMyAds('active');
           }
+          
           showScreen('mainScreen');
           
-        } catch (error) {
-          console.error('Error deleting ad:', error);
-          showNotification(`Ошибка: ${error.message}`);
+        } catch (deleteError) {
+          console.error('Delete error:', deleteError);
+          showNotification(`Ошибка удаления: ${deleteError.message}`);
         }
-      }
+      },
+      'Удалить',
+      'danger' // Добавим параметр для красной кнопки
     );
+    
   } catch (error) {
     console.error('Error in closeAd:', error);
-    showNotification('Ошибка при удалении задания');
+    showNotification(`Ошибка: ${error.message}`);
   }
 }
 
