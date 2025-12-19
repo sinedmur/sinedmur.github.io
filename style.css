@@ -4337,3 +4337,73 @@ input:checked + .slider:before {
 #loadingScreen .app-header {
     display: none;
 }
+
+/* style.css - добавить новые стили */
+
+/* Стили для кнопки удаления */
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-danger:disabled {
+    background-color: #e0a9b0;
+    cursor: not-allowed;
+}
+
+/* Стили для кнопки удаления в карточке */
+.my-ad-action-btn.delete {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.my-ad-action-btn.delete:hover {
+    background-color: #c82333;
+}
+
+/* Обновим контейнер с действиями в деталях объявления */
+.ad-detail-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+}
+
+/* Обновим кнопки в моих заданиях */
+.my-ad-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* Стили для модального окна с предупреждением */
+.modal.warning {
+    background-color: #ffc107;
+    color: #856404;
+}
+
+.modal.danger {
+    background-color: #dc3545;
+    color: white;
+}
