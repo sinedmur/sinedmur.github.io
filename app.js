@@ -629,10 +629,10 @@ function createAdElement(ad) {
     `;
     
     const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
-    detailsBtn.addEventListener('click', function() {
-        const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
+        detailsBtn.addEventListener('click', function() {
+        const adId = ad.id; // Используем реальный ID из объекта ad
         showAdDetail(adId);
-    });
+        });
     
     if (!isMyAd && ad.status === 'active' && !ad.auction) {
         const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
@@ -745,10 +745,11 @@ function createMyAdElement(ad) {
         </div>
     `;
     
-    adElement.querySelector('.details').addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
+        // В createMyAdElement:
+        adElement.querySelector('.details').addEventListener('click', function() {
+        const adId = ad.id; // Используем реальный ID
         showAdDetail(adId);
-    });
+        });
     
     if (ad.status === 'active') {
         adElement.querySelector('.edit')?.addEventListener('click', function() {
@@ -761,35 +762,59 @@ function createMyAdElement(ad) {
 }
 
 async function showAdDetail(adId) {
-    try {
-        // Преобразуем ID в строку для корректной работы с UUID
-        const adIdStr = adId.toString();
-        
-        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-            headers: {
-                'Authorization': currentUser.telegram_id.toString()
-            }
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Failed to load ad details:', errorData);
-            throw new Error(errorData.error || 'Failed to load ad details');
-        }
-        
-        const data = await response.json();
-        const ad = data.ad;
-        
-        if (!ad) {
-            showNotification('Задание не найдено');
-            return;
-        }
-        
-        displayAdDetail(ad);
-    } catch (error) {
-        console.error('Error loading ad details:', error);
-        showNotification('Ошибка при загрузке задания: ' + error.message);
+  try {
+    // Преобразуем ID в строку для корректной работы
+    const adIdStr = adId.toString();
+    
+    console.log('Loading ad details for ID:', adIdStr);
+    
+    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+      headers: {
+        'Authorization': currentUser.telegram_id.toString()
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to load ad details:', errorData);
+      
+      // Пробуем найти объявление в локальном кэше
+      const localAd = ads.find(a => a.id === adId || a.id.toString() === adIdStr);
+      if (localAd) {
+        console.log('Found ad in local cache:', localAd);
+        displayAdDetail(localAd);
+        return;
+      }
+      
+      throw new Error(errorData.error || 'Failed to load ad details');
     }
+    
+    const data = await response.json();
+    const ad = data.ad;
+    
+    if (!ad) {
+      showNotification('Задание не найдено');
+      return;
+    }
+    
+    displayAdDetail(ad);
+  } catch (error) {
+    console.error('Error loading ad details:', error);
+    showNotification(`Ошибка при загрузке задания: ${error.message}`);
+    
+    // Показываем экран ошибки
+    document.getElementById('adDetailContainer').innerHTML = `
+      <div class="error-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Ошибка загрузки</h3>
+        <p>${error.message}</p>
+        <button onclick="showScreen('mainScreen')" class="btn-primary">
+          Вернуться к списку
+        </button>
+      </div>
+    `;
+    showScreen('adDetailScreen');
+  }
 }
 
 function displayAdDetail(ad) {
