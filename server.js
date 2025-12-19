@@ -667,6 +667,475 @@ app.post('/api/messages', authenticate, async (req, res) => {
   }
 });
 
+// Добавляем новые маршруты в server.js
+
+// Цены и конфигурация
+const PRICES = {
+    ad_publication: 50, // 50 рублей за публикацию
+    subscription_monthly: 299, // 299 рублей в месяц
+    subscription_yearly: 2990, // 2990 рублей в год (экономия 2 месяца)
+    referral_bonus_ads: 2, // 2 бесплатных объявления за приглашенного друга
+    free_ads_on_registration: 2 // 2 бесплатных объявления при регистрации
+};
+
+// Проверка возможности публикации объявления
+app.post('/api/ads/check', authenticate, async (req, res) => {
+    try {
+        const user = req.user;
+        
+        // Проверяем активную подписку
+        const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .gt('ends_at', new Date().toISOString())
+            .single();
+        
+        if (subscription) {
+            return res.json({ 
+                allowed: true,
+                reason: 'active_subscription',
+                free: true,
+                subscription_end: subscription.ends_at
+            });
+        }
+        
+        // Проверяем бесплатные объявления
+        if (user.free_ads_available > 0) {
+            return res.json({ 
+                allowed: true,
+                reason: 'free_ads_available',
+                free: true,
+                free_ads_left: user.free_ads_available
+            });
+        }
+        
+        // Если нет бесплатных объявлений и подписки
+        return res.json({
+            allowed: true, // Разрешаем, но с оплатой
+            reason: 'needs_payment',
+            free: false,
+            price: PRICES.ad_publication
+        });
+        
+    } catch (error) {
+        console.error('Check ad publication error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Создание объявления с оплатой/проверкой
+app.post('/api/ads', authenticate, async (req, res) => {
+    try {
+        const { 
+            title, 
+            description, 
+            category, 
+            price, 
+            location, 
+            contacts, 
+            auction, 
+            auction_hours,
+            payment_method // 'free', 'card', 'balance'
+        } = req.body;
+        
+        const user = req.user;
+        
+        // Проверяем возможность публикации
+        const checkResponse = await checkAdPublication(user);
+        
+        if (!checkResponse.allowed) {
+            return res.status(400).json({ 
+                error: 'Publication not allowed',
+                details: checkResponse.reason
+            });
+        }
+        
+        let transaction = null;
+        
+        // Обрабатываем оплату, если нужно
+        if (!checkResponse.free && payment_method === 'card') {
+            // Здесь должна быть интеграция с платежной системой
+            // Для демо просто создаем транзакцию
+            transaction = await createTransaction(user.id, {
+                amount: -PRICES.ad_publication,
+                type: 'ad_purchase',
+                description: `Публикация объявления: ${title}`
+            });
+        } else if (payment_method === 'balance') {
+            // Проверяем баланс
+            const balance = await getUserBalance(user.id);
+            if (balance < PRICES.ad_publication) {
+                return res.status(400).json({ 
+                    error: 'Недостаточно средств на балансе' 
+                });
+            }
+            
+            transaction = await createTransaction(user.id, {
+                amount: -PRICES.ad_publication,
+                type: 'ad_purchase',
+                description: `Публикация объявления: ${title}`
+            });
+        } else if (checkResponse.reason === 'free_ads_available') {
+            // Используем бесплатное объявление
+            await supabase
+                .from('users')
+                .update({ 
+                    free_ads_available: user.free_ads_available - 1,
+                    total_ads_published: (user.total_ads_published || 0) + 1
+                })
+                .eq('id', user.id);
+        }
+        
+        // Создаем объявление
+        let auction_ends_at = null;
+        if (auction && auction_hours) {
+            auction_ends_at = new Date(Date.now() + auction_hours * 60 * 60 * 1000).toISOString();
+        }
+        
+        const { data: ads, error } = await supabase
+            .from('ads')
+            .insert({
+                employer_id: user.id,
+                title,
+                description,
+                category,
+                price,
+                location,
+                contacts,
+                auction,
+                auction_ends_at,
+                status: 'active',
+                paid: !checkResponse.free,
+                transaction_id: transaction?.id
+            })
+            .select(`
+                *,
+                employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
+            `);
+        
+        if (error) {
+            console.error('Create ad error:', error);
+            throw error;
+        }
+        
+        if (!ads || ads.length === 0) {
+            return res.status(500).json({ error: 'Failed to create ad' });
+        }
+        
+        const ad = ads[0];
+        
+        res.json({ 
+            ad,
+            used_free_ad: checkResponse.reason === 'free_ads_available',
+            transaction
+        });
+        
+    } catch (error) {
+        console.error('Create ad error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Реферальная система
+app.post('/api/referrals/create', authenticate, async (req, res) => {
+    try {
+        const user = req.user;
+        
+        // Генерируем реферальный код, если нет
+        if (!user.referral_code) {
+            const referralCode = generateReferralCode();
+            await supabase
+                .from('users')
+                .update({ referral_code: referralCode })
+                .eq('id', user.id);
+        }
+        
+        const { data: updatedUser } = await supabase
+            .from('users')
+            .select('referral_code')
+            .eq('id', user.id)
+            .single();
+        
+        res.json({ 
+            referral_code: updatedUser.referral_code,
+            referral_link: `https://t.me/your_bot?start=${updatedUser.referral_code}`,
+            stats: {
+                referrals_count: user.referral_count || 0,
+                bonus_ads_earned: user.referral_bonus_ads || 0
+            }
+        });
+        
+    } catch (error) {
+        console.error('Create referral error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.post('/api/referrals/use', authenticate, async (req, res) => {
+    try {
+        const { referral_code } = req.body;
+        const user = req.user;
+        
+        // Находим пользователя, который пригласил
+        const { data: referrer } = await supabase
+            .from('users')
+            .select('id')
+            .eq('referral_code', referral_code)
+            .single();
+        
+        if (!referrer) {
+            return res.status(400).json({ error: 'Неверный реферальный код' });
+        }
+        
+        // Проверяем, не использовал ли уже пользователь реферальный код
+        const { data: existingReferral } = await supabase
+            .from('referrals')
+            .select('id')
+            .eq('referred_id', user.id)
+            .single();
+        
+        if (existingReferral) {
+            return res.status(400).json({ error: 'Вы уже использовали реферальный код' });
+        }
+        
+        // Создаем запись о реферале
+        const { data: referral } = await supabase
+            .from('referrals')
+            .insert({
+                referrer_id: referrer.id,
+                referred_id: user.id,
+                status: 'pending'
+            })
+            .select()
+            .single();
+        
+        // Начисляем бонус пригласившему (после публикации первого объявления)
+        // или сразу, в зависимости от логики
+        
+        res.json({ 
+            success: true,
+            message: 'Реферальный код успешно применен',
+            referrer_id: referrer.id
+        });
+        
+    } catch (error) {
+        console.error('Use referral error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Система подписок
+app.post('/api/subscriptions/create', authenticate, async (req, res) => {
+    try {
+        const { plan } = req.body; // 'monthly' или 'yearly'
+        const user = req.user;
+        
+        const subscriptionPrice = plan === 'yearly' 
+            ? PRICES.subscription_yearly 
+            : PRICES.subscription_monthly;
+        
+        const duration = plan === 'yearly' ? 365 : 30; // дней
+        
+        // Здесь должна быть интеграция с платежной системой
+        // Для демо создаем подписку сразу
+        
+        const endsAt = new Date(Date.now() + duration * 24 * 60 * 60 * 1000);
+        
+        const { data: subscription } = await supabase
+            .from('subscriptions')
+            .upsert({
+                user_id: user.id,
+                plan,
+                price: subscriptionPrice,
+                starts_at: new Date().toISOString(),
+                ends_at: endsAt.toISOString(),
+                is_active: true
+            })
+            .select()
+            .single();
+        
+        // Обновляем статус пользователя
+        await supabase
+            .from('users')
+            .update({ has_active_subscription: true })
+            .eq('id', user.id);
+        
+        // Создаем транзакцию
+        await createTransaction(user.id, {
+            amount: -subscriptionPrice,
+            type: 'subscription',
+            description: `Подписка "${plan === 'yearly' ? 'Годовая' : 'Месячная'}"`
+        });
+        
+        res.json({ 
+            subscription,
+            message: `Подписка успешно оформлена. Действует до: ${endsAt.toLocaleDateString('ru-RU')}`
+        });
+        
+    } catch (error) {
+        console.error('Create subscription error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/subscriptions/my', authenticate, async (req, res) => {
+    try {
+        const user = req.user;
+        
+        const { data: subscription } = await supabase
+            .from('subscriptions')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('is_active', true)
+            .gt('ends_at', new Date().toISOString())
+            .single();
+        
+        res.json({ subscription });
+        
+    } catch (error) {
+        console.error('Get subscription error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Вспомогательные функции
+async function checkAdPublication(user) {
+    // Проверяем активную подписку
+    const { data: subscription } = await supabase
+        .from('subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .gt('ends_at', new Date().toISOString())
+        .single();
+    
+    if (subscription) {
+        return { 
+            allowed: true,
+            reason: 'active_subscription',
+            free: true,
+            subscription_end: subscription.ends_at
+        };
+    }
+    
+    // Проверяем бесплатные объявления
+    if (user.free_ads_available > 0) {
+        return { 
+            allowed: true,
+            reason: 'free_ads_available',
+            free: true,
+            free_ads_left: user.free_ads_available
+        };
+    }
+    
+    return {
+        allowed: true,
+        reason: 'needs_payment',
+        free: false,
+        price: PRICES.ad_publication
+    };
+}
+
+async function createTransaction(userId, data) {
+    const { data: transaction } = await supabase
+        .from('transactions')
+        .insert({
+            user_id: userId,
+            amount: data.amount,
+            type: data.type,
+            description: data.description,
+            status: 'completed'
+        })
+        .select()
+        .single();
+    
+    return transaction;
+}
+
+async function getUserBalance(userId) {
+    const { data: transactions } = await supabase
+        .from('transactions')
+        .select('amount')
+        .eq('user_id', userId)
+        .eq('status', 'completed');
+    
+    if (!transactions) return 0;
+    
+    return transactions.reduce((sum, t) => sum + parseFloat(t.amount), 0);
+}
+
+function generateReferralCode() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// Обновляем регистрацию пользователя для рефералов
+app.post('/api/user/init', authenticate, async (req, res) => {
+    try {
+        const { username, first_name, last_name, referral_code } = req.body;
+        
+        // Обновляем данные пользователя
+        const updateData = {
+            username,
+            first_name: first_name || req.user.first_name,
+            last_name: last_name || req.user.last_name
+        };
+        
+        // Если передан реферальный код, обрабатываем его
+        if (referral_code) {
+            const { data: referrer } = await supabase
+                .from('users')
+                .select('id')
+                .eq('referral_code', referral_code)
+                .single();
+            
+            if (referrer && referrer.id !== req.user.id) {
+                // Создаем запись о реферале
+                await supabase
+                    .from('referrals')
+                    .insert({
+                        referrer_id: referrer.id,
+                        referred_id: req.user.id,
+                        status: 'completed'
+                    });
+                
+                // Начисляем бонус пригласившему
+                await supabase
+                    .from('users')
+                    .update({ 
+                        free_ads_available: supabase.raw('COALESCE(free_ads_available, 0) + ?', [PRICES.referral_bonus_ads]),
+                        referral_count: supabase.raw('COALESCE(referral_count, 0) + 1'),
+                        referral_bonus_ads: supabase.raw('COALESCE(referral_bonus_ads, 0) + ?', [PRICES.referral_bonus_ads])
+                    })
+                    .eq('id', referrer.id);
+                
+                // Начисляем бонус новому пользователю (опционально)
+                updateData.free_ads_available = supabase.raw('COALESCE(free_ads_available, 0) + 1');
+            }
+        }
+        
+        const { data: updatedUsers, error } = await supabase
+            .from('users')
+            .update(updateData)
+            .eq('id', req.user.id)
+            .select();
+        
+        if (error) throw error;
+        
+        res.json({ user: updatedUsers[0] });
+        
+    } catch (error) {
+        console.error('Init user error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // WebSocket подключения
 io.on('connection', (socket) => {
   console.log('New client connected:', socket.id);
