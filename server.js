@@ -288,55 +288,6 @@ app.get('/api/ads/:id', async (req, res) => {
   }
 });
 
-// Создать объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
-app.post('/api/ads', authenticate, async (req, res) => {
-  try {
-    const { title, description, category, price, location, contacts, auction, auction_hours } = req.body;
-    const user = req.user;
-    
-    let auction_ends_at = null;
-    if (auction && auction_hours) {
-      auction_ends_at = new Date(Date.now() + auction_hours * 60 * 60 * 1000).toISOString();
-    }
-    
-    const { data: ads, error } = await supabase
-      .from('ads')
-      .insert({
-        employer_id: user.id,
-        title,
-        description,
-        category,
-        price,
-        location,
-        contacts,
-        auction,
-        auction_ends_at,
-        status: 'active'
-      })
-      .select(`
-        *,
-        employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
-      `)
-    
-    if (error) {
-      console.error('Create ad error:', error);
-      throw error;
-    }
-    
-    if (!ads || ads.length === 0) {
-      return res.status(500).json({ error: 'Failed to create ad' });
-    }
-    
-    const ad = ads[0];
-    
-    res.json({ ad });
-  } catch (error) {
-    console.error('Create ad error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-
 // Сделать ставку
 app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
   try {
