@@ -219,12 +219,14 @@ app.get('/api/ads', async (req, res) => {
   }
 });
 
-// Получить конкретное объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// Получить конкретное объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ С UUID
 app.get('/api/ads/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    // Используем явное указание связи
+    console.log('Get ad request for ID:', id, 'Type:', typeof id);
+    
+    // Пробуем получить объявление как UUID
     const { data: ad, error } = await supabase
       .from('ads')
       .select(`
@@ -234,7 +236,39 @@ app.get('/api/ads/:id', async (req, res) => {
       .eq('id', id)
       .single();
     
-    if (error) throw error;
+    if (error) {
+      console.error('Get ad error:', error);
+      
+      // Если ошибка связана с форматом UUID, пробуем найти по числовому ID
+      if (error.code === '22P02') {
+        console.log('UUID format error, trying to find by numeric id...');
+        
+        // Пытаемся найти объявление с числовым полем (если оно есть)
+        // Или преобразуем запрос
+        const { data: numericAd, error: numericError } = await supabase
+          .from('ads')
+          .select(`
+            *,
+            employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
+          `)
+          .eq('numeric_id', parseInt(id)) // если у вас есть numeric_id поле
+          .single();
+        
+        if (numericError) {
+          return res.status(404).json({ 
+            error: 'Объявление не найдено',
+            details: 'Invalid ID format or ad does not exist'
+          });
+        }
+        
+        return res.json({ ad: numericAd });
+      }
+      
+      return res.status(404).json({ 
+        error: 'Объявление не найдено',
+        details: error.message 
+      });
+    }
     
     // Если есть исполнитель, получаем и его данные
     if (ad && ad.taken_by) {
@@ -383,35 +417,43 @@ app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
   }
 });
 
-// Удалить объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
+// Удалить объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ С UUID
 app.delete('/api/ads/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
     
-    console.log(`Delete request for ad ID: ${id}, User ID: ${user.id}`);
+    console.log(`Delete request - Ad ID: "${id}", User ID: ${user.id}`);
     
-    // Сначала проверяем, существует ли объявление и принадлежит ли оно пользователю
-    const { data: ad, error: fetchError } = await supabase
+    // Сначала попробуем найти объявление как UUID
+    let { data: ad, error: fetchError } = await supabase
       .from('ads')
       .select('*')
-      .eq('id', id)
-      .eq('employer_id', user.id);
+      .eq('id', id);
     
-    if (fetchError) {
-      console.error('Fetch ad error:', fetchError);
-      return res.status(500).json({ 
-        error: 'Ошибка при проверке объявления',
-        details: fetchError.message 
-      });
+    // Если ошибка UUID, ищем альтернативными способами
+    if (fetchError && fetchError.code === '22P02') {
+      console.log('UUID error, trying alternative lookup...');
+      
+      // Вариант 1: Ищем по numeric_id если есть такое поле
+      ad = await findAdByNumericId(id, user.id);
+      
+      // Вариант 2: Ищем по title или другому полю
+      if (!ad) {
+        ad = await findAdByOtherFields(id, user.id);
+      }
     }
     
-    console.log('Found ads:', ad);
+    console.log('Found ad:', ad);
     
     if (!ad || ad.length === 0) {
       return res.status(404).json({ 
-        error: 'Объявление не найдено или у вас нет прав для его удаления',
-        debug: { requestedId: id, userId: user.id, foundAds: ad }
+        error: 'Объявление не найдено',
+        debug: { 
+          requestedId: id, 
+          userId: user.id,
+          isUuid: isUuid(id)
+        }
       });
     }
     
@@ -425,41 +467,23 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
       });
     }
     
-    // Удаляем связанные данные (ставки, сообщения)
-    try {
-      // Удаляем ставки
-      await supabase
-        .from('bids')
-        .delete()
-        .eq('ad_id', id);
-      
-      // Удаляем сообщения
-      await supabase
-        .from('messages')
-        .delete()
-        .eq('ad_id', id);
-    } catch (cleanupError) {
-      console.warn('Cleanup error (may be normal):', cleanupError);
-      // Продолжаем удаление даже если очистка не удалась
-    }
-    
-    // Удаляем объявление
+    // Удаляем объявление по его реальному UUID
     const { error: deleteError } = await supabase
       .from('ads')
       .delete()
-      .eq('id', id);
+      .eq('id', adToDelete.id); // Используем реальный UUID из найденной записи
     
     if (deleteError) {
       console.error('Delete ad error:', deleteError);
       throw deleteError;
     }
     
-    console.log('Ad successfully deleted:', id);
+    console.log('Ad successfully deleted:', adToDelete.id);
     
     res.json({ 
       success: true, 
       message: 'Объявление успешно удалено',
-      deletedId: id
+      deletedId: adToDelete.id
     });
     
   } catch (error) {
@@ -471,6 +495,90 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
   }
 });
 
+// Вспомогательные функции для поиска объявлений
+async function findAdByNumericId(id, userId) {
+  try {
+    const numericId = parseInt(id);
+    if (isNaN(numericId)) return null;
+    
+    const { data, error } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('numeric_id', numericId)
+      .eq('employer_id', userId);
+    
+    if (error) {
+      console.error('Find by numeric_id error:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('findAdByNumericId error:', error);
+    return null;
+  }
+}
+
+async function findAdByOtherFields(id, userId) {
+  try {
+    // Пытаемся найти по части title или другому полю
+    const { data, error } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('employer_id', userId)
+      .ilike('title', `%${id}%`)
+      .limit(1);
+    
+    if (error) {
+      console.error('Find by other fields error:', error);
+      return null;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('findAdByOtherFields error:', error);
+    return null;
+  }
+}
+
+function isUuid(str) {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
+// Альтернативный endpoint для работы с числовыми ID
+app.get('/api/ads/by-numeric/:numericId', authenticate, async (req, res) => {
+  try {
+    const { numericId } = req.params;
+    const numericIdInt = parseInt(numericId);
+    
+    if (isNaN(numericIdInt)) {
+      return res.status(400).json({ error: 'Invalid numeric ID' });
+    }
+    
+    const { data: ads, error } = await supabase
+      .from('ads')
+      .select(`
+        *,
+        employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
+      `)
+      .eq('numeric_id', numericIdInt);
+    
+    if (error) {
+      console.error('Get ad by numeric error:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    
+    if (!ads || ads.length === 0) {
+      return res.status(404).json({ error: 'Ad not found' });
+    }
+    
+    res.json({ ad: ads[0] });
+  } catch (error) {
+    console.error('Get ad by numeric error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 // Получить ставки для объявления
 app.get('/api/ads/:id/bids', async (req, res) => {
