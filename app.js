@@ -663,13 +663,14 @@ function createAdElement(ad) {
         });
     
         // Для кнопки отклика:
-        if (!isMyAd && ad.status === 'active' && !ad.auction) {
-            const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
-            acceptBtn.addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
-                respondToAd(adId);
-            });
-        }
+            if (!isMyAd && ad.status === 'active' && !ad.auction) {
+                const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+                acceptBtn.addEventListener('click', function() {
+                    const adId = this.getAttribute('data-ad-id');
+                    console.log('Responding to ad ID from card:', adId, 'Type:', typeof adId);
+                    respondToAd(adId);
+                });
+            }
     
     return adElement;
 }
@@ -792,7 +793,9 @@ function createMyAdElement(ad) {
 
 async function showAdDetail(adId) {
     try {
-        // Преобразуем ID в строку (не преобразуем в число!)
+        console.log('Show ad detail for ID:', adId, 'Type:', typeof adId);
+        
+        // Преобразуем ID в строку для корректной работы с UUID
         const adIdStr = adId.toString();
         
         const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
@@ -804,7 +807,8 @@ async function showAdDetail(adId) {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             console.error('Failed to load ad details:', errorData);
-            throw new Error(errorData.error || 'Failed to load ad details');
+            showNotification('Ошибка загрузки задания: ' + (errorData.error || 'Unknown error'));
+            return;
         }
         
         const data = await response.json();
@@ -815,7 +819,9 @@ async function showAdDetail(adId) {
             return;
         }
         
+        console.log('Ad loaded successfully:', ad);
         displayAdDetail(ad);
+        
     } catch (error) {
         console.error('Error loading ad details:', error);
         showNotification('Ошибка при загрузке задания: ' + error.message);
@@ -955,34 +961,51 @@ function displayAdDetail(ad) {
 
 async function respondToAd(adId) {
     try {
+        console.log('Responding to ad with ID:', adId, 'Type:', typeof adId);
+        
         showModal(
             'Отклик на задание',
             'Вы уверены, что хотите откликнуться на это задание? После отклика вы сможете обсудить детали с автором.',
             async () => {
-                // Используем строковый ID
-                const adIdStr = adId.toString();
-                
-                const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-                    headers: {
-                        'Authorization': currentUser.telegram_id.toString()
+                try {
+                    // Преобразуем ID в строку для корректной работы с UUID
+                    const adIdStr = adId.toString();
+                    console.log('Fetching ad details for ID:', adIdStr);
+                    
+                    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+                        headers: {
+                            'Authorization': currentUser.telegram_id.toString()
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => ({}));
+                        console.error('Failed to load ad details:', errorData);
+                        showNotification('Ошибка загрузки задания: ' + (errorData.error || 'Unknown error'));
+                        return;
                     }
-                });
-                
-                if (response.ok) {
+                    
                     const data = await response.json();
                     const ad = data.ad;
+                    
+                    if (!ad) {
+                        showNotification('Задание не найдено');
+                        return;
+                    }
                     
                     showNotification(`Отклик отправлен! Контакты автора: ${ad.contacts || 'не указаны'}`);
                     
                     // Открываем чат с автором
-                    openChat(adIdStr, ad.employer_id); // employer_id тоже может быть UUID
-                } else {
-                    showNotification('Задание отправлено автору на рассмотрение');
+                    openChat(adId, ad.employer_id);
+                    
+                } catch (error) {
+                    console.error('Error in respondToAd callback:', error);
+                    showNotification('Ошибка при отклике на задание');
                 }
             }
         );
     } catch (error) {
-        console.error('Error responding to ad:', error);
+        console.error('Error in respondToAd:', error);
         showNotification('Ошибка при отклике на задание');
     }
 }
