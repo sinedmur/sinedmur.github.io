@@ -428,6 +428,34 @@ function showScreen(screenId) {
     }
 }
 
+// Константы цен
+const PRICES = {
+    AD_PUBLICATION: 50,
+    SUBSCRIPTION_MONTHLY: 299,
+    SUBSCRIPTION_YEARLY: 2990
+};
+
+// Проверка возможности публикации
+async function checkAdPublication() {
+    if (!currentUser) return { allowed: false, reason: 'no_user' };
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/ads/check`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
+        
+        if (response.ok) {
+            return await response.json();
+        }
+        return { allowed: true, reason: 'fallback', free: true };
+    } catch (error) {
+        console.error('Check ad publication error:', error);
+        return { allowed: true, reason: 'error', free: true };
+    }
+}
+
 // Обновляем функцию showNotification для использования виброотклика
 function showNotification(message, duration = 3000) {
     const notification = document.getElementById('notification');
@@ -959,6 +987,7 @@ async function respondToAd(adId) {
     }
 }
 
+// Обновленная функция публикации объявления
 async function publishAd() {
     try {
         const title = document.getElementById('adTitle').value.trim();
@@ -975,15 +1004,31 @@ async function publishAd() {
             return;
         }
         
-        if (auctionEnabled) {
-            const auctionHours = parseInt(document.getElementById('auctionHours').value) || 0;
-            
-            if (auctionHours < 1) {
-                showNotification('Укажите время проведения аукциона (минимум 1 час)');
-                return;
-            }
+        // Проверяем возможность публикации
+        const checkResult = await checkAdPublication();
+        
+        if (!checkResult.allowed) {
+            showNotification('Не удалось проверить возможность публикации');
+            return;
         }
         
+        let paymentRequired = false;
+        let paymentMethod = 'free';
+        
+        // Если нужна оплата, показываем экран оплаты
+        if (!checkResult.free) {
+            paymentRequired = true;
+            const paymentResult = await showPaymentScreen(checkResult.price);
+            
+            if (!paymentResult.success) {
+                showNotification('Публикация отменена');
+                return;
+            }
+            
+            paymentMethod = paymentResult.method;
+        }
+        
+        // Подготавливаем данные
         const adData = {
             title,
             description,
@@ -991,7 +1036,8 @@ async function publishAd() {
             price,
             location,
             contacts,
-            auction: auctionEnabled
+            auction: auctionEnabled,
+            payment_method: paymentMethod
         };
         
         if (auctionEnabled) {
@@ -999,6 +1045,7 @@ async function publishAd() {
             adData.auction_hours = auctionHours;
         }
         
+        // Отправляем запрос на создание
         const response = await fetch(`${API_BASE_URL}/ads`, {
             method: 'POST',
             headers: {
@@ -1008,7 +1055,10 @@ async function publishAd() {
             body: JSON.stringify(adData)
         });
         
-        if (!response.ok) throw new Error('Failed to create ad');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create ad');
+        }
         
         const data = await response.json();
         
@@ -1020,14 +1070,189 @@ async function publishAd() {
         document.getElementById('adContacts').value = '';
         document.getElementById('auctionToggle').checked = false;
         
-        showNotification(`Задание "${title}" успешно опубликовано!`);
+        // Показываем сообщение в зависимости от типа публикации
+        if (data.used_free_ad) {
+            showNotification(`Задание "${title}" опубликовано бесплатно! Осталось ${checkResult.free_ads_left - 1} бесплатных публикаций`);
+        } else if (paymentRequired) {
+            showNotification(`Задание "${title}" опубликовано! Стоимость: ${checkResult.price} ₽`);
+        } else {
+            showNotification(`Задание "${title}" успешно опубликовано!`);
+        }
+        
+        // Обновляем данные
         showScreen('mainScreen');
         await loadAds();
-        updateProfileStats();
+        await updateProfileStats();
         
     } catch (error) {
         console.error('Error publishing ad:', error);
-        showNotification('Ошибка при создании задания');
+        showNotification('Ошибка при создании задания: ' + error.message);
+    }
+}
+
+// Экран оплаты
+async function showPaymentScreen(amount) {
+    return new Promise((resolve) => {
+        showModal(
+            'Оплата публикации',
+            `
+            <div class="payment-screen">
+                <div class="payment-amount">
+                    <h3>Сумма к оплате:</h3>
+                    <div class="payment-sum">${amount} ₽</div>
+                </div>
+                
+                <div class="payment-methods">
+                    <h4>Способ оплаты:</h4>
+                    
+                    <div class="payment-method" data-method="card">
+                        <div class="payment-method-icon">
+                            <i class="fas fa-credit-card"></i>
+                        </div>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Банковская карта</div>
+                            <div class="payment-method-desc">Visa, Mastercard, МИР</div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                    
+                    <div class="payment-method" data-method="balance">
+                        <div class="payment-method-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="payment-method-info">
+                            <div class="payment-method-name">Баланс приложения</div>
+                            <div class="payment-method-desc">Использовать средства на балансе</div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+                
+                <div class="payment-promo">
+                    <p style="margin-bottom: 10px;">Есть промокод?</p>
+                    <div class="promo-input">
+                        <input type="text" id="promoCodeInput" placeholder="Введите промокод">
+                        <button id="applyPromoBtn" class="btn-secondary">Применить</button>
+                    </div>
+                </div>
+            </div>
+            `,
+            () => resolve({ success: true, method: 'card' })
+        );
+        
+        // Настройка обработчиков методов оплаты
+        setTimeout(() => {
+            document.querySelectorAll('.payment-method').forEach(method => {
+                method.addEventListener('click', function() {
+                    const methodType = this.getAttribute('data-method');
+                    resolve({ success: true, method: methodType });
+                    document.getElementById('modal').classList.remove('active');
+                });
+            });
+            
+            document.getElementById('applyPromoBtn').addEventListener('click', function() {
+                const promoCode = document.getElementById('promoCodeInput').value.trim();
+                if (promoCode) {
+                    // Проверка промокода
+                    showNotification('Промокод проверяется...');
+                }
+            });
+        }, 100);
+    });
+}
+
+// Реферальная система
+async function loadReferralInfo() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/referrals/create`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data;
+        }
+        return null;
+    } catch (error) {
+        console.error('Load referral info error:', error);
+        return null;
+    }
+}
+
+// Использование реферального кода
+async function useReferralCode(code) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/referrals/use`, {
+            method: 'POST',
+            headers: {
+                'Authorization': currentUser.telegram_id.toString(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ referral_code: code })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showNotification('Реферальный код успешно применен!');
+            return data;
+        } else {
+            const errorData = await response.json();
+            showNotification(errorData.error || 'Ошибка применения кода');
+            return null;
+        }
+    } catch (error) {
+        console.error('Use referral code error:', error);
+        showNotification('Ошибка применения реферального кода');
+        return null;
+    }
+}
+
+// Система подписок
+async function loadSubscriptionInfo() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/subscriptions/my`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            return data.subscription;
+        }
+        return null;
+    } catch (error) {
+        console.error('Load subscription error:', error);
+        return null;
+    }
+}
+
+async function createSubscription(plan) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/subscriptions/create`, {
+            method: 'POST',
+            headers: {
+                'Authorization': currentUser.telegram_id.toString(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ plan })
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            showNotification(data.message || 'Подписка оформлена успешно!');
+            return data.subscription;
+        } else {
+            const errorData = await response.json();
+            showNotification(errorData.error || 'Ошибка оформления подписки');
+            return null;
+        }
+    } catch (error) {
+        console.error('Create subscription error:', error);
+        showNotification('Ошибка оформления подписки');
+        return null;
     }
 }
 
@@ -1544,25 +1769,252 @@ function addMessageToChat(message) {
 
 // ============ ПРОФИЛЬ ============
 
+// Обновленный экран профиля
 function loadProfileScreen() {
     if (!currentUser) return;
     
     document.getElementById('profileUserName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
     
+    // Загружаем информацию о подписках и рефералах
+    loadExtendedProfileInfo();
     updateProfileStats();
 }
 
+async function loadExtendedProfileInfo() {
+    // Загружаем информацию о подписке
+    const subscription = await loadSubscriptionInfo();
+    
+    // Загружаем реферальную информацию
+    const referralInfo = await loadReferralInfo();
+    
+    // Обновляем UI
+    updateSubscriptionUI(subscription);
+    updateReferralUI(referralInfo);
+}
+
+function updateSubscriptionUI(subscription) {
+    const profileStats = document.querySelector('.profile-stats');
+    
+    if (subscription) {
+        const endDate = new Date(subscription.ends_at);
+        const now = new Date();
+        const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+        
+        // Добавляем информацию о подписке
+        const subscriptionElement = document.createElement('div');
+        subscriptionElement.className = 'subscription-info';
+        subscriptionElement.innerHTML = `
+            <h3>Активная подписка</h3>
+            <div class="subscription-details">
+                <div class="subscription-plan">${subscription.plan === 'yearly' ? 'Годовая' : 'Месячная'}</div>
+                <div class="subscription-days">Осталось дней: ${daysLeft}</div>
+                <div class="subscription-end">Действует до: ${endDate.toLocaleDateString('ru-RU')}</div>
+            </div>
+        `;
+        
+        profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
+    } else {
+        // Показываем кнопку покупки подписки
+        const subscriptionElement = document.createElement('div');
+        subscriptionElement.className = 'subscription-offer';
+        subscriptionElement.innerHTML = `
+            <h3>Подписка на публикации</h3>
+            <div class="subscription-plans">
+                <div class="subscription-plan-card">
+                    <div class="plan-header">
+                        <h4>Месячная</h4>
+                        <div class="plan-price">${PRICES.SUBSCRIPTION_MONTHLY} ₽</div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Неограниченные публикации</li>
+                        <li><i class="fas fa-check"></i> 30 дней доступа</li>
+                        <li><i class="fas fa-check"></i> Приоритет в поиске</li>
+                    </ul>
+                    <button class="btn-primary btn-small" onclick="buySubscription('monthly')">Купить</button>
+                </div>
+                
+                <div class="subscription-plan-card recommended">
+                    <div class="plan-badge">Выгодно</div>
+                    <div class="plan-header">
+                        <h4>Годовая</h4>
+                        <div class="plan-price">${PRICES.SUBSCRIPTION_YEARLY} ₽</div>
+                        <div class="plan-save">Экономия 598 ₽</div>
+                    </div>
+                    <ul class="plan-features">
+                        <li><i class="fas fa-check"></i> Неограниченные публикации</li>
+                        <li><i class="fas fa-check"></i> 365 дней доступа</li>
+                        <li><i class="fas fa-check"></i> Приоритет в поиске</li>
+                        <li><i class="fas fa-check"></i> Выделение объявлений</li>
+                    </ul>
+                    <button class="btn-primary btn-small" onclick="buySubscription('yearly')">Купить</button>
+                </div>
+            </div>
+        `;
+        
+        profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
+    }
+}
+
+function updateReferralUI(referralInfo) {
+    if (!referralInfo) return;
+    
+    // Добавляем реферальную информацию в профиль
+    const profileActions = document.querySelector('.profile-actions');
+    
+    const referralElement = document.createElement('button');
+    referralElement.className = 'profile-action-btn';
+    referralElement.id = 'referralBtn';
+    referralElement.innerHTML = `
+        <i class="fas fa-user-plus"></i>
+        <span>Пригласить друга</span>
+        <i class="fas fa-chevron-right"></i>
+    `;
+    
+    profileActions.appendChild(referralElement);
+    
+    // Обработчик для реферальной системы
+    document.getElementById('referralBtn').addEventListener('click', function() {
+        showReferralScreen(referralInfo);
+    });
+}
+
+// Экран реферальной системы
+function showReferralScreen(referralInfo) {
+    showModal(
+        'Пригласите друга',
+        `
+        <div class="referral-screen">
+            <div class="referral-header">
+                <i class="fas fa-gift" style="font-size: 3rem; color: #007bff; margin-bottom: 20px;"></i>
+                <h3>Приглашайте друзей и получайте бонусы!</h3>
+            </div>
+            
+            <div class="referral-stats">
+                <div class="stat-item">
+                    <div class="stat-value">${referralInfo.stats.referrals_count || 0}</div>
+                    <div class="stat-label">Приглашено</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value">${referralInfo.stats.bonus_ads_earned || 0}</div>
+                    <div class="stat-label">Бонусов получено</div>
+                </div>
+            </div>
+            
+            <div class="referral-code">
+                <h4>Ваш реферальный код:</h4>
+                <div class="code-display">${referralInfo.referral_code}</div>
+                <button id="copyReferralCode" class="btn-secondary btn-small">
+                    <i class="fas fa-copy"></i> Копировать
+                </button>
+            </div>
+            
+            <div class="referral-link">
+                <h4>Или отправьте ссылку:</h4>
+                <div class="link-display">${referralInfo.referral_link}</div>
+                <button id="copyReferralLink" class="btn-secondary btn-small">
+                    <i class="fas fa-copy"></i> Копировать ссылку
+                </button>
+            </div>
+            
+            <div class="referral-benefits">
+                <h4>Как это работает:</h4>
+                <ul>
+                    <li><i class="fas fa-check-circle" style="color: #28a745;"></i> За каждого приглашенного друга вы получаете <strong>2 бесплатных публикации</strong></li>
+                    <li><i class="fas fa-check-circle" style="color: #28a745;"></i> Ваш друг получает <strong>+1 бесплатную публикацию</strong></li>
+                    <li><i class="fas fa-check-circle" style="color: #28a745;"></i> Бонусы начисляются после первой публикации друга</li>
+                </ul>
+            </div>
+        </div>
+        `,
+        () => {}
+    );
+    
+    // Настройка копирования
+    setTimeout(() => {
+        document.getElementById('copyReferralCode').addEventListener('click', function() {
+            navigator.clipboard.writeText(referralInfo.referral_code)
+                .then(() => showNotification('Код скопирован в буфер обмена'))
+                .catch(() => showNotification('Не удалось скопировать код'));
+        });
+        
+        document.getElementById('copyReferralLink').addEventListener('click', function() {
+            navigator.clipboard.writeText(referralInfo.referral_link)
+                .then(() => showNotification('Ссылка скопирована в буфер обмена'))
+                .catch(() => showNotification('Не удалось скопировать ссылку'));
+        });
+    }, 100);
+}
+
+// Обновленная функция обновления статистики профиля
 function updateProfileStats() {
     if (!currentUser) return;
     
-    // В реальном приложении здесь был бы запрос к API для статистики
+    // Обновляем базовую статистику
     const createdCount = ads.filter(ad => ad.employer_id === currentUser.id).length;
-    const takenCount = 0; // В реальном приложении нужно считать выполненные задания
     
     document.getElementById('profileUserStats').textContent = `${createdCount} заданий создано`;
     document.getElementById('profileCreatedCount').textContent = createdCount;
-    document.getElementById('profileTakenCount').textContent = takenCount;
+    
+    // Добавляем информацию о бесплатных публикациях
+    const freeAdsLeft = currentUser.free_ads_available || 0;
+    document.getElementById('profileTakenCount').textContent = freeAdsLeft;
+    document.getElementById('profileTakenCount').parentNode.querySelector('.stat-label').textContent = 'Бесплатных осталось';
+    
+    // Обновляем рейтинг
     document.getElementById('profileRating').textContent = '5.0';
+}
+
+// Глобальные функции
+window.buySubscription = async function(plan) {
+    const result = await showSubscriptionPaymentScreen(plan);
+    if (result) {
+        await createSubscription(plan);
+        loadProfileScreen(); // Перезагружаем профиль
+    }
+};
+
+// Экран оплаты подписки
+async function showSubscriptionPaymentScreen(plan) {
+    const price = plan === 'yearly' ? PRICES.SUBSCRIPTION_YEARLY : PRICES.SUBSCRIPTION_MONTHLY;
+    const period = plan === 'yearly' ? 'год' : 'месяц';
+    
+    return new Promise((resolve) => {
+        showModal(
+            'Оформление подписки',
+            `
+            <div class="subscription-payment">
+                <div class="payment-summary">
+                    <h3>Подписка на ${period}</h3>
+                    <div class="payment-amount">${price} ₽</div>
+                    <p>Доступ к неограниченным публикациям на ${plan === 'yearly' ? '365 дней' : '30 дней'}</p>
+                </div>
+                
+                <div class="payment-features">
+                    <h4>Включено в подписку:</h4>
+                    <ul>
+                        <li><i class="fas fa-check"></i> Неограниченное количество публикаций</li>
+                        <li><i class="fas fa-check"></i> Приоритетное отображение в поиске</li>
+                        ${plan === 'yearly' ? '<li><i class="fas fa-check"></i> Выделение объявлений цветом</li>' : ''}
+                        <li><i class="fas fa-check"></i> Поддержка 24/7</li>
+                        <li><i class="fas fa-check"></i> Отмена в любой момент</li>
+                    </ul>
+                </div>
+                
+                <div class="payment-method-select">
+                    <h4>Способ оплаты:</h4>
+                    <select id="subscriptionPaymentMethod" class="form-control">
+                        <option value="card">Банковская карта</option>
+                        <option value="balance">Баланс приложения</option>
+                    </select>
+                </div>
+            </div>
+            `,
+            () => {
+                const method = document.getElementById('subscriptionPaymentMethod')?.value || 'card';
+                resolve({ success: true, plan, method });
+            }
+        );
+    });
 }
 
 // ============ УВЕДОМЛЕНИЯ ============
