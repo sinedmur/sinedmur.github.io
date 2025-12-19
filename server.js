@@ -383,53 +383,89 @@ app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
   }
 });
 
-// Удалить объявление
+// Удалить объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.delete('/api/ads/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
     
+    console.log(`Delete request for ad ID: ${id}, User ID: ${user.id}`);
+    
     // Сначала проверяем, существует ли объявление и принадлежит ли оно пользователю
-    const { data: ads, error: fetchError } = await supabase
+    const { data: ad, error: fetchError } = await supabase
       .from('ads')
       .select('*')
       .eq('id', id)
-      .eq('employer_id', user.id)
-      .single();
+      .eq('employer_id', user.id);
     
-    if (fetchError || !ads) {
-      return res.status(404).json({ 
-        error: 'Объявление не найдено или у вас нет прав для его удаления' 
+    if (fetchError) {
+      console.error('Fetch ad error:', fetchError);
+      return res.status(500).json({ 
+        error: 'Ошибка при проверке объявления',
+        details: fetchError.message 
       });
     }
     
-    // Удаляем объявление (или меняем статус на 'deleted')
-    // Вариант 1: Полное удаление
+    console.log('Found ads:', ad);
+    
+    if (!ad || ad.length === 0) {
+      return res.status(404).json({ 
+        error: 'Объявление не найдено или у вас нет прав для его удаления',
+        debug: { requestedId: id, userId: user.id, foundAds: ad }
+      });
+    }
+    
+    // Проверяем, можно ли удалить объявление
+    const adToDelete = ad[0];
+    
+    if (adToDelete.status === 'taken' || adToDelete.status === 'completed') {
+      return res.status(400).json({ 
+        error: 'Нельзя удалить задание, которое уже взято в работу или завершено',
+        currentStatus: adToDelete.status
+      });
+    }
+    
+    // Удаляем связанные данные (ставки, сообщения)
+    try {
+      // Удаляем ставки
+      await supabase
+        .from('bids')
+        .delete()
+        .eq('ad_id', id);
+      
+      // Удаляем сообщения
+      await supabase
+        .from('messages')
+        .delete()
+        .eq('ad_id', id);
+    } catch (cleanupError) {
+      console.warn('Cleanup error (may be normal):', cleanupError);
+      // Продолжаем удаление даже если очистка не удалась
+    }
+    
+    // Удаляем объявление
     const { error: deleteError } = await supabase
       .from('ads')
       .delete()
       .eq('id', id);
-    
-    // Вариант 2: Мягкое удаление (меняем статус)
-    // const { error: deleteError } = await supabase
-    //   .from('ads')
-    //   .update({ status: 'deleted' })
-    //   .eq('id', id);
     
     if (deleteError) {
       console.error('Delete ad error:', deleteError);
       throw deleteError;
     }
     
+    console.log('Ad successfully deleted:', id);
+    
     res.json({ 
       success: true, 
-      message: 'Объявление успешно удалено' 
+      message: 'Объявление успешно удалено',
+      deletedId: id
     });
     
   } catch (error) {
     console.error('Delete ad error:', error);
     res.status(500).json({ 
-      error: 'Ошибка при удалении объявления',
+      error: 'Ошибка сервера при удалении объявления',
       details: error.message 
     });
   }
