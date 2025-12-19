@@ -440,9 +440,12 @@ async function checkAdPublication() {
     if (!currentUser) return { allowed: false, reason: 'no_user' };
     
     try {
+        // Измените метод с GET на POST
         const response = await fetch(`${API_BASE_URL}/ads/check`, {
+            method: 'POST', // Добавьте этот метод
             headers: {
-                'Authorization': currentUser.telegram_id.toString()
+                'Authorization': currentUser.telegram_id.toString(),
+                'Content-Type': 'application/json' // Добавьте заголовок
             }
         });
         
