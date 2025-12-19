@@ -383,72 +383,55 @@ app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
   }
 });
 
-// Удалить объявление (только автор)
+// Удалить объявление
 app.delete('/api/ads/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
     const user = req.user;
     
-    // Проверяем существование объявления
+    // Сначала проверяем, существует ли объявление и принадлежит ли оно пользователю
     const { data: ads, error: fetchError } = await supabase
       .from('ads')
       .select('*')
       .eq('id', id)
+      .eq('employer_id', user.id)
       .single();
     
     if (fetchError || !ads) {
-      return res.status(404).json({ error: 'Объявление не найдено' });
-    }
-    
-    const ad = ads;
-    
-    // Проверяем, является ли пользователь автором объявления
-    if (ad.employer_id !== user.id) {
-      return res.status(403).json({ error: 'Вы не автор этого объявления' });
-    }
-    
-    // Проверяем статус объявления - нельзя удалять если уже взято в работу
-    if (ad.status === 'taken') {
-      return res.status(400).json({ 
-        error: 'Нельзя удалить задание, которое уже взято в работу. Завершите задание или отмените его сначала.' 
+      return res.status(404).json({ 
+        error: 'Объявление не найдено или у вас нет прав для его удаления' 
       });
     }
     
-    // Удаляем связанные данные (ставки, сообщения) если они есть
-    // Сначала ставки
-    await supabase
-      .from('bids')
-      .delete()
-      .eq('ad_id', id);
-    
-    // Затем сообщения
-    await supabase
-      .from('messages')
-      .delete()
-      .eq('ad_id', id);
-    
-    // Удаляем само объявление
+    // Удаляем объявление (или меняем статус на 'deleted')
+    // Вариант 1: Полное удаление
     const { error: deleteError } = await supabase
       .from('ads')
       .delete()
       .eq('id', id);
     
-    if (deleteError) throw deleteError;
+    // Вариант 2: Мягкое удаление (меняем статус)
+    // const { error: deleteError } = await supabase
+    //   .from('ads')
+    //   .update({ status: 'deleted' })
+    //   .eq('id', id);
     
-    // Отправляем уведомление через WebSocket
-    io.emit('ad-deleted', {
-      adId: id,
-      userId: user.id
-    });
+    if (deleteError) {
+      console.error('Delete ad error:', deleteError);
+      throw deleteError;
+    }
     
     res.json({ 
-      success: true,
+      success: true, 
       message: 'Объявление успешно удалено' 
     });
     
   } catch (error) {
     console.error('Delete ad error:', error);
-    res.status(500).json({ error: 'Ошибка сервера при удалении объявления' });
+    res.status(500).json({ 
+      error: 'Ошибка при удалении объявления',
+      details: error.message 
+    });
   }
 });
 
