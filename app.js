@@ -1847,9 +1847,6 @@ function removeOldProfileElements() {
 }
 
 function updateSubscriptionUI(subscription) {
-    const profileStats = document.querySelector('.profile-stats');
-    if (!profileStats) return;
-    
     // Создаем новый элемент подписки
     const subscriptionElement = document.createElement('div');
     
@@ -1903,9 +1900,6 @@ function updateSubscriptionUI(subscription) {
             </div>
         `;
     }
-    
-    // Добавляем блок подписки перед статистикой
-    profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
 }
 
 function updateReferralUI(referralInfo) {
