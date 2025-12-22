@@ -953,16 +953,6 @@ main {
     font-size: 0.9rem;
 }
 
-.profile-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    background: var(--surface-color);
-    padding: 12px;
-    margin-bottom: 100px;
-    border-radius: var(--border-radius);
-}
-
 .stat-item {
     display: flex;
     flex-direction: column;
