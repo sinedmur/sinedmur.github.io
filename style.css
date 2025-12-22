@@ -954,11 +954,11 @@ main {
 }
 
 .profile-stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
+    display: flex;
+    justify-content: space-between;
     background: var(--surface-color);
     padding: 20px;
+    margin-bottom: 50px;
     border-radius: var(--border-radius);
 }
 
