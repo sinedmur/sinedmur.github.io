@@ -621,21 +621,19 @@ function createAdElement(ad) {
             }
         </div>
     `;
-    
-    const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
-    detailsBtn.addEventListener('click', function() {
-        const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
-        showAdDetail(adId);
-    });
-    
-    if (!isMyAd && ad.status === 'active' && !ad.auction) {
-        const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
-        acceptBtn.addEventListener('click', function() {
-            const adId = this.getAttribute('data-ad-id');
-            respondToAd(adId);
-        });
-    }
-    
+            const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
+            detailsBtn.addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id'); // Получаем как строку
+            showAdDetail(adId);
+            });
+
+            if (!isMyAd && ad.status === 'active' && !ad.auction) {
+            const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+            acceptBtn.addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Получаем как строку
+                respondToAd(adId);
+            });
+            }  
     return adElement;
 }
 
@@ -736,31 +734,29 @@ function createMyAdElement(ad) {
         </div>
     `;
     
-    adElement.querySelector('.details').addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
+        adElement.querySelector('.details').addEventListener('click', function() {
+        const adId = ad.id; // Берем ID напрямую
         showAdDetail(adId);
-    });
-    
-    if (ad.status === 'active') {
-    adElement.querySelector('.edit')?.addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
-        editAd(adId);
-    });
-    
-    adElement.querySelector('.delete')?.addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
-        deleteAd(adId);
-    });
-    }
+        });
+
+        if (ad.status === 'active') {
+        adElement.querySelector('.edit')?.addEventListener('click', function() {
+            const adId = ad.id; // Берем ID напрямую
+            editAd(adId);
+        });
+        
+        adElement.querySelector('.delete')?.addEventListener('click', function() {
+            const adId = ad.id; // Берем ID напрямую
+            deleteAd(adId);
+        });
+        }
     
     return adElement;
 }
 
 async function showAdDetail(adId) {
     try {
-        // Преобразуем ID в строку для корректной работы с UUID
-        const adIdStr = adId.toString();
-        
+        const adIdStr = adId.toString();   
         const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
@@ -926,8 +922,8 @@ async function respondToAd(adId) {
             'Отклик на задание',
             'Вы уверены, что хотите откликнуться на это задание? После отклика вы сможете обсудить детали с автором.',
             async () => {
-                // Загружаем детали задания чтобы получить контакты автора
-                const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+                    const adIdStr = adId.toString(); // Преобразуем в строку   
+                    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
                     headers: {
                         'Authorization': currentUser.telegram_id.toString()
                     }
@@ -1032,30 +1028,34 @@ async function editAd(adId) {
 // В функции deleteAd убедитесь что правильно передаете ID:
 async function deleteAd(adId) {
   try {
+    console.log('Deleting ad with ID:', adId, 'Type:', typeof adId);
+    
     showModal(
       'Удаление задания',
       'Вы уверены, что хотите удалить это задание? Это действие нельзя отменить. Все связанные ставки и сообщения также будут удалены.',
       async () => {
-        // Преобразуем ID в строку для корректной передачи
-        const adIdStr = adId.toString();
+        console.log('Sending DELETE request for ad:', adId);
         
-        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': currentUser.telegram_id.toString()
           }
         });
         
+        console.log('Response status:', response.status);
+        
         if (!response.ok) {
           const error = await response.json();
+          console.error('Delete error:', error);
           showNotification(error.error || 'Ошибка при удалении задания');
           return;
         }
         
         const data = await response.json();
+        console.log('Delete success:', data);
         showNotification(data.message || 'Задание успешно удалено');
         
-        // Обновляем список заданий
         await loadAds();
         showScreen('mainScreen');
       },
@@ -1068,15 +1068,18 @@ async function deleteAd(adId) {
   }
 }
 
+
 // ============ АУКЦИОНЫ ============
 
 async function showAuctionScreen(adId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
-            headers: {
-                'Authorization': currentUser.telegram_id.toString()
-            }
-        });
+  try {
+    const adIdStr = adId.toString(); // Преобразуем в строку
+    
+    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+      headers: {
+        'Authorization': currentUser.telegram_id.toString()
+      }
+    });
         
         if (!response.ok) throw new Error('Failed to load ad');
         
@@ -1250,15 +1253,17 @@ async function placeBid(adId, amount) {
             showNotification('Введите корректную сумму');
             return;
         }
-        
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}/bids`, {
+
+            const adIdStr = adId.toString(); // Преобразуем в строку
+            
+            const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}/bids`, {
             method: 'POST',
             headers: {
                 'Authorization': currentUser.telegram_id.toString(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ amount })
-        });
+            });
         
         if (!response.ok) {
             const error = await response.json();
@@ -1279,8 +1284,10 @@ async function placeBid(adId, amount) {
 }
 
 async function loadBidsForAd(adId) {
-    try {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}/bids`);
+  try {
+    const adIdStr = adId.toString(); // Преобразуем в строку
+    
+    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}/bids`);
         
         if (!response.ok) throw new Error('Failed to load bids');
         
@@ -1852,11 +1859,11 @@ function setupTelegramNotifications() {
 
 // Глобальные функции для использования в HTML
 window.placeBid = function(adId) {
-    const input = document.getElementById(`bidInput_${adId}`);
-    const amount = parseInt(input?.value);
-    if (amount) {
-        placeBid(adId, amount);
-    }
+  const input = document.getElementById(`bidInput_${adId}`);
+  const amount = parseInt(input?.value);
+  if (amount) {
+    placeBid(adId, amount);
+  }
 };
 
 window.showAuctionScreen = showAuctionScreen;
