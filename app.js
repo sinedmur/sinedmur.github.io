@@ -417,14 +417,7 @@ function showScreen(screenId) {
     // Обновляем кнопку назад в Telegram
     updateBackButtonForScreen(screenId);
     
-    // Скрываем навигацию на некоторых экранах
-    const bottomNav = document.getElementById('bottomNav');
-    if (screenId === 'loadingScreen' || screenId === 'createAdScreen' || 
-        screenId === 'adDetailScreen' || screenId === 'chatScreen') {
-        bottomNav.style.display = 'none';
-    } else {
-        bottomNav.style.display = 'flex';
-    }
+
 }
 
 // Константы цен
