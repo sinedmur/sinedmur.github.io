@@ -1820,9 +1820,6 @@ async function loadExtendedProfileInfo() {
     // Загружаем информацию о подписке
     const subscription = await loadSubscriptionInfo();
     
-    // Загружаем реферальную информацию
-    const referralInfo = await loadReferralInfo();
-    
     // Очищаем старые элементы перед обновлением
     removeOldProfileElements();
     
@@ -1836,12 +1833,6 @@ function removeOldProfileElements() {
     const oldSubscription = document.querySelector('.subscription-info, .subscription-offer');
     if (oldSubscription) {
         oldSubscription.remove();
-    }
-    
-    // Удаляем старую реферальную кнопку
-    const oldReferralBtn = document.getElementById('referralBtn');
-    if (oldReferralBtn) {
-        oldReferralBtn.remove();
     }
 }
 
