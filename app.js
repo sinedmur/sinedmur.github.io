@@ -1911,22 +1911,6 @@ function updateSubscriptionUI(subscription) {
 function updateReferralUI(referralInfo) {
     if (!referralInfo) return;
     
-    const profileActions = document.querySelector('.profile-actions');
-    if (!profileActions) return;
-    
-    // Создаем новую реферальную кнопку
-    const referralElement = document.createElement('button');
-    referralElement.className = 'profile-action-btn';
-    referralElement.id = 'referralBtn';
-    referralElement.innerHTML = `
-        <i class="fas fa-user-plus"></i>
-        <span>Пригласить друга</span>
-        <i class="fas fa-chevron-right"></i>
-    `;
-    
-    // Добавляем кнопку в профиль
-    profileActions.appendChild(referralElement);
-    
     // Устанавливаем обработчик событий
     referralElement.addEventListener('click', function() {
         showReferralScreen(referralInfo);
