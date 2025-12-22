@@ -4438,18 +4438,21 @@ input:checked + .slider:before {
 
 /* Стили для реферальной системы */
 .referral-screen {
-    padding: 20px;
+    padding: 10px;
 }
 
 .referral-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
 
 .referral-stats {
     display: flex;
     justify-content: space-around;
-    margin: 30px 0;
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--secondary-bg-color);
+    border-radius: 10px;
 }
 
 .referral-stats .stat-item {
@@ -4458,44 +4461,39 @@ input:checked + .slider:before {
 
 .referral-stats .stat-value {
     font-size: 2rem;
-    font-weight: bold;
-    color: #007bff;
+    font-weight: 600;
+    color: var(--primary-color);
+    line-height: 1;
 }
 
 .referral-stats .stat-label {
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--secondary-text-color);
+    margin-top: 5px;
 }
 
 .referral-code, .referral-link {
-    background-color: #f8f9fa;
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--card-bg-color);
     border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    text-align: center;
+    border: 1px solid var(--border-color);
 }
 
 .code-display, .link-display {
-    background: white;
-    border: 2px dashed #ddd;
-    border-radius: 5px;
-    padding: 15px;
-    margin: 15px 0;
     font-family: monospace;
+    padding: 10px;
+    background: var(--secondary-bg-color);
+    border-radius: 5px;
+    margin: 10px 0;
     word-break: break-all;
-    font-size: 1.1rem;
-}
-
-.referral-benefits {
-    background-color: #e8f5e9;
-    border-radius: 10px;
-    padding: 20px;
-    margin-top: 20px;
+    font-size: 0.9rem;
 }
 
 .referral-benefits ul {
     list-style: none;
     padding: 0;
+    margin: 20px 0;
 }
 
 .referral-benefits li {
@@ -4504,7 +4502,7 @@ input:checked + .slider:before {
     align-items: flex-start;
 }
 
-.referral-benefits i {
+.referral-benefits li i {
     margin-right: 10px;
     margin-top: 3px;
 }
