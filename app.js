@@ -1828,7 +1828,6 @@ async function loadExtendedProfileInfo() {
     
     // Обновляем UI
     updateSubscriptionUI(subscription);
-    updateReferralUI(referralInfo);
 }
 
 // Новая функция для очистки старых элементов
@@ -1906,15 +1905,6 @@ function updateSubscriptionUI(subscription) {
     
     // Добавляем блок подписки перед статистикой
     profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
-}
-
-function updateReferralUI(referralInfo) {
-    if (!referralInfo) return;
-    
-    // Устанавливаем обработчик событий
-    referralElement.addEventListener('click', function() {
-        showReferralScreen(referralInfo);
-    });
 }
 
 // Экран реферальной системы
@@ -2226,6 +2216,10 @@ function setupEventListeners() {
         });
     });
     
+        document.getElementById('referralBtn').addEventListener('click', function() {
+        showReferralScreen('referralInfo');
+    });
+
     // Кнопка создания в навигации
     document.getElementById('createNavBtn').addEventListener('click', function() {
         showScreen('createAdScreen');
