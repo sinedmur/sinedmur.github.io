@@ -1268,10 +1268,10 @@ main {
     }
     
     .ad-card, .stat-card, .payment-info, 
-    .subscription-offer, .ad-detail-container,
+    .ad-detail-container,
     .payment-container, .profile-action-btn,
     .subscription-section {
-        background-color: #2d2d2d;
+        background-color: var(--surface-color);
         color: #e0e0e0;
     }
     
