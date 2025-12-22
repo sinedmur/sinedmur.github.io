@@ -1826,21 +1826,41 @@ async function loadExtendedProfileInfo() {
     // Загружаем реферальную информацию
     const referralInfo = await loadReferralInfo();
     
+    // Очищаем старые элементы перед обновлением
+    removeOldProfileElements();
+    
     // Обновляем UI
     updateSubscriptionUI(subscription);
     updateReferralUI(referralInfo);
 }
 
+// Новая функция для очистки старых элементов
+function removeOldProfileElements() {
+    // Удаляем старый блок подписки
+    const oldSubscription = document.querySelector('.subscription-info, .subscription-offer');
+    if (oldSubscription) {
+        oldSubscription.remove();
+    }
+    
+    // Удаляем старую реферальную кнопку
+    const oldReferralBtn = document.getElementById('referralBtn');
+    if (oldReferralBtn) {
+        oldReferralBtn.remove();
+    }
+}
+
 function updateSubscriptionUI(subscription) {
     const profileStats = document.querySelector('.profile-stats');
+    if (!profileStats) return;
+    
+    // Создаем новый элемент подписки
+    const subscriptionElement = document.createElement('div');
     
     if (subscription) {
         const endDate = new Date(subscription.ends_at);
         const now = new Date();
         const daysLeft = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
         
-        // Добавляем информацию о подписке
-        const subscriptionElement = document.createElement('div');
         subscriptionElement.className = 'subscription-info';
         subscriptionElement.innerHTML = `
             <h3>Активная подписка</h3>
@@ -1850,11 +1870,7 @@ function updateSubscriptionUI(subscription) {
                 <div class="subscription-end">Действует до: ${endDate.toLocaleDateString('ru-RU')}</div>
             </div>
         `;
-        
-        profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
     } else {
-        // Показываем кнопку покупки подписки
-        const subscriptionElement = document.createElement('div');
         subscriptionElement.className = 'subscription-offer';
         subscriptionElement.innerHTML = `
             <h3>Подписка на публикации</h3>
@@ -1889,17 +1905,19 @@ function updateSubscriptionUI(subscription) {
                 </div>
             </div>
         `;
-        
-        profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
     }
+    
+    // Добавляем блок подписки перед статистикой
+    profileStats.parentNode.insertBefore(subscriptionElement, profileStats);
 }
 
 function updateReferralUI(referralInfo) {
     if (!referralInfo) return;
     
-    // Добавляем реферальную информацию в профиль
     const profileActions = document.querySelector('.profile-actions');
+    if (!profileActions) return;
     
+    // Создаем новую реферальную кнопку
     const referralElement = document.createElement('button');
     referralElement.className = 'profile-action-btn';
     referralElement.id = 'referralBtn';
@@ -1909,10 +1927,11 @@ function updateReferralUI(referralInfo) {
         <i class="fas fa-chevron-right"></i>
     `;
     
+    // Добавляем кнопку в профиль
     profileActions.appendChild(referralElement);
     
-    // Обработчик для реферальной системы
-    document.getElementById('referralBtn').addEventListener('click', function() {
+    // Устанавливаем обработчик событий
+    referralElement.addEventListener('click', function() {
         showReferralScreen(referralInfo);
     });
 }
