@@ -273,6 +273,7 @@ async function initUserFromTelegram() {
         if (response.ok) {
             const data = await response.json();
             currentUser = data.user;
+            updateFreeAdsCounter();
             console.log('User loaded from server:', currentUser);
             isUserInitialized = true;
         } else {
@@ -1107,12 +1108,24 @@ async function publishAd() {
         
         // Обновляем данные
         showScreen('mainScreen');
+        
+        await initUserFromTelegram(); // 🔥 получаем новое значение
+        updateFreeAdsCounter();
         await loadAds();
         await updateProfileStats();
         
     } catch (error) {
         console.error('Error publishing ad:', error);
         showNotification('Ошибка при создании задания: ' + error.message);
+    }
+}
+
+function updateFreeAdsCounter() {
+    if (!currentUser) return;
+
+    const el = document.getElementById('freeAdsCount');
+    if (el) {
+        el.textContent = currentUser.free_ads_available ?? 0;
     }
 }
 
