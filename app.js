@@ -629,8 +629,8 @@ function createAdElement(ad) {
     
     const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
     detailsBtn.addEventListener('click', function() {
-        const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
-        showAdDetail(adId);
+    const adId = ad.id; // Используем реальный ID из объекта ad
+    showAdDetail(adId);
     });
     
     if (!isMyAd && ad.status === 'active' && !ad.auction) {
@@ -739,8 +739,8 @@ function createMyAdElement(ad) {
     `;
     
     adElement.querySelector('.details').addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
-        showAdDetail(adId);
+    const adId = ad.id; // Используем реальный ID
+    showAdDetail(adId);
     });
     
     if (ad.status === 'active') {
@@ -754,35 +754,59 @@ function createMyAdElement(ad) {
 }
 
 async function showAdDetail(adId) {
-    try {
-        // Преобразуем ID в строку для корректной работы с UUID
-        const adIdStr = adId.toString();
-        
-        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-            headers: {
-                'Authorization': currentUser.telegram_id.toString()
-            }
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}));
-            console.error('Failed to load ad details:', errorData);
-            throw new Error(errorData.error || 'Failed to load ad details');
-        }
-        
-        const data = await response.json();
-        const ad = data.ad;
-        
-        if (!ad) {
-            showNotification('Задание не найдено');
-            return;
-        }
-        
-        displayAdDetail(ad);
-    } catch (error) {
-        console.error('Error loading ad details:', error);
-        showNotification('Ошибка при загрузке задания: ' + error.message);
+  try {
+    // Преобразуем ID в строку для корректной работы
+    const adIdStr = adId.toString();
+    
+    console.log('Loading ad details for ID:', adIdStr);
+    
+    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+      headers: {
+        'Authorization': currentUser.telegram_id.toString()
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Failed to load ad details:', errorData);
+      
+      // Пробуем найти объявление в локальном кэше
+      const localAd = ads.find(a => a.id === adId || a.id.toString() === adIdStr);
+      if (localAd) {
+        console.log('Found ad in local cache:', localAd);
+        displayAdDetail(localAd);
+        return;
+      }
+      
+      throw new Error(errorData.error || 'Failed to load ad details');
     }
+    
+    const data = await response.json();
+    const ad = data.ad;
+    
+    if (!ad) {
+      showNotification('Задание не найдено');
+      return;
+    }
+    
+    displayAdDetail(ad);
+  } catch (error) {
+    console.error('Error loading ad details:', error);
+    showNotification(`Ошибка при загрузке задания: ${error.message}`);
+    
+    // Показываем экран ошибки
+    document.getElementById('adDetailContainer').innerHTML = `
+      <div class="error-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Ошибка загрузки</h3>
+        <p>${error.message}</p>
+        <button onclick="showScreen('mainScreen')" class="btn-primary">
+          Вернуться к списку
+        </button>
+      </div>
+    `;
+    showScreen('adDetailScreen');
+  }
 }
 
 function displayAdDetail(ad) {
@@ -1028,42 +1052,90 @@ async function editAd(adId) {
 // Удалить объявление
 async function deleteAd(adId) {
   try {
+    // Преобразуем ID в строку для избежания проблем с типами
+    const adIdStr = adId.toString();
+    
+    console.log('Attempting to delete ad:', {
+      adId: adIdStr,
+      userId: currentUser?.id,
+      userName: currentUser?.first_name
+    });
+    
+    // Сначала загрузим детали объявления для проверки
+    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+      headers: {
+        'Authorization': currentUser.telegram_id.toString()
+      }
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Не удалось загрузить данные объявления');
+    }
+    
+    const data = await response.json();
+    const ad = data.ad;
+    
+    if (!ad) {
+      showNotification('Объявление не найдено');
+      return;
+    }
+    
+    // Проверяем, является ли пользователь автором
+    if (ad.employer_id !== currentUser.id) {
+      showNotification('Вы не являетесь автором этого объявления');
+      return;
+    }
+    
+    // Проверяем статус
+    if (ad.status === 'taken' || ad.status === 'completed') {
+      showNotification(`Нельзя удалить задание со статусом "${getStatusText(ad.status)}"`);
+      return;
+    }
+    
     showModal(
       'Удаление задания',
-      'Вы уверены, что хотите удалить это задание? Это действие невозможно отменить. Все связанные ставки и сообщения также будут удалены.',
+      `Вы уверены, что хотите удалить задание "${ad.title}"?`,
       async () => {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': currentUser.telegram_id.toString()
+        try {
+          const deleteResponse = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': currentUser.telegram_id.toString()
+            }
+          });
+          
+          const result = await deleteResponse.json();
+          
+          if (!deleteResponse.ok) {
+            console.error('Delete API error:', result);
+            throw new Error(result.error || `Ошибка ${deleteResponse.status}`);
           }
-        });
-        
-        if (!response.ok) {
-          const error = await response.json();
-          showNotification(error.error || 'Ошибка при удалении задания');
-          return;
-        }
-        
-        const data = await response.json();
-        showNotification(data.message || 'Задание успешно удалено');
-        
-        // Обновляем данные
-        if (currentScreen === 'mainScreen') {
+          
+          showNotification(result.message || 'Задание успешно удалено');
+          
+          // Обновляем интерфейс
           await loadAds();
+          
+          // Если мы на экране моих заданий, обновляем и его
+          if (currentScreen === 'myAdsScreen') {
+            await loadMyAds('active');
+          }
+          
           showScreen('mainScreen');
-        } else if (currentScreen === 'myAdsScreen') {
-          await loadMyAds('active');
-          showScreen('myAdsScreen');
-        } else {
-          showScreen('mainScreen');
-          await loadAds();
+          
+        } catch (deleteError) {
+          console.error('Delete error:', deleteError);
+          showNotification(`Ошибка удаления: ${deleteError.message}`);
         }
-      }
+      },
+      'Удалить',
+      'danger' // Добавим параметр для красной кнопки
     );
+    
   } catch (error) {
-    console.error('Error deleting ad:', error);
-    showNotification('Ошибка при удалении задания');
+    console.error('Error in closeAd:', error);
+    showNotification(`Ошибка: ${error.message}`);
   }
 }
 
