@@ -1,4 +1,4 @@
-// app.js - все объявления бесплатные
+// app.js - упрощенная версия без ролей и баланса
 
 // Инициализация Telegram Web App
 const tg = window.Telegram.WebApp;
@@ -366,20 +366,7 @@ function initWebSocket() {
             message: `Пользователь ${data.userName} сделал ставку ${data.bid.amount} ₽`
         });
     });
-
-    socket.on('ad-deleted', (data) => {
-    if (currentChat && currentChat.adId === data.adId) {
-        showNotification('Задание было удалено автором');
-        showScreen('mainScreen');
-        }
-
-    addNotification({
-        type: 'system',
-        title: 'Задание удалено',
-        message: 'Автор удалил одно из заданий'
-        });
-    });
-
+    
     socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
     });
@@ -621,19 +608,21 @@ function createAdElement(ad) {
             }
         </div>
     `;
-            const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
-            detailsBtn.addEventListener('click', function() {
-            const adId = this.getAttribute('data-ad-id'); // Получаем как строку
-            showAdDetail(adId);
-            });
-
-            if (!isMyAd && ad.status === 'active' && !ad.auction) {
-            const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
-            acceptBtn.addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Получаем как строку
-                respondToAd(adId);
-            });
-            }  
+    
+    const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
+    detailsBtn.addEventListener('click', function() {
+        const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
+        showAdDetail(adId);
+    });
+    
+    if (!isMyAd && ad.status === 'active' && !ad.auction) {
+        const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+        acceptBtn.addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            respondToAd(adId); // Нужно будет также обновить эту функцию
+        });
+    }
+    
     return adElement;
 }
 
@@ -724,39 +713,33 @@ function createMyAdElement(ad) {
                 <i class="fas fa-map-marker-alt"></i>
                 <span>${ad.location}</span>
             </div>
-        <div class="my-ad-actions">
-        <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
-        ${ad.status === 'active' ? `
-            <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>
-            <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">Удалить</button>
-        ` : ''}
-        </div>
+            <div class="my-ad-actions">
+                <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
+                ${ad.status === 'active' ? `<button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>` : ''}
+            </div>
         </div>
     `;
     
-        adElement.querySelector('.details').addEventListener('click', function() {
-        const adId = ad.id; // Берем ID напрямую
+    adElement.querySelector('.details').addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
         showAdDetail(adId);
-        });
-
-        if (ad.status === 'active') {
+    });
+    
+    if (ad.status === 'active') {
         adElement.querySelector('.edit')?.addEventListener('click', function() {
-            const adId = ad.id; // Берем ID напрямую
+            const adId = parseInt(this.getAttribute('data-ad-id'));
             editAd(adId);
         });
-        
-        adElement.querySelector('.delete')?.addEventListener('click', function() {
-            const adId = ad.id; // Берем ID напрямую
-            deleteAd(adId);
-        });
-        }
+    }
     
     return adElement;
 }
 
 async function showAdDetail(adId) {
     try {
-        const adIdStr = adId.toString();   
+        // Преобразуем ID в строку для корректной работы с UUID
+        const adIdStr = adId.toString();
+        
         const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
@@ -867,12 +850,12 @@ function displayAdDetail(ad) {
             ` : ''}
             
             ${isMyAd && ad.status === 'active' ? `
-            <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
-                <i class="fas fa-edit"></i> Редактировать
-            </button>
-            <button id="deleteAdBtn" class="btn-danger" data-ad-id="${ad.id}">
-                <i class="fas fa-trash"></i> Удалить
-            </button>
+                <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
+                    <i class="fas fa-edit"></i> Редактировать
+                </button>
+                <button id="closeAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
+                    <i class="fas fa-times"></i> Закрыть
+                </button>
             ` : ''}
         </div>
     `;
@@ -900,19 +883,18 @@ function displayAdDetail(ad) {
         });
     }
     
-        if (isMyAd && ad.status === 'active') {
+    if (isMyAd && ad.status === 'active') {
         document.getElementById('editAdBtn').addEventListener('click', function() {
-            // Получаем ID как число
-            const adId = parseInt(ad.id);
+            const adId = parseInt(this.getAttribute('data-ad-id'));
             editAd(adId);
         });
         
-        document.getElementById('deleteAdBtn').addEventListener('click', function() {
-            // Получаем ID как число
-            const adId = parseInt(ad.id);
-            deleteAd(adId);
+        document.getElementById('closeAdBtn').addEventListener('click', function() {
+            const adId = parseInt(this.getAttribute('data-ad-id'));
+            closeAd(adId);
         });
-        }
+    }
+    
     showScreen('adDetailScreen');
 }
 
@@ -922,8 +904,8 @@ async function respondToAd(adId) {
             'Отклик на задание',
             'Вы уверены, что хотите откликнуться на это задание? После отклика вы сможете обсудить детали с автором.',
             async () => {
-                    const adIdStr = adId.toString(); // Преобразуем в строку   
-                    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+                // Загружаем детали задания чтобы получить контакты автора
+                const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
                     headers: {
                         'Authorization': currentUser.telegram_id.toString()
                     }
@@ -1025,61 +1007,33 @@ async function editAd(adId) {
     showNotification('Редактирование задания (в разработке)');
 }
 
-// В функции deleteAd убедитесь что правильно передаете ID:
-async function deleteAd(adId) {
-  try {
-    console.log('Deleting ad with ID:', adId, 'Type:', typeof adId);
-    
-    showModal(
-      'Удаление задания',
-      'Вы уверены, что хотите удалить это задание? Это действие нельзя отменить. Все связанные ставки и сообщения также будут удалены.',
-      async () => {
-        console.log('Sending DELETE request for ad:', adId);
-        
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': currentUser.telegram_id.toString()
-          }
-        });
-        
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-          const error = await response.json();
-          console.error('Delete error:', error);
-          showNotification(error.error || 'Ошибка при удалении задания');
-          return;
-        }
-        
-        const data = await response.json();
-        console.log('Delete success:', data);
-        showNotification(data.message || 'Задание успешно удалено');
-        
-        await loadAds();
-        showScreen('mainScreen');
-      },
-      'Удалить',
-      'danger'
-    );
-  } catch (error) {
-    console.error('Error deleting ad:', error);
-    showNotification('Ошибка при удалении задания');
-  }
+async function closeAd(adId) {
+    try {
+        showModal(
+            'Закрытие задания',
+            'Вы уверены, что хотите закрыть это задание? После закрытия новые отклики не будут приниматься.',
+            async () => {
+                // Здесь должен быть API для закрытия задания
+                showNotification('Задание закрыто');
+                await loadAds();
+                showScreen('mainScreen');
+            }
+        );
+    } catch (error) {
+        console.error('Error closing ad:', error);
+        showNotification('Ошибка при закрытии задания');
+    }
 }
-
 
 // ============ АУКЦИОНЫ ============
 
 async function showAuctionScreen(adId) {
-  try {
-    const adIdStr = adId.toString(); // Преобразуем в строку
-    
-    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-      headers: {
-        'Authorization': currentUser.telegram_id.toString()
-      }
-    });
+    try {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
         
         if (!response.ok) throw new Error('Failed to load ad');
         
@@ -1253,17 +1207,15 @@ async function placeBid(adId, amount) {
             showNotification('Введите корректную сумму');
             return;
         }
-
-            const adIdStr = adId.toString(); // Преобразуем в строку
-            
-            const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}/bids`, {
+        
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}/bids`, {
             method: 'POST',
             headers: {
                 'Authorization': currentUser.telegram_id.toString(),
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ amount })
-            });
+        });
         
         if (!response.ok) {
             const error = await response.json();
@@ -1283,11 +1235,11 @@ async function placeBid(adId, amount) {
     }
 }
 
+
+
 async function loadBidsForAd(adId) {
-  try {
-    const adIdStr = adId.toString(); // Преобразуем в строку
-    
-    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}/bids`);
+    try {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}/bids`);
         
         if (!response.ok) throw new Error('Failed to load bids');
         
@@ -1641,40 +1593,36 @@ function getStatusText(status) {
 
 // ============ МОДАЛЬНЫЕ ОКНА ============
 
-function showModal(title, message, confirmCallback, confirmText = 'Подтвердить', confirmStyle = 'primary') {
-  const modal = document.getElementById('modal');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalBody = document.getElementById('modalBody');
-  const modalCancelBtn = document.getElementById('modalCancelBtn');
-  const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  
-  modalTitle.textContent = title;
-  modalBody.innerHTML = `<p>${message}</p>`;
-  
-  // Настраиваем кнопку подтверждения
-  modalConfirmBtn.textContent = confirmText;
-  modalConfirmBtn.className = `btn-${confirmStyle}`;
-  
-  modal.classList.add('active');
-  
-  const closeModal = () => {
-    modal.classList.remove('active');
-  };
-  
-  modalCancelBtn.onclick = closeModal;
-  closeModalBtn.onclick = closeModal;
-  
-  modalConfirmBtn.onclick = () => {
-    confirmCallback();
-    closeModal();
-  };
-  
-  modal.onclick = (e) => {
-    if (e.target === modal) {
-      closeModal();
-    }
-  };
+function showModal(title, message, confirmCallback) {
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    
+    modalTitle.textContent = title;
+    modalBody.innerHTML = `<p>${message}</p>`;
+    
+    modal.classList.add('active');
+    
+    const closeModal = () => {
+        modal.classList.remove('active');
+    };
+    
+    modalCancelBtn.onclick = closeModal;
+    closeModalBtn.onclick = closeModal;
+    
+    modalConfirmBtn.onclick = () => {
+        confirmCallback();
+        closeModal();
+    };
+    
+    modal.onclick = (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    };
 }
 
 // ============ ОБРАБОТЧИКИ СОБЫТИЙ ============
@@ -1859,11 +1807,11 @@ function setupTelegramNotifications() {
 
 // Глобальные функции для использования в HTML
 window.placeBid = function(adId) {
-  const input = document.getElementById(`bidInput_${adId}`);
-  const amount = parseInt(input?.value);
-  if (amount) {
-    placeBid(adId, amount);
-  }
+    const input = document.getElementById(`bidInput_${adId}`);
+    const amount = parseInt(input?.value);
+    if (amount) {
+        placeBid(adId, amount);
+    }
 };
 
 window.showAuctionScreen = showAuctionScreen;
@@ -1945,6 +1893,7 @@ function handleTelegramBackButton() {
     }
 }
 
+
 // Инициализация при загрузке
 async function initApp() {
     await initUserFromTelegram();
@@ -1956,3 +1905,12 @@ async function initApp() {
         updateProfileStats();
     }
 }
+
+// if (document.readyState === 'loading') {
+//     document.addEventListener('DOMContentLoaded', function() {
+//         // Экран загрузки уже показан в основном обработчике
+//     });
+// } else {
+//     // Если DOM уже загружен, запускаем загрузку
+//     startLoading();
+// }
