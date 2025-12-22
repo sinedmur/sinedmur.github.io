@@ -23,6 +23,7 @@ const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Простой аутентификационный middleware
+// Обновите middleware authenticate
 const authenticate = async (req, res, next) => {
   const telegramId = req.headers.authorization;
   
@@ -151,7 +152,7 @@ app.get('/api/user', authenticate, async (req, res) => {
   }
 });
 
-// Получить объявления
+// Получить объявления - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.get('/api/ads', async (req, res) => {
   try {
     const { category, status, type, user_id } = req.query;
@@ -218,7 +219,7 @@ app.get('/api/ads', async (req, res) => {
   }
 });
 
-// Получить конкретное объявление
+// Получить конкретное объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.get('/api/ads/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -253,7 +254,7 @@ app.get('/api/ads/:id', async (req, res) => {
   }
 });
 
-// Создать объявление
+// Создать объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ
 app.post('/api/ads', authenticate, async (req, res) => {
   try {
     const { title, description, category, price, location, contacts, auction, auction_hours } = req.body;
@@ -300,6 +301,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 // Сделать ставку
 app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
@@ -400,99 +402,6 @@ app.get('/api/ads/:id/bids', async (req, res) => {
   } catch (error) {
     console.error('Get bids error:', error);
     res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Удалить объявление
-app.delete('/api/ads/:id', authenticate, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = req.user;
-    
-    console.log(`DELETE request: ad=${id}, user=${user.id}, telegram=${user.telegram_id}`);
-    
-    // Сначала просто проверяем существование объявления
-    const { data: ad, error: fetchError } = await supabase
-      .from('ads')
-      .select('id, employer_id')
-      .eq('id', id);
-    
-    console.log('Ad fetch result:', { ad, fetchError });
-    
-    if (fetchError) {
-      console.error('Fetch ad error:', fetchError);
-      return res.status(500).json({ error: 'Ошибка при проверке объявления' });
-    }
-    
-    if (!ad || ad.length === 0) {
-      console.log('Ad not found');
-      return res.status(404).json({ error: 'Объявление не найдено' });
-    }
-    
-    // Проверяем владельца
-    if (ad[0].employer_id !== user.id) {
-      console.log('User is not owner. Ad owner:', ad[0].employer_id, 'Current user:', user.id);
-      return res.status(403).json({ error: 'Вы не являетесь владельцем этого объявления' });
-    }
-    
-    console.log('Starting deletion process...');
-    
-    // Удаляем связанные данные
-    try {
-      // Удаляем ставки
-      const { error: bidsError } = await supabase
-        .from('bids')
-        .delete()
-        .eq('ad_id', id);
-      
-      if (bidsError) {
-        console.warn('Bids deletion warning:', bidsError.message);
-      } else {
-        console.log('Bids deleted');
-      }
-      
-      // Удаляем сообщения
-      const { error: messagesError } = await supabase
-        .from('messages')
-        .delete()
-        .eq('ad_id', id);
-      
-      if (messagesError) {
-        console.warn('Messages deletion warning:', messagesError.message);
-      } else {
-        console.log('Messages deleted');
-      }
-    } catch (relationError) {
-      console.warn('Error deleting relations, continuing:', relationError.message);
-    }
-    
-    // Удаляем само объявление
-    const { error: deleteError } = await supabase
-      .from('ads')
-      .delete()
-      .eq('id', id);
-    
-    if (deleteError) {
-      console.error('Delete ad error:', deleteError);
-      return res.status(500).json({ error: 'Ошибка при удалении объявления' });
-    }
-    
-    console.log('Ad successfully deleted');
-    
-    // Отправляем уведомление через WebSocket
-    io.emit('ad-deleted', {
-      adId: id,
-      userId: user.id
-    });
-    
-    res.json({ 
-      success: true,
-      message: 'Объявление успешно удалено' 
-    });
-    
-  } catch (error) {
-    console.error('Unexpected delete error:', error);
-    res.status(500).json({ error: 'Ошибка при удалении объявления' });
   }
 });
 
