@@ -4525,9 +4525,8 @@ input:checked + .slider:before {
 .free-ads-indicator {
     background-color: var(--surface-color);
     border: 1px solid var(--surface-color);
-    padding: 10px;
+    padding: 24px;
     border-radius: 5px;
-    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
