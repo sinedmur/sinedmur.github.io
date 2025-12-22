@@ -3427,11 +3427,7 @@ input:checked + .slider:before {
         gap: 15px;
     }
     
-    .profile-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-        padding: 16px;
-    }
+
     
     /* Чат */
     .chat-container {
