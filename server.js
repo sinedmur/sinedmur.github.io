@@ -403,6 +403,62 @@ app.get('/api/ads/:id/bids', async (req, res) => {
   }
 });
 
+// Удалить объявление
+app.delete('/api/ads/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+    
+    // Проверяем, что объявление принадлежит пользователю
+    const { data: ads, error: fetchError } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('id', id)
+      .eq('employer_id', user.id)
+      .single();
+    
+    if (fetchError || !ads) {
+      return res.status(404).json({ error: 'Объявление не найдено или вы не являетесь его владельцем' });
+    }
+    
+    // Удаляем связанные данные в правильном порядке
+    // 1. Удаляем ставки (если есть)
+    await supabase
+      .from('bids')
+      .delete()
+      .eq('ad_id', id);
+    
+    // 2. Удаляем сообщения (если есть)
+    await supabase
+      .from('messages')
+      .delete()
+      .eq('ad_id', id);
+    
+    // 3. Удаляем само объявление
+    const { error: deleteError } = await supabase
+      .from('ads')
+      .delete()
+      .eq('id', id);
+    
+    if (deleteError) throw deleteError;
+    
+    // Отправляем уведомление через WebSocket
+    io.emit('ad-deleted', {
+      adId: id,
+      userId: user.id
+    });
+    
+    res.json({ 
+      success: true,
+      message: 'Объявление успешно удалено' 
+    });
+    
+  } catch (error) {
+    console.error('Delete ad error:', error);
+    res.status(500).json({ error: 'Ошибка при удалении объявления' });
+  }
+});
+
 // Получить сообщения
 app.get('/api/messages', authenticate, async (req, res) => {
   try {
