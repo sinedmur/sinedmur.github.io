@@ -904,18 +904,19 @@ function displayAdDetail(ad) {
         });
     }
     
-    if (isMyAd && ad.status === 'active') {
-    document.getElementById('editAdBtn').addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
-        editAd(adId);
-    });
-    
-    document.getElementById('deleteAdBtn').addEventListener('click', function() {
-        const adId = parseInt(this.getAttribute('data-ad-id'));
-        deleteAd(adId);
-    });
-    }
-    
+        if (isMyAd && ad.status === 'active') {
+        document.getElementById('editAdBtn').addEventListener('click', function() {
+            // Получаем ID как число
+            const adId = parseInt(ad.id);
+            editAd(adId);
+        });
+        
+        document.getElementById('deleteAdBtn').addEventListener('click', function() {
+            // Получаем ID как число
+            const adId = parseInt(ad.id);
+            deleteAd(adId);
+        });
+        }
     showScreen('adDetailScreen');
 }
 
@@ -1028,13 +1029,17 @@ async function editAd(adId) {
     showNotification('Редактирование задания (в разработке)');
 }
 
+// В функции deleteAd убедитесь что правильно передаете ID:
 async function deleteAd(adId) {
   try {
     showModal(
       'Удаление задания',
       'Вы уверены, что хотите удалить это задание? Это действие нельзя отменить. Все связанные ставки и сообщения также будут удалены.',
       async () => {
-        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+        // Преобразуем ID в строку для корректной передачи
+        const adIdStr = adId.toString();
+        
+        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
           method: 'DELETE',
           headers: {
             'Authorization': currentUser.telegram_id.toString()
