@@ -4523,12 +4523,11 @@ input:checked + .slider:before {
 
 /* Индикатор бесплатных публикаций в карточке создания */
 .free-ads-indicator {
-    background-color: #d4edda;
-    border: 1px solid #c3e6cb;
-    color: #155724;
+    background-color: var(--surface-color);
+    border: 1px solid var(--surface-color);
     padding: 10px;
     border-radius: 5px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
