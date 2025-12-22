@@ -2207,9 +2207,7 @@ function setupEventListeners() {
         });
     });
     
-        document.getElementById('referralBtn').addEventListener('click', function() {
-        showReferralScreen('referralInfo');
-    });
+    document.getElementById('referralBtn').addEventListener('click', showReferralScreen);
 
     // Кнопка создания в навигации
     document.getElementById('createNavBtn').addEventListener('click', function() {
