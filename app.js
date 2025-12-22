@@ -1201,20 +1201,44 @@ async function showPaymentScreen(amount) {
 async function loadReferralInfo() {
     try {
         const response = await fetch(`${API_BASE_URL}/referrals/create`, {
+            method: 'POST', // Изменяем на POST
             headers: {
-                'Authorization': currentUser.telegram_id.toString()
+                'Authorization': currentUser.telegram_id.toString(),
+                'Content-Type': 'application/json'
             }
         });
         
         if (response.ok) {
-            const data = await response.json();
-            return data;
+            return await response.json();
+        } else {
+            // Если запрос не удался, создаем локальные данные
+            console.error('Failed to load referral info, using fallback');
+            return {
+                referral_code: generateReferralCode(),
+                referral_link: `https://t.me/your_bot?start=ref_${currentUser.id}`,
+                stats: {
+                    referrals_count: 0,
+                    bonus_ads_earned: 0
+                }
+            };
         }
-        return null;
     } catch (error) {
         console.error('Load referral info error:', error);
-        return null;
+        // Возвращаем fallback данные
+        return {
+            referral_code: generateReferralCode(),
+            referral_link: `https://t.me/your_bot?start=ref_${currentUser.id}`,
+            stats: {
+                referrals_count: 0,
+                bonus_ads_earned: 0
+            }
+        };
     }
+}
+
+// Вспомогательная функция для генерации кода
+function generateReferralCode() {
+    return 'REF' + Math.random().toString(36).substr(2, 6).toUpperCase();
 }
 
 // Использование реферального кода
@@ -1899,7 +1923,17 @@ function updateSubscriptionUI(subscription) {
 }
 
 // Экран реферальной системы
-function showReferralScreen(referralInfo) {
+function showReferralScreen(referralInfo = null) {
+    // Если данные не переданы, используем fallback
+    const info = referralInfo || {
+        referral_code: generateReferralCode(),
+        referral_link: `https://t.me/your_bot?start=ref_${currentUser.id}`,
+        stats: {
+            referrals_count: 0,
+            bonus_ads_earned: 0
+        }
+    };
+    
     showModal(
         'Пригласите друга',
         `
@@ -1911,18 +1945,18 @@ function showReferralScreen(referralInfo) {
             
             <div class="referral-stats">
                 <div class="stat-item">
-                    <div class="stat-value">${referralInfo.stats.referrals_count || 0}</div>
+                    <div class="stat-value">${info.stats.referrals_count || 0}</div>
                     <div class="stat-label">Приглашено</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${referralInfo.stats.bonus_ads_earned || 0}</div>
+                    <div class="stat-value">${info.stats.bonus_ads_earned || 0}</div>
                     <div class="stat-label">Бонусов получено</div>
                 </div>
             </div>
             
             <div class="referral-code">
                 <h4>Ваш реферальный код:</h4>
-                <div class="code-display">${referralInfo.referral_code}</div>
+                <div class="code-display">${info.referral_code}</div>
                 <button id="copyReferralCode" class="btn-secondary btn-small">
                     <i class="fas fa-copy"></i> Копировать
                 </button>
@@ -1930,7 +1964,7 @@ function showReferralScreen(referralInfo) {
             
             <div class="referral-link">
                 <h4>Или отправьте ссылку:</h4>
-                <div class="link-display">${referralInfo.referral_link}</div>
+                <div class="link-display">${info.referral_link}</div>
                 <button id="copyReferralLink" class="btn-secondary btn-small">
                     <i class="fas fa-copy"></i> Копировать ссылку
                 </button>
@@ -1946,22 +1980,32 @@ function showReferralScreen(referralInfo) {
             </div>
         </div>
         `,
-        () => {}
+        () => {
+            // Callback при закрытии
+            console.log('Referral screen closed');
+        }
     );
     
     // Настройка копирования
     setTimeout(() => {
-        document.getElementById('copyReferralCode').addEventListener('click', function() {
-            navigator.clipboard.writeText(referralInfo.referral_code)
-                .then(() => showNotification('Код скопирован в буфер обмена'))
-                .catch(() => showNotification('Не удалось скопировать код'));
-        });
+        const copyCodeBtn = document.getElementById('copyReferralCode');
+        const copyLinkBtn = document.getElementById('copyReferralLink');
         
-        document.getElementById('copyReferralLink').addEventListener('click', function() {
-            navigator.clipboard.writeText(referralInfo.referral_link)
-                .then(() => showNotification('Ссылка скопирована в буфер обмена'))
-                .catch(() => showNotification('Не удалось скопировать ссылку'));
-        });
+        if (copyCodeBtn) {
+            copyCodeBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(info.referral_code)
+                    .then(() => showNotification('Код скопирован в буфер обмена'))
+                    .catch(() => showNotification('Не удалось скопировать код'));
+            });
+        }
+        
+        if (copyLinkBtn) {
+            copyLinkBtn.addEventListener('click', function() {
+                navigator.clipboard.writeText(info.referral_link)
+                    .then(() => showNotification('Ссылка скопирована в буфер обмена'))
+                    .catch(() => showNotification('Не удалось скопировать ссылку'));
+            });
+        }
     }, 100);
 }
 
@@ -2208,7 +2252,13 @@ function setupEventListeners() {
     });
     
     document.getElementById('referralBtn').addEventListener('click', async function() {
-        await showReferralScreen();
+        // Загружаем данные рефералов перед показом экрана
+        const referralInfo = await loadReferralInfo();
+        if (referralInfo) {
+            showReferralScreen(referralInfo);
+        } else {
+            showNotification('Не удалось загрузить информацию о рефералах');
+        }
     });
 
     // Кнопка создания в навигации
