@@ -644,116 +644,59 @@ app.post('/api/ads/check', authenticate, async (req, res) => {
 
 // Создание объявления с оплатой/проверкой
 app.post('/api/ads', authenticate, async (req, res) => {
-    try {
-        const { 
-            title, 
-            description, 
-            category, 
-            price, 
-            location, 
-            contacts, 
-            auction, 
-            auction_hours,
-            payment_method // 'free', 'card', 'balance'
-        } = req.body;
-        
-        const user = req.user;
-        
-        // Проверяем возможность публикации
-        const checkResponse = await checkAdPublication(user);
-        
-        if (!checkResponse.allowed) {
-            return res.status(400).json({ 
-                error: 'Publication not allowed',
-                details: checkResponse.reason
-            });
-        }
-        
-        let transaction = null;
-        
-        // Обрабатываем оплату, если нужно
-        if (!checkResponse.free && payment_method === 'card') {
-            // Здесь должна быть интеграция с платежной системой
-            // Для демо просто создаем транзакцию
-            transaction = await createTransaction(user.id, {
-                amount: -PRICES.ad_publication,
-                type: 'ad_purchase',
-                description: `Публикация объявления: ${title}`
-            });
-        } else if (payment_method === 'balance') {
-            // Проверяем баланс
-            const balance = await getUserBalance(user.id);
-            if (balance < PRICES.ad_publication) {
-                return res.status(400).json({ 
-                    error: 'Недостаточно средств на балансе' 
-                });
-            }
-            
-            transaction = await createTransaction(user.id, {
-                amount: -PRICES.ad_publication,
-                type: 'ad_purchase',
-                description: `Публикация объявления: ${title}`
-            });
-        } else if (checkResponse.reason === 'free_ads_available') {
-            // Используем бесплатное объявление
-            await supabase
-                .from('users')
-                .update({ 
-                    free_ads_available: user.free_ads_available - 1,
-                    total_ads_published: (user.total_ads_published || 0) + 1
-                })
-                .eq('id', user.id);
-        }
-        
-        // Создаем объявление
-        let auction_ends_at = null;
-        if (auction && auction_hours) {
-            auction_ends_at = new Date(Date.now() + auction_hours * 60 * 60 * 1000).toISOString();
-        }
-        
-        const { data: ads, error } = await supabase
-            .from('ads')
-            .insert({
-                employer_id: user.id,
-                title,
-                description,
-                category,
-                price,
-                location,
-                contacts,
-                auction,
-                auction_ends_at,
-                status: 'active',
-                paid: !checkResponse.free,
-                transaction_id: transaction?.id
-            })
-            .select(`
-                *,
-                employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
-            `);
-        
-        if (error) {
-            console.error('Create ad error:', error);
-            throw error;
-        }
-        
-        if (!ads || ads.length === 0) {
-            return res.status(500).json({ error: 'Failed to create ad' });
-        }
-        
-        const ad = ads[0];
-        
-        res.json({ 
-            ad,
-            used_free_ad: checkResponse.reason === 'free_ads_available',
-            transaction
-        });
-        
-    } catch (error) {
-        console.error('Create ad error:', error);
-        res.status(500).json({ error: 'Server error' });
+  try {
+    const { title, description, category, price, location, contacts, auction, auction_hours } = req.body;
+    const user = req.user;
+
+    // ❗ Проверяем бесплатные объявления
+    if (user.free_ads <= 0) {
+      return res.status(403).json({ error: 'Лимит бесплатных объявлений исчерпан' });
     }
+
+    let auction_ends_at = null;
+    if (auction && auction_hours) {
+      auction_ends_at = new Date(Date.now() + auction_hours * 60 * 60 * 1000).toISOString();
+    }
+
+    // Создаём объявление
+    const { data: ads, error } = await supabase
+      .from('ads')
+      .insert({
+        employer_id: user.id,
+        title,
+        description,
+        category,
+        price,
+        location,
+        contacts,
+        auction,
+        auction_ends_at,
+        status: 'active'
+      })
+      .select();
+
+    if (error || !ads?.length) {
+      throw error;
+    }
+
+    // ❗ Уменьшаем количество бесплатных объявлений
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ free_ads: user.free_ads - 1 })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.error('Failed to update free_ads:', updateError);
+    }
+
+    res.json({ ad: ads[0] });
+
+  } catch (error) {
+    console.error('Create ad error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
+
 
 // Реферальная система
 app.post('/api/referrals/create', authenticate, async (req, res) => {
