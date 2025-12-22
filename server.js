@@ -44,7 +44,7 @@ const authenticate = async (req, res, next) => {
   
   try {
     // Используем сервисную роль для обхода RLS
-    const supabaseAdmin = createClient(supabaseUrl, anonKey, {
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
@@ -705,7 +705,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
     }
 
     // ✅ ВОТ ЗДЕСЬ УМЕНЬШАЕМ free_ads_available
-    const supabaseAdmin = createClient(supabaseUrl, anonKey, {
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
