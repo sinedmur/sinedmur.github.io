@@ -410,29 +410,43 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
     const user = req.user;
     
     // Проверяем, что объявление принадлежит пользователю
-    const { data: ads, error: fetchError } = await supabase
+    const { data: ad, error: fetchError } = await supabase
       .from('ads')
       .select('*')
       .eq('id', id)
-      .eq('employer_id', user.id)
-      .single();
+      .eq('employer_id', user.id);
     
-    if (fetchError || !ads) {
+    if (fetchError) {
+      console.error('Fetch ad error:', fetchError);
+      return res.status(500).json({ error: 'Ошибка при проверке объявления' });
+    }
+    
+    if (!ad || ad.length === 0) {
       return res.status(404).json({ error: 'Объявление не найдено или вы не являетесь его владельцем' });
     }
     
     // Удаляем связанные данные в правильном порядке
     // 1. Удаляем ставки (если есть)
-    await supabase
+    const { error: bidsError } = await supabase
       .from('bids')
       .delete()
       .eq('ad_id', id);
     
+    if (bidsError) {
+      console.error('Delete bids error:', bidsError);
+      // Продолжаем удаление даже если ошибка с ставками
+    }
+    
     // 2. Удаляем сообщения (если есть)
-    await supabase
+    const { error: messagesError } = await supabase
       .from('messages')
       .delete()
       .eq('ad_id', id);
+    
+    if (messagesError) {
+      console.error('Delete messages error:', messagesError);
+      // Продолжаем удаление
+    }
     
     // 3. Удаляем само объявление
     const { error: deleteError } = await supabase
@@ -440,7 +454,10 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
       .delete()
       .eq('id', id);
     
-    if (deleteError) throw deleteError;
+    if (deleteError) {
+      console.error('Delete ad error:', deleteError);
+      throw deleteError;
+    }
     
     // Отправляем уведомление через WebSocket
     io.emit('ad-deleted', {
