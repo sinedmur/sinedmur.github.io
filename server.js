@@ -19,8 +19,19 @@ app.use(express.json());
 
 // Подключение к Supabase
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const anonKey = process.env.SUPABASE_ANON_KEY;
+const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// обычный клиент (для чтения)
+const supabase = createClient(supabaseUrl, anonKey);
+
+// админ-клиент (RLS bypass)
+const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
 // Простой аутентификационный middleware
 // Обновите middleware authenticate
@@ -879,44 +890,6 @@ app.get('/api/subscriptions/my', authenticate, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-// Вспомогательные функции
-async function checkAdPublication(user) {
-    // Проверяем активную подписку
-    const { data: subscription } = await supabase
-        .from('subscriptions')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('is_active', true)
-        .gt('ends_at', new Date().toISOString())
-        .single();
-    
-    if (subscription) {
-        return { 
-            allowed: true,
-            reason: 'active_subscription',
-            free: true,
-            subscription_end: subscription.ends_at
-        };
-    }
-    
-    // Проверяем бесплатные объявления
-    if (user.free_ads_available > 0) {
-        return { 
-            allowed: true,
-            reason: 'free_ads_available',
-            free: true,
-            free_ads_left: user.free_ads_available
-        };
-    }
-    
-    return {
-        allowed: true,
-        reason: 'needs_payment',
-        free: false,
-        price: PRICES.ad_publication
-    };
-}
 
 async function createTransaction(userId, data) {
     const { data: transaction } = await supabase
