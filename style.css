@@ -4330,7 +4330,7 @@ input:checked + .slider:before {
 .payment-promo {
     margin-top: 20px;
     padding: 15px;
-    background-color: #f8f9fa;
+    background-color: var(--surface-color);
     border-radius: 10px;
 }
 
@@ -4348,7 +4348,7 @@ input:checked + .slider:before {
 
 /* Стили для подписок */
 .subscription-offer {
-    background: white;
+    background-color: var(--surface-color);
     border-radius: 10px;
     padding: 20px;
     margin-bottom: 20px;
