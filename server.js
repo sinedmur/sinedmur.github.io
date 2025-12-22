@@ -658,7 +658,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
 
     const user = req.user;
 
-    // ✅ ПРОВЕРКА ЛИМИТА
+    // ❗ ПРОВЕРКА ЛИМИТА
     if (user.free_ads_available <= 0) {
       return res.status(403).json({
         error: 'Бесплатные объявления закончились'
@@ -672,7 +672,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
       ).toISOString();
     }
 
-    // ✅ СОЗДАНИЕ ОБЪЯВЛЕНИЯ
+    // ✅ СОЗДАЁМ ОБЪЯВЛЕНИЕ
     const { data: ads, error } = await supabase
       .from('ads')
       .insert({
@@ -693,17 +693,20 @@ app.post('/api/ads', authenticate, async (req, res) => {
       throw error;
     }
 
-    // ✅ УМЕНЬШАЕМ КОЛ-ВО БЕСПЛАТНЫХ ОБЪЯВЛЕНИЙ
-    const { error: updateError } = await supabase
+    // ✅ ВОТ ЗДЕСЬ УМЕНЬШАЕМ free_ads_available
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
+    });
+
+    await supabaseAdmin
       .from('users')
       .update({
         free_ads_available: user.free_ads_available - 1
       })
       .eq('id', user.id);
-
-    if (updateError) {
-      console.error('Ошибка обновления free_ads_available:', updateError);
-    }
 
     res.json({ ad: ads[0] });
 
@@ -712,6 +715,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 
 // Реферальная система
