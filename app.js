@@ -419,7 +419,7 @@ function showScreen(screenId) {
     
     // Скрываем навигацию на некоторых экранах
     const bottomNav = document.getElementById('bottomNav');
-    if (screenId === 'loadingScreen') {
+    if (screenId === 'loadingScreen' || screenId === 'createAdScreen') {
         bottomNav.style.display = 'none';
     } else {
         bottomNav.style.display = 'flex';
