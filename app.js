@@ -1847,7 +1847,7 @@ function removeOldProfileElements() {
 }
 
 function updateSubscriptionUI(subscription) {
-    const profileStats = document.querySelector('.profile-actions');
+    const profileStats = document.querySelector('.profile-stats');
     if (!profileStats) return;
     
     // Создаем новый элемент подписки
