@@ -366,7 +366,20 @@ function initWebSocket() {
             message: `Пользователь ${data.userName} сделал ставку ${data.bid.amount} ₽`
         });
     });
-    
+
+    socket.on('ad-deleted', (data) => {
+    if (currentChat && currentChat.adId === data.adId) {
+        showNotification('Задание было удалено автором');
+        showScreen('mainScreen');
+        }
+
+    addNotification({
+        type: 'system',
+        title: 'Задание удалено',
+        message: 'Автор удалил одно из заданий'
+        });
+    });
+
     socket.on('disconnect', () => {
         console.log('WebSocket disconnected');
     });
@@ -713,10 +726,13 @@ function createMyAdElement(ad) {
                 <i class="fas fa-map-marker-alt"></i>
                 <span>${ad.location}</span>
             </div>
-            <div class="my-ad-actions">
-                <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
-                ${ad.status === 'active' ? `<button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>` : ''}
-            </div>
+        <div class="my-ad-actions">
+        <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
+        ${ad.status === 'active' ? `
+            <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>
+            <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">Удалить</button>
+        ` : ''}
+        </div>
         </div>
     `;
     
@@ -726,10 +742,15 @@ function createMyAdElement(ad) {
     });
     
     if (ad.status === 'active') {
-        adElement.querySelector('.edit')?.addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            editAd(adId);
-        });
+    adElement.querySelector('.edit')?.addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        editAd(adId);
+    });
+    
+    adElement.querySelector('.delete')?.addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        deleteAd(adId);
+    });
     }
     
     return adElement;
@@ -850,12 +871,12 @@ function displayAdDetail(ad) {
             ` : ''}
             
             ${isMyAd && ad.status === 'active' ? `
-                <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
-                    <i class="fas fa-edit"></i> Редактировать
-                </button>
-                <button id="closeAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
-                    <i class="fas fa-times"></i> Закрыть
-                </button>
+            <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
+                <i class="fas fa-edit"></i> Редактировать
+            </button>
+            <button id="deleteAdBtn" class="btn-danger" data-ad-id="${ad.id}">
+                <i class="fas fa-trash"></i> Удалить
+            </button>
             ` : ''}
         </div>
     `;
@@ -884,15 +905,15 @@ function displayAdDetail(ad) {
     }
     
     if (isMyAd && ad.status === 'active') {
-        document.getElementById('editAdBtn').addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            editAd(adId);
-        });
-        
-        document.getElementById('closeAdBtn').addEventListener('click', function() {
-            const adId = parseInt(this.getAttribute('data-ad-id'));
-            closeAd(adId);
-        });
+    document.getElementById('editAdBtn').addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        editAd(adId);
+    });
+    
+    document.getElementById('deleteAdBtn').addEventListener('click', function() {
+        const adId = parseInt(this.getAttribute('data-ad-id'));
+        deleteAd(adId);
+    });
     }
     
     showScreen('adDetailScreen');
@@ -1007,22 +1028,39 @@ async function editAd(adId) {
     showNotification('Редактирование задания (в разработке)');
 }
 
-async function closeAd(adId) {
-    try {
-        showModal(
-            'Закрытие задания',
-            'Вы уверены, что хотите закрыть это задание? После закрытия новые отклики не будут приниматься.',
-            async () => {
-                // Здесь должен быть API для закрытия задания
-                showNotification('Задание закрыто');
-                await loadAds();
-                showScreen('mainScreen');
-            }
-        );
-    } catch (error) {
-        console.error('Error closing ad:', error);
-        showNotification('Ошибка при закрытии задания');
-    }
+async function deleteAd(adId) {
+  try {
+    showModal(
+      'Удаление задания',
+      'Вы уверены, что хотите удалить это задание? Это действие нельзя отменить. Все связанные ставки и сообщения также будут удалены.',
+      async () => {
+        const response = await fetch(`${API_BASE_URL}/ads/${adId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': currentUser.telegram_id.toString()
+          }
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          showNotification(error.error || 'Ошибка при удалении задания');
+          return;
+        }
+        
+        const data = await response.json();
+        showNotification(data.message || 'Задание успешно удалено');
+        
+        // Обновляем список заданий
+        await loadAds();
+        showScreen('mainScreen');
+      },
+      'Удалить',
+      'danger'
+    );
+  } catch (error) {
+    console.error('Error deleting ad:', error);
+    showNotification('Ошибка при удалении задания');
+  }
 }
 
 // ============ АУКЦИОНЫ ============
@@ -1591,36 +1629,40 @@ function getStatusText(status) {
 
 // ============ МОДАЛЬНЫЕ ОКНА ============
 
-function showModal(title, message, confirmCallback) {
-    const modal = document.getElementById('modal');
-    const modalTitle = document.getElementById('modalTitle');
-    const modalBody = document.getElementById('modalBody');
-    const modalCancelBtn = document.getElementById('modalCancelBtn');
-    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    
-    modalTitle.textContent = title;
-    modalBody.innerHTML = `<p>${message}</p>`;
-    
-    modal.classList.add('active');
-    
-    const closeModal = () => {
-        modal.classList.remove('active');
-    };
-    
-    modalCancelBtn.onclick = closeModal;
-    closeModalBtn.onclick = closeModal;
-    
-    modalConfirmBtn.onclick = () => {
-        confirmCallback();
-        closeModal();
-    };
-    
-    modal.onclick = (e) => {
-        if (e.target === modal) {
-            closeModal();
-        }
-    };
+function showModal(title, message, confirmCallback, confirmText = 'Подтвердить', confirmStyle = 'primary') {
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody = document.getElementById('modalBody');
+  const modalCancelBtn = document.getElementById('modalCancelBtn');
+  const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  
+  modalTitle.textContent = title;
+  modalBody.innerHTML = `<p>${message}</p>`;
+  
+  // Настраиваем кнопку подтверждения
+  modalConfirmBtn.textContent = confirmText;
+  modalConfirmBtn.className = `btn-${confirmStyle}`;
+  
+  modal.classList.add('active');
+  
+  const closeModal = () => {
+    modal.classList.remove('active');
+  };
+  
+  modalCancelBtn.onclick = closeModal;
+  closeModalBtn.onclick = closeModal;
+  
+  modalConfirmBtn.onclick = () => {
+    confirmCallback();
+    closeModal();
+  };
+  
+  modal.onclick = (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  };
 }
 
 // ============ ОБРАБОТЧИКИ СОБЫТИЙ ============
