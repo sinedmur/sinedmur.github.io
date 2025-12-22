@@ -2002,21 +2002,10 @@ function showReferralScreen(referralInfo) {
 
 // Обновленная функция обновления статистики профиля
 function updateProfileStats() {
-    if (!currentUser) return;
-    
+    if (!currentUser) return;    
     // Обновляем базовую статистику
     const createdCount = ads.filter(ad => ad.employer_id === currentUser.id).length;
-    
     document.getElementById('profileUserStats').textContent = `${createdCount} заданий создано`;
-    document.getElementById('profileCreatedCount').textContent = createdCount;
-    
-    // Добавляем информацию о бесплатных публикациях
-    const freeAdsLeft = currentUser.free_ads_available || 0;
-    document.getElementById('profileTakenCount').textContent = freeAdsLeft;
-    document.getElementById('profileTakenCount').parentNode.querySelector('.stat-label').textContent = 'Бесплатных осталось';
-    
-    // Обновляем рейтинг
-    document.getElementById('profileRating').textContent = '5.0';
 }
 
 // Глобальные функции
