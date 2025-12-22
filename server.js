@@ -645,20 +645,34 @@ app.post('/api/ads/check', authenticate, async (req, res) => {
 // Создание объявления с оплатой/проверкой
 app.post('/api/ads', authenticate, async (req, res) => {
   try {
-    const { title, description, category, price, location, contacts, auction, auction_hours } = req.body;
+    const {
+      title,
+      description,
+      category,
+      price,
+      location,
+      contacts,
+      auction,
+      auction_hours
+    } = req.body;
+
     const user = req.user;
 
-    // ❗ Проверяем бесплатные объявления
-    if (user.free_ads <= 0) {
-      return res.status(403).json({ error: 'Лимит бесплатных объявлений исчерпан' });
+    // ✅ ПРОВЕРКА ЛИМИТА
+    if (user.free_ads_available <= 0) {
+      return res.status(403).json({
+        error: 'Бесплатные объявления закончились'
+      });
     }
 
     let auction_ends_at = null;
     if (auction && auction_hours) {
-      auction_ends_at = new Date(Date.now() + auction_hours * 60 * 60 * 1000).toISOString();
+      auction_ends_at = new Date(
+        Date.now() + auction_hours * 60 * 60 * 1000
+      ).toISOString();
     }
 
-    // Создаём объявление
+    // ✅ СОЗДАНИЕ ОБЪЯВЛЕНИЯ
     const { data: ads, error } = await supabase
       .from('ads')
       .insert({
@@ -679,14 +693,16 @@ app.post('/api/ads', authenticate, async (req, res) => {
       throw error;
     }
 
-    // ❗ Уменьшаем количество бесплатных объявлений
+    // ✅ УМЕНЬШАЕМ КОЛ-ВО БЕСПЛАТНЫХ ОБЪЯВЛЕНИЙ
     const { error: updateError } = await supabase
       .from('users')
-      .update({ free_ads: user.free_ads - 1 })
+      .update({
+        free_ads_available: user.free_ads_available - 1
+      })
       .eq('id', user.id);
 
     if (updateError) {
-      console.error('Failed to update free_ads:', updateError);
+      console.error('Ошибка обновления free_ads_available:', updateError);
     }
 
     res.json({ ad: ads[0] });
