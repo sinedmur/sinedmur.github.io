@@ -434,6 +434,75 @@ app.get('/api/messages', authenticate, async (req, res) => {
   }
 });
 
+// Удалить объявление (только автор)
+app.delete('/api/ads/:id', authenticate, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = req.user;
+    
+    // Проверяем существование объявления
+    const { data: ads, error: fetchError } = await supabase
+      .from('ads')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError || !ads) {
+      return res.status(404).json({ error: 'Объявление не найдено' });
+    }
+    
+    const ad = ads;
+    
+    // Проверяем, является ли пользователь автором объявления
+    if (ad.employer_id !== user.id) {
+      return res.status(403).json({ error: 'Вы не автор этого объявления' });
+    }
+    
+    // Проверяем статус объявления - нельзя удалять если уже взято в работу
+    if (ad.status === 'taken') {
+      return res.status(400).json({ 
+        error: 'Нельзя удалить задание, которое уже взято в работу. Завершите задание или отмените его сначала.' 
+      });
+    }
+    
+    // Удаляем связанные данные (ставки, сообщения) если они есть
+    // Сначала ставки
+    await supabase
+      .from('bids')
+      .delete()
+      .eq('ad_id', id);
+    
+    // Затем сообщения
+    await supabase
+      .from('messages')
+      .delete()
+      .eq('ad_id', id);
+    
+    // Удаляем само объявление
+    const { error: deleteError } = await supabase
+      .from('ads')
+      .delete()
+      .eq('id', id);
+    
+    if (deleteError) throw deleteError;
+    
+    // Отправляем уведомление через WebSocket
+    io.emit('ad-deleted', {
+      adId: id,
+      userId: user.id
+    });
+    
+    res.json({ 
+      success: true,
+      message: 'Объявление успешно удалено' 
+    });
+    
+  } catch (error) {
+    console.error('Delete ad error:', error);
+    res.status(500).json({ error: 'Ошибка сервера при удалении объявления' });
+  }
+});
+
 // Отправить сообщение
 app.post('/api/messages', authenticate, async (req, res) => {
   try {
