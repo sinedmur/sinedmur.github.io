@@ -2134,7 +2134,6 @@ function loadProfileScreen() {
     updateProfileStats();
 }
 
-// Функция для обновления аватара пользователя
 function updateProfileAvatar() {
     const avatarElement = document.querySelector('#profileScreen .profile-header .avatar');
     if (!avatarElement) return;
@@ -2142,36 +2141,47 @@ function updateProfileAvatar() {
     // Очищаем текущее содержимое
     avatarElement.innerHTML = '';
     
-    if (currentUser.photo_url) {
-        // Используем аватар из Telegram
-        avatarElement.innerHTML = `<img src="${currentUser.photo_url}" alt="Аватар пользователя" class="avatar-img">`;
-    } else if (currentUser.avatar_url) {
-        // Используем аватар с сервера
-        avatarElement.innerHTML = `<img src="${currentUser.avatar_url}" alt="Аватар пользователя" class="avatar-img">`;
+    console.log('Current user data for avatar:', {
+        photo_url: currentUser.photo_url,
+        first_name: currentUser.first_name,
+        last_name: currentUser.last_name
+    });
+    
+    // Проверяем разные возможные источники аватара
+    let avatarUrl = currentUser.photo_url || currentUser.avatar_url;
+    
+    if (avatarUrl) {
+        // Проверяем, является ли URL полным
+        if (!avatarUrl.startsWith('http')) {
+            // Если это относительный URL, добавляем базовый путь
+            avatarUrl = `https://t.me/${avatarUrl}`;
+        }
+        
+        console.log('Loading avatar from URL:', avatarUrl);
+        
+        // Создаем изображение с обработчиками ошибок
+        const img = new Image();
+        img.onload = function() {
+            console.log('Avatar image loaded successfully');
+            avatarElement.innerHTML = `<img src="${avatarUrl}" alt="Аватар пользователя" class="avatar-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'avatar-fallback\\'>${getUserInitials()}</div>'">`;
+        };
+        img.onerror = function() {
+            console.log('Failed to load avatar image, using fallback');
+            avatarElement.innerHTML = `<div class="avatar-fallback">${getUserInitials()}</div>`;
+        };
+        img.src = avatarUrl;
     } else {
         // Используем инициалы как fallback
-        const firstName = currentUser.first_name || 'П';
-        const lastName = currentUser.last_name || '';
-        const initials = (firstName.charAt(0) + (lastName.charAt(0) || '')).toUpperCase();
-        
-        // Создаем аватар с инициалами
-        avatarElement.innerHTML = `
-            <div class="avatar-fallback" style="
-                width: 100%; 
-                height: 100%; 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                background: linear-gradient(135deg, #4361ee, #3a0ca3);
-                color: white;
-                font-weight: bold;
-                font-size: 2.5rem;
-                border-radius: 50%;
-            ">
-                ${initials}
-            </div>
-        `;
+        console.log('No avatar URL, using initials');
+        avatarElement.innerHTML = `<div class="avatar-fallback">${getUserInitials()}</div>`;
     }
+}
+
+// Вспомогательная функция для получения инициалов
+function getUserInitials() {
+    const firstName = currentUser.first_name || 'П';
+    const lastName = currentUser.last_name || '';
+    return (firstName.charAt(0) + (lastName.charAt(0) || '')).toUpperCase();
 }
 
 async function loadExtendedProfileInfo() {
