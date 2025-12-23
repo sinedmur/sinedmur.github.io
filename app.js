@@ -57,49 +57,52 @@ async function startLoading() {
     
     try {
         // Шаг 1: Инициализация
-        updateLoadingStep(0, 'Инициализация приложения...');
-        await updateProgress(20);
-        await sleep(500); // Имитация загрузки
+        updateLoadingStep(0);
+        await updateProgress(10);
+        await sleep(300);
         
-        // Шаг 2: Инициализация пользователя
-        updateLoadingStep(1, 'Загрузка профиля...');
-        await updateProgress(40);
+        // Шаг 2: Авторизация
+        updateLoadingStep(1);
+        await updateProgress(30);
+        
         if (!isUserInitialized && !isUserInitializing) {
             await initUserFromTelegram();
         }
-        // Шаг 3: Загрузка основных данных
-        updateLoadingStep(2, 'Загрузка заданий...');
+        
+        // Шаг 3: Загрузка данных
+        updateLoadingStep(2);
         await updateProgress(60);
         
         if (currentUser) {
-            // Параллельная загрузка данных
-            await Promise.all([
-                loadAds(),
-                loadNotifications()
-            ]);
-            
-            await updateProgress(80);
+            await loadAds();
+            await updateProgress(85);
         }
         
-        // Шаг 4: Подготовка интерфейса
-        updateLoadingStep(3, 'Подготовка интерфейса...');
+        // Шаг 4: Завершение
+        updateLoadingStep(3);
         await updateProgress(100);
-        await sleep(300);
+        await sleep(200);
         
         // Загрузка завершена
         completeLoading();
         
     } catch (error) {
         console.error('Error during loading:', error);
-        // Даже при ошибке показываем основной интерфейс
-        completeLoading();
-        showNotification('Ошибка загрузки, некоторые данные могут быть недоступны');
+        document.getElementById('loadingHint').textContent = 'Ошибка загрузки. Перезагрузите приложение.';
+        setTimeout(completeLoading, 3000);
     }
 }
 
 // Обновление шага загрузки
 function updateLoadingStep(step, hint = '') {
     loadingStep = step;
+    
+    const stepNames = [
+        'Инициализация приложения...',
+        'Авторизация пользователя...',
+        'Загрузка данных...',
+        'Завершение загрузки...'
+    ];
     
     // Обновляем иконки шагов
     const steps = document.querySelectorAll('.loading-step');
@@ -118,6 +121,8 @@ function updateLoadingStep(step, hint = '') {
     // Обновляем подсказку
     if (hint) {
         document.getElementById('loadingHint').textContent = hint;
+    } else if (stepNames[step]) {
+        document.getElementById('loadingHint').textContent = stepNames[step];
     }
 }
 
