@@ -23,26 +23,30 @@ let isUserInitialized = false;
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
-  setupTelegramBackButton();
-  showScreen('loadingScreen');
-  await startLoading();
-  
-  // Немедленно обновляем UI из Telegram данных
-  updateUIFromTelegram();
-  
-  // Инициализация пользователя
-  await initUserFromTelegram();
-  
-  // Настройка обработчиков
-  setupEventListeners();
-  
-  // Загрузка данных
-  if (currentUser) {
-    showScreen('mainScreen');
-    await loadAds();
-    await loadNotifications();
-    updateProfileStats();
-  }
+    setupTelegramBackButton();
+    // Сразу показываем экран загрузки
+    showScreen('loadingScreen');
+    
+    // Начинаем процесс загрузки
+    await startLoading();
+    // Добавляем класс loaded после загрузки
+    setTimeout(() => {
+        document.body.classList.add('loaded');
+    }, 500);
+
+    // Инициализация пользователя
+    await initUserFromTelegram();
+    
+    // Настройка обработчиков событий
+    setupEventListeners();
+    
+    // Загрузка данных
+    if (currentUser) {
+        showScreen('mainScreen');
+        await loadAds();
+        await loadNotifications();
+        updateProfileStats();
+    }
 });
 
 // Процесс загрузки приложения
@@ -83,7 +87,6 @@ async function startLoading() {
         completeLoading();
         
     } catch (error) {
-        console.error('Error during loading:', error);
         document.getElementById('loadingHint').textContent = 'Ошибка загрузки. Перезагрузите приложение.';
         setTimeout(completeLoading, 3000);
     }
@@ -182,11 +185,9 @@ async function restoreAfterSleep() {
         updateLoadingStep(2, 'Завершение...');
         
         await updateProgress(100);
-        await sleep(300);
-        
-    } catch (error) {
-        console.error('Error during restoration:', error);
-    } finally {
+        await sleep(300); 
+    } 
+    finally {
         completeLoading();
     }
 }
@@ -235,206 +236,88 @@ let currentScreen = 'loadingScreen';
 
 // ============ ФУНКЦИИ АУТЕНТИФИКАЦИИ ============
 
-// Функция initUserFromTelegram - обновленная версия
+// Функция initUserFromTelegram - упрощаем
 async function initUserFromTelegram() {
-  // Если уже инициализируемся или инициализированы - выходим
-  if (isUserInitializing || isUserInitialized) {
-    console.log('User initialization already in progress or completed');
-    return;
-  }
-  
-  isUserInitializing = true;
-  
-  try {
-    // Используем данные из Telegram Web App
-    const userData = tg.initDataUnsafe.user;
-    
-    if (!userData) {
-      throw new Error('Telegram user data not found');
+    // Если уже инициализируемся или инициализированы - выходим
+    if (isUserInitializing || isUserInitialized) {
+        return;
     }
     
-    console.log('Initializing user with Telegram data:', userData);
+    isUserInitializing = true;
     
-    const telegramId = userData.id.toString();
-    
-    // Проверяем, есть ли уже currentUser с таким telegram_id
-    if (currentUser && currentUser.telegram_id === telegramId) {
-      console.log('User already initialized:', currentUser);
-      isUserInitialized = true;
-      return;
+    try {
+        // Используем данные из Telegram Web App
+        const userData = tg.initDataUnsafe.user;
+        
+        if (!userData) {
+            throw new Error('Telegram user data not found');
+        }
+        
+        const telegramId = userData.id.toString();
+        
+        // Проверяем, есть ли уже currentUser с таким telegram_id
+        if (currentUser && currentUser.telegram_id === telegramId) {
+            isUserInitialized = true;
+            return;
+        }
+        
+        // Пытаемся получить пользователя с сервера
+        const response = await fetch(`${API_BASE_URL}/user`, {
+            headers: {
+                'Authorization': telegramId
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = data.user;
+            updateFreeAdsCounter();
+            isUserInitialized = true;
+        } else {
+            // Если сервер вернул ошибку, создаем временного пользователя
+            currentUser = {
+                id: Date.now(), // временный ID
+                telegram_id: telegramId,
+                username: userData.username,
+                first_name: userData.first_name || 'Пользователь',
+                last_name: userData.last_name || '',
+                photo_url: userData.photo_url
+            };
+            isUserInitialized = true;
+            showNotification('Используется локальный режим');
+        }
+        
+        // Инициализируем WebSocket только если он еще не инициализирован
+        if (currentUser && !socket) {
+            initWebSocket();
+        }
+        
+    } catch (error) {
+        // Создаем временного пользователя при ошибке
+        const userData = tg.initDataUnsafe.user;
+        if (userData) {
+            currentUser = {
+                id: Date.now(),
+                telegram_id: userData.id.toString(),
+                username: userData.username,
+                first_name: userData.first_name || 'Пользователь',
+                last_name: userData.last_name || '',
+                photo_url: userData.photo_url
+            };
+            isUserInitialized = true;
+        }
+        showNotification(`Ошибка инициализации: ${error.message}`);
+    } finally {
+        isUserInitializing = false;
     }
-    
-    // Пытаемся получить пользователя с сервера
-    const response = await fetch(`${API_BASE_URL}/user`, {
-      headers: {
-        'Authorization': telegramId
-      }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      currentUser = data.user;
-      
-      // Обновляем Telegram данные, если они есть
-      await updateTelegramUserData(userData);
-      
-      console.log('User loaded from server:', currentUser);
-      isUserInitialized = true;
-    } else {
-      // Если сервер вернул ошибку, создаем временного пользователя
-      currentUser = {
-        id: Date.now(), // временный ID
-        telegram_id: telegramId,
-        username: userData.username,
-        first_name: userData.first_name || 'Пользователь',
-        last_name: userData.last_name || '',
-        photo_url: userData.photo_url
-      };
-      console.log('Using temporary user:', currentUser);
-      isUserInitialized = true;
-      showNotification('Используется локальный режим');
-    }
-    
-    // Обновляем UI с данными пользователя
-    updateUserUI();
-    
-    // Инициализируем WebSocket только если он еще не инициализирован
-    if (currentUser && !socket) {
-      console.log('Initializing WebSocket for user ID:', currentUser.id);
-      initWebSocket();
-    }
-    
-  } catch (error) {
-    console.error('Error initializing user:', error);
-    // Создаем временного пользователя при ошибке
-    const userData = tg.initDataUnsafe.user;
-    if (userData) {
-      currentUser = {
-        id: Date.now(),
-        telegram_id: userData.id.toString(),
-        username: userData.username,
-        first_name: userData.first_name || 'Пользователь',
-        last_name: userData.last_name || '',
-        photo_url: userData.photo_url
-      };
-      console.log('Created temporary user due to error:', currentUser);
-      isUserInitialized = true;
-      updateUserUI();
-    }
-    showNotification(`Ошибка инициализации: ${error.message}`);
-  } finally {
-    isUserInitializing = false;
-  }
-}
-
-// Новая функция для обновления Telegram данных на сервере
-// Упрощенная функция обновления Telegram данных
-async function updateTelegramUserData(telegramData) {
-  try {
-    if (!currentUser || !telegramData) return;
-    
-    // Обновляем локальные данные сразу
-    const updatedUser = {
-      ...currentUser,
-      username: telegramData.username || currentUser.username,
-      first_name: telegramData.first_name || currentUser.first_name || 'Пользователь',
-      last_name: telegramData.last_name || currentUser.last_name || '',
-      photo_url: telegramData.photo_url || currentUser.photo_url
-    };
-    
-    currentUser = updatedUser;
-    
-    // Пытаемся обновить на сервере
-    const response = await fetch(`${API_BASE_URL}/user/update-telegram`, {
-      method: 'POST',
-      headers: {
-        'Authorization': currentUser.telegram_id.toString(),
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: telegramData.username,
-        first_name: telegramData.first_name,
-        last_name: telegramData.last_name,
-        photo_url: telegramData.photo_url
-      })
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data.user) {
-        currentUser = { ...currentUser, ...data.user };
-      }
-    }
-    
-  } catch (error) {
-    console.error('Error updating Telegram data:', error);
-    // Локальные данные уже обновлены, продолжаем
-  }
-}
-
-// Функция для обновления UI с данными пользователя
-// Упрощенная функция обновления UI
-function updateUserUI() {
-  if (!currentUser) return;
-  
-  const telegramData = tg?.initDataUnsafe?.user;
-  
-  // Всегда используем актуальные Telegram данные, если они есть
-  const displayFirstName = telegramData?.first_name || currentUser.first_name || 'Пользователь';
-  const displayLastName = telegramData?.last_name || currentUser.last_name || '';
-  const displayPhotoUrl = telegramData?.photo_url || currentUser.photo_url;
-  
-  // Обновляем имя в профиле
-  const profileUserName = document.getElementById('profileUserName');
-  if (profileUserName) {
-    const fullName = `${displayFirstName} ${displayLastName}`.trim();
-    profileUserName.textContent = fullName || 'Пользователь';
-  }
-  
-  // Обновляем аватар
-  updateAvatar(displayPhotoUrl, displayFirstName, displayLastName);
-  
-  // Обновляем статистику
-  updateProfileStats();
-  
-  // Обновляем счетчик бесплатных объявлений
-  updateFreeAdsCounter();
-}
-
-// Функция для быстрого обновления UI из Telegram данных
-function updateUIFromTelegram() {
-  const telegramData = tg?.initDataUnsafe?.user;
-  if (!telegramData) return;
-  
-  // Немедленно обновляем UI
-  const nameElement = document.getElementById('profileUserName');
-  if (nameElement) {
-    const fullName = `${telegramData.first_name || ''} ${telegramData.last_name || ''}`.trim();
-    nameElement.textContent = fullName || 'Пользователь';
-  }
-  
-  // Обновляем аватар
-  if (telegramData.photo_url) {
-    const avatarElement = document.querySelector('.profile-header .avatar');
-    if (avatarElement) {
-      avatarElement.innerHTML = `
-        <img src="${telegramData.photo_url}" 
-             alt="Аватар" 
-             style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
-      `;
-    }
-  }
 }
 
 // ============ WEBSOCKET ============
 
 function initWebSocket() {
     if (!currentUser || socket) {
-        console.log('WebSocket already initialized or no user');
         return;
     }
-    
-    console.log('Initializing WebSocket connection for user:', currentUser.id);
     
     socket = io(SOCKET_URL, {
         query: {
@@ -448,11 +331,9 @@ function initWebSocket() {
     });
     
     socket.on('connect', () => {
-        console.log('WebSocket connected, ID:', socket.id);
     });
     
     socket.on('connect_error', (error) => {
-        console.error('WebSocket connection error:', error);
     });
     
     socket.on('new-message', (data) => {
@@ -494,7 +375,6 @@ function initWebSocket() {
     });
 
     socket.on('disconnect', () => {
-        console.log('WebSocket disconnected');
     });
 
 }
@@ -559,7 +439,6 @@ async function checkAdPublication() {
         }
         return { allowed: true, reason: 'fallback', free: true };
     } catch (error) {
-        console.error('Check ad publication error:', error);
         return { allowed: true, reason: 'error', free: true };
     }
 }
@@ -636,7 +515,6 @@ async function loadAds() {
         
         displayAds();
     } catch (error) {
-        console.error('Error loading ads:', error);
         showNotification('Ошибка при загрузке заданий');
     }
 }
@@ -775,7 +653,6 @@ function createAdElement(ad) {
                 const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
                 acceptBtn.addEventListener('click', function() {
                     const adId = this.getAttribute('data-ad-id');
-                    console.log('Responding to ad ID from card:', adId, 'Type:', typeof adId);
                     respondToAd(adId);
                 });
             }
@@ -785,7 +662,6 @@ function createAdElement(ad) {
 
 async function loadMyAds(filter = 'active') {
     try {
-        console.log('Loading my ads with filter:', filter);
         const response = await fetch(`${API_BASE_URL}/ads?type=my&user_id=${currentUser.id}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
@@ -796,7 +672,6 @@ async function loadMyAds(filter = 'active') {
         
         const data = await response.json();
         const myAds = data.ads || [];
-        console.log('Loaded my ads:', myAds.length);
         
         let filteredAds = myAds;
         if (filter === 'active') {
@@ -816,7 +691,6 @@ async function loadMyAds(filter = 'active') {
         }
         
     } catch (error) {
-        console.error('Error loading my ads:', error);
         showNotification('Ошибка при загрузке ваших заданий');
         displayMyAds([]); // Показываем пустое состояние при ошибке
     }
@@ -941,7 +815,6 @@ function addMyAdEventListeners(adElement, ad) {
     if (detailsBtn) {
         detailsBtn.addEventListener('click', function() {
             const adId = this.getAttribute('data-ad-id');
-            console.log('Opening ad details from my ads:', adId);
             showAdDetail(adId);
         });
     }
@@ -951,7 +824,6 @@ function addMyAdEventListeners(adElement, ad) {
     if (editBtn) {
         editBtn.addEventListener('click', function() {
             const adId = this.getAttribute('data-ad-id');
-            console.log('Editing ad:', adId);
             editAd(adId);
         });
     }
@@ -961,12 +833,9 @@ function addMyAdEventListeners(adElement, ad) {
     if (deleteBtn) {
         deleteBtn.addEventListener('click', async function() {
             const adId = this.getAttribute('data-ad-id');
-            console.log('Deleting ad from my ads screen:', adId);
-            
             // Блокируем кнопку во время удаления
             this.disabled = true;
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Удаление...';
-            
             try {
                 await closeAd(adId);
             } finally {
@@ -979,12 +848,9 @@ function addMyAdEventListeners(adElement, ad) {
 }
 
 async function showAdDetail(adId) {
-    try {
-        console.log('Show ad detail for ID:', adId, 'Type:', typeof adId);
-        
+    try {    
         // Преобразуем ID в строку для корректной работы с UUID
-        const adIdStr = adId.toString();
-        
+        const adIdStr = adId.toString();   
         const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
@@ -993,7 +859,6 @@ async function showAdDetail(adId) {
         
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            console.error('Failed to load ad details:', errorData);
             showNotification('Ошибка загрузки задания: ' + (errorData.error || 'Unknown error'));
             return;
         }
@@ -1005,12 +870,9 @@ async function showAdDetail(adId) {
             showNotification('Задание не найдено');
             return;
         }
-        
-        console.log('Ad loaded successfully:', ad);
         displayAdDetail(ad);
         
     } catch (error) {
-        console.error('Error loading ad details:', error);
         showNotification('Ошибка при загрузке задания: ' + error.message);
     }
 }
@@ -1260,17 +1122,13 @@ function displayAdDetail(ad) {
 
 async function respondToAd(adId) {
     try {
-        console.log('Responding to ad with ID:', adId, 'Type:', typeof adId);
-        
         showModal(
             'Отклик на задание',
             'Вы уверены, что хотите откликнуться на это задание? После отклика вы сможете обсудить детали с автором.',
             async () => {
                 try {
                     // Преобразуем ID в строку для корректной работы с UUID
-                    const adIdStr = adId.toString();
-                    console.log('Fetching ad details for ID:', adIdStr);
-                    
+                    const adIdStr = adId.toString();                  
                     const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
                         headers: {
                             'Authorization': currentUser.telegram_id.toString()
@@ -1279,7 +1137,6 @@ async function respondToAd(adId) {
                     
                     if (!response.ok) {
                         const errorData = await response.json().catch(() => ({}));
-                        console.error('Failed to load ad details:', errorData);
                         showNotification('Ошибка загрузки задания: ' + (errorData.error || 'Unknown error'));
                         return;
                     }
@@ -1298,13 +1155,11 @@ async function respondToAd(adId) {
                     openChat(adId, ad.employer_id);
                     
                 } catch (error) {
-                    console.error('Error in respondToAd callback:', error);
                     showNotification('Ошибка при отклике на задание');
                 }
             }
         );
     } catch (error) {
-        console.error('Error in respondToAd:', error);
         showNotification('Ошибка при отклике на задание');
     }
 }
@@ -1410,7 +1265,6 @@ async function publishAd() {
         await updateProfileStats();
         
     } catch (error) {
-        console.error('Error publishing ad:', error);
         showNotification('Ошибка при создании задания: ' + error.message);
     }
 }
@@ -1510,7 +1364,6 @@ async function loadReferralInfo() {
             return await response.json();
         } else {
             // Если запрос не удался, создаем локальные данные
-            console.error('Failed to load referral info, using fallback');
             return {
                 referral_code: generateReferralCode(),
                 referral_link: `https://t.me/your_bot?start=ref_${currentUser.id}`,
@@ -1521,7 +1374,6 @@ async function loadReferralInfo() {
             };
         }
     } catch (error) {
-        console.error('Load referral info error:', error);
         // Возвращаем fallback данные
         return {
             referral_code: generateReferralCode(),
@@ -1561,7 +1413,6 @@ async function useReferralCode(code) {
             return null;
         }
     } catch (error) {
-        console.error('Use referral code error:', error);
         showNotification('Ошибка применения реферального кода');
         return null;
     }
@@ -1582,7 +1433,6 @@ async function loadSubscriptionInfo() {
         }
         return null;
     } catch (error) {
-        console.error('Load subscription error:', error);
         return null;
     }
 }
@@ -1608,7 +1458,6 @@ async function createSubscription(plan) {
             return null;
         }
     } catch (error) {
-        console.error('Create subscription error:', error);
         showNotification('Ошибка оформления подписки');
         return null;
     }
@@ -1649,13 +1498,11 @@ async function editAd(adId) {
             </div>
             `,
             () => {
-                console.log('Edit modal confirmed for ad:', adId);
             },
             'Понятно'
         );
         
     } catch (error) {
-        console.error('Error in editAd:', error);
         showNotification('Ошибка при загрузке данных задания');
     }
 }
@@ -1664,12 +1511,6 @@ async function closeAd(adId) {
     try {
         // Преобразуем ID в строку для избежания проблем с типами
         const adIdStr = adId.toString();
-        
-        console.log('Attempting to delete ad:', {
-            adId: adIdStr,
-            userId: currentUser?.id,
-            userName: currentUser?.first_name
-        });
         
         // Сначала загрузим детали объявления для проверки
         const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
@@ -1746,7 +1587,6 @@ async function closeAd(adId) {
                     const result = await deleteResponse.json();
                     
                     if (!deleteResponse.ok) {
-                        console.error('Delete API error:', result);
                         throw new Error(result.error || `Ошибка ${deleteResponse.status}`);
                     }
                     
@@ -1766,7 +1606,6 @@ async function closeAd(adId) {
                     }
                     
                 } catch (deleteError) {
-                    console.error('Delete error:', deleteError);
                     showNotification(`Ошибка удаления: ${deleteError.message}`);
                 }
             },
@@ -1775,7 +1614,6 @@ async function closeAd(adId) {
         );
         
     } catch (error) {
-        console.error('Error in closeAd:', error);
         showNotification(`Ошибка: ${error.message}`);
     }
 }
@@ -1815,7 +1653,6 @@ async function showAuctionScreen(adId) {
         
         displayAuctionScreen(ad);
     } catch (error) {
-        console.error('Error loading auction:', error);
         showNotification('Ошибка при загрузке аукциона');
     }
 }
@@ -1998,7 +1835,6 @@ async function placeBid(adId, amount) {
         loadBidsForAd(adId);
         
     } catch (error) {
-        console.error('Error placing bid:', error);
         showNotification('Ошибка при размещении ставки');
     }
 }
@@ -2014,7 +1850,6 @@ async function loadBidsForAd(adId) {
         const data = await response.json();
         displayBidsHistory(data.bids || []);
     } catch (error) {
-        console.error('Error loading bids:', error);
     }
 }
 
@@ -2116,7 +1951,6 @@ async function loadChatMessages(adId, otherUserId) {
         const data = await response.json();
         displayChatMessages(data.messages || []);
     } catch (error) {
-        console.error('Error loading messages:', error);
     }
 }
 
@@ -2193,7 +2027,6 @@ async function sendMessage() {
         input.value = '';
         
     } catch (error) {
-        console.error('Error sending message:', error);
         showNotification('Ошибка при отправке сообщения');
     }
 }
@@ -2210,16 +2043,17 @@ function addMessageToChat(message) {
 
 // ============ ПРОФИЛЬ ============
 
-// Обновите функцию loadProfileScreen
+// Обновленный экран профиля
 function loadProfileScreen() {
-  if (!currentUser) return;
-  
-  // Используем updateUserUI вместо прямого обновления
-  updateUserUI();
-  
-  // Загружаем дополнительную информацию
-  loadExtendedProfileInfo();
+    if (!currentUser) return;
+    
+    document.getElementById('profileUserName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+    
+    // Загружаем информацию о подписках и рефералах
+    loadExtendedProfileInfo();
+    updateProfileStats();
 }
+
 async function loadExtendedProfileInfo() {
     // Загружаем информацию о подписке
     const subscription = await loadSubscriptionInfo();
@@ -2361,8 +2195,6 @@ function showReferralScreen(referralInfo = null) {
         </div>
         `,
         () => {
-            // Callback при закрытии
-            console.log('Referral screen closed');
         }
     );
     
@@ -2705,7 +2537,6 @@ function setupEventListeners() {
             await loadAds();
             showNotification('Список обновлен');
         } catch (error) {
-            console.error('Error refreshing ads:', error);
             showNotification('Ошибка при обновлении');
         } finally {
             button.classList.remove('loading');
@@ -2784,7 +2615,6 @@ function setupEventListeners() {
             await loadAds();
             showNotification('Список обновлен');
         } catch (error) {
-            console.error('Error refreshing ads:', error);
             showNotification('Ошибка при обновлении');
         } finally {
             button.classList.remove('loading');
