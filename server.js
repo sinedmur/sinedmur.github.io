@@ -33,8 +33,7 @@ const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
   }
 });
 
-// Простой аутентификационный middleware
-// Обновите middleware authenticate
+// Обновленная функция authenticate в server.js
 const authenticate = async (req, res, next) => {
   const telegramId = req.headers.authorization;
   
@@ -43,6 +42,11 @@ const authenticate = async (req, res, next) => {
   }
   
   try {
+    // Получаем данные пользователя из заголовков (передаются из Telegram Web App)
+    const telegramUserData = req.headers['x-telegram-user'] 
+      ? JSON.parse(req.headers['x-telegram-user'])
+      : null;
+
     // Используем сервисную роль для обхода RLS
     const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
       auth: {
@@ -66,14 +70,51 @@ const authenticate = async (req, res, next) => {
     if (users && users.length > 0) {
       // Пользователь найден
       user = users[0];
+      
+      // Обновляем данные пользователя из Telegram, если они изменились
+      if (telegramUserData && telegramUserData.first_name) {
+        const updateData = {};
+        
+        if (telegramUserData.first_name && telegramUserData.first_name !== user.first_name) {
+          updateData.first_name = telegramUserData.first_name;
+        }
+        
+        if (telegramUserData.last_name && telegramUserData.last_name !== user.last_name) {
+          updateData.last_name = telegramUserData.last_name;
+        }
+        
+        if (telegramUserData.username && telegramUserData.username !== user.username) {
+          updateData.username = telegramUserData.username;
+        }
+        
+        // Если есть данные для обновления
+        if (Object.keys(updateData).length > 0) {
+          const { data: updatedUser } = await supabaseAdmin
+            .from('users')
+            .update(updateData)
+            .eq('id', user.id)
+            .select()
+            .single();
+          
+          if (updatedUser) {
+            user = updatedUser;
+          }
+        }
+      }
     } else {
-      // Создаем нового пользователя с сервисной ролью
+      // Создаем нового пользователя с реальными данными из Telegram
       const newUserData = {
         telegram_id: telegramId,
-        first_name: 'Пользователь',
-        last_name: `#${telegramId}`,
+        first_name: telegramUserData?.first_name || 'Пользователь',
+        last_name: telegramUserData?.last_name || '',
+        username: telegramUserData?.username || null,
         created_at: new Date().toISOString()
       };
+      
+      // Если есть username, добавляем его
+      if (telegramUserData?.username) {
+        newUserData.username = telegramUserData.username;
+      }
       
       const { data: newUsers, error: createError } = await supabaseAdmin
         .from('users')
