@@ -5787,15 +5787,3 @@ input:checked + .slider:before {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(239, 35, 60, 0.4) !important;
 }
-
-.nav-user {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.nav-user-name {
-  font-weight: 600;
-  color: var(--text-color);
-  font-size: 14px;
-}
