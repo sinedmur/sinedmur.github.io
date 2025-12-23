@@ -775,7 +775,7 @@ function createMyAdElement(ad) {
                 <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
                 ${ad.status === 'active' ? `
                     <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>
-                    <button class="closeAdBtn" data-ad-id="${ad.id}">Удалить</button>
+                    <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">Удалить</button>
                 ` : ''}
             </div>
         </div>
@@ -957,6 +957,11 @@ function displayAdDetail(ad) {
             });
             
             document.getElementById('closeAdBtn').addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
+                closeAd(adId);
+            });
+
+            document.getElementById('my-ad-action-btn delete').addEventListener('click', function() {
                 const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
                 closeAd(adId);
             });
