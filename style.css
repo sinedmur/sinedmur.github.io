@@ -411,7 +411,7 @@ main {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 28px;
-    margin-top: 100px;
+    margin-top: 80px;
     padding: 24px 12px 0;
 }
 
@@ -862,6 +862,9 @@ main {
 .ad-detail-screen {
     padding: 0;
     background: var(--surface-color);
+    position: relative;
+    min-height: 100vh;
+    padding-bottom: 100px; /* Добавляем отступ снизу */
 }
 
 .ad-detail-header {
@@ -873,6 +876,7 @@ main {
     color: white;
     position: relative;
     min-height: 120px;
+    z-index: 2; /* Добавляем z-index для хедера */
 }
 
 .ad-detail-header-back {
@@ -889,7 +893,7 @@ main {
     justify-content: center;
     color: white;
     font-size: 1.2rem;
-    z-index: 2;
+    z-index: 3;
     transition: var(--transition);
     backdrop-filter: blur(10px);
 }
@@ -941,11 +945,11 @@ main {
 .ad-detail-container {
     background: var(--surface-color);
     border-radius: 24px 24px 0 0;
-    padding: 25px 20px 30px;
-    margin-top: -20px;
+    padding: 25px 20px 100px; /* Увеличиваем нижний padding для кнопок */
+    margin-top: -15px; /* Уменьшаем отрицательный margin */
     position: relative;
     z-index: 1;
-    min-height: calc(100vh - 160px);
+    min-height: calc(100vh - 150px);
 }
 
 /* Мета информация в виде карточек */
@@ -1076,15 +1080,15 @@ main {
 
 /* Кнопки действий */
 .ad-detail-actions {
-    position: sticky;
-    bottom: 0;
     background: var(--surface-color);
-    padding: 20px;
+    padding: 20px 0 30px; /* Увеличиваем нижний padding */
     border-top: 1px solid #f1f3f5;
     display: flex;
     gap: 15px;
-    margin: 40px -20px -30px;
-    z-index: 10;
+    margin-top: 40px;
+    position: relative;
+    z-index: 1;
+    width: 100%;
 }
 
 .ad-detail-action-btn {
@@ -1326,9 +1330,10 @@ main {
     }
     
     .ad-detail-actions {
-        padding: 15px;
-        margin: 30px -15px -30px;
+        padding: 15px 0 25px;
         flex-direction: column;
+        gap: 12px;
+        margin-top: 30px;
     }
     
     .ad-detail-action-btn {
