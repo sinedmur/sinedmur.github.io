@@ -33,6 +33,8 @@ const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
   }
 });
 
+// Простой аутентификационный middleware
+// Обновите middleware authenticate
 const authenticate = async (req, res, next) => {
   const telegramId = req.headers.authorization;
   
@@ -65,12 +67,10 @@ const authenticate = async (req, res, next) => {
       // Пользователь найден
       user = users[0];
     } else {
-      // Создаем нового пользователя
-      // Для получения данных из Telegram нам нужно обработать их в отдельном запросе
-      // Используем дефолтные значения, данные обновятся позже через /api/user/init
+      // Создаем нового пользователя с сервисной ролью
       const newUserData = {
         telegram_id: telegramId,
-        first_name: 'Пользователь', // Временное значение
+        first_name: 'Пользователь',
         last_name: `#${telegramId}`,
         created_at: new Date().toISOString()
       };
