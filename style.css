@@ -4761,6 +4761,7 @@ input:checked + .slider:before {
     flex-direction: column;
     gap: 16px;
     padding: 0 12px 100px;
+    margin-bottom: 20px;
 }
 
 /* Карточка моего задания */
