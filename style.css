@@ -1471,26 +1471,6 @@ main {
     font-size: 2.5rem;
 }
 
-.avatar-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.avatar-fallback {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #4361ee, #3a0ca3);
-    color: white;
-    font-weight: bold;
-    font-size: 2.5rem;
-    border-radius: 50%;
-}
-
 .profile-info h3 {
     font-size: 1.5rem;
     margin-bottom: 5px;
