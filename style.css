@@ -4119,8 +4119,9 @@ input:checked + .slider:before {
 
 /* Шаги загрузки */
 .loading-steps {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
     position: relative;
     margin-top: 1rem;
 }
@@ -4129,8 +4130,8 @@ input:checked + .slider:before {
     content: '';
     position: absolute;
     top: 20px;
-    left: 20px;
-    right: 20px;
+    left: 15px;
+    right: 15px;
     height: 2px;
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-50%);
@@ -4143,32 +4144,31 @@ input:checked + .slider:before {
     align-items: center;
     z-index: 1;
     position: relative;
-    flex: 1;
-    min-width: 80px;
 }
 
 .loading-step i {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     background: rgba(255, 255, 255, 0.15);
-    width: 45px;
-    height: 45px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.6rem;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     border: 2px solid transparent;
 }
 
 .loading-step span {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     opacity: 0.7;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 500;
-    max-width: 100px;
     text-align: center;
     line-height: 1.2;
+    word-break: break-word;
+    max-width: 75px;
 }
 
 .loading-step.active i {
@@ -4307,13 +4307,21 @@ input:checked + .slider:before {
     }
     
     .loading-step i {
-        width: 40px;
-        height: 40px;
-        font-size: 1.5rem;
+        width: 32px;
+        height: 32px;
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
     }
     
     .loading-step span {
-        font-size: 0.8rem;
+        font-size: 0.7rem;
+        max-width: 65px;
+    }
+    
+    .loading-steps::before {
+        left: 10px;
+        right: 10px;
+        top: 16px;
     }
     
     .loading-hint {
@@ -4335,9 +4343,25 @@ input:checked + .slider:before {
         font-size: 2rem;
     }
     
+    .loading-step i {
+        width: 28px;
+        height: 28px;
+        font-size: 1rem;
+    }
+    
+    .loading-step span {
+        font-size: 0.65rem;
+        max-width: 55px;
+    }
+    
     .loading-steps {
-        flex-wrap: wrap;
-        gap: 15px;
+        gap: 5px;
+    }
+    
+    .loading-steps::before {
+        left: 8px;
+        right: 8px;
+        top: 14px;
     }
     
     .loading-step {
