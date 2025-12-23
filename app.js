@@ -296,6 +296,11 @@ async function initUserFromTelegram() {
             showNotification('Используется локальный режим');
         }
         
+        // Обновляем аватар, если находимся на экране профиля
+        if (currentScreen === 'profileScreen') {
+            updateProfileAvatar();
+        }
+
         // Инициализируем WebSocket только если он еще не инициализирован
         if (currentUser && !socket) {
             console.log('Initializing WebSocket for user ID:', currentUser.id);
@@ -422,6 +427,11 @@ function showScreen(screenId) {
     // Обновляем кнопку назад в Telegram
     updateBackButtonForScreen(screenId);
     
+    // Обновляем аватар при переходе на экран профиля
+    if (screenId === 'profileScreen' && currentUser) {
+        loadProfileScreen();
+    }
+
     // Скрываем навигацию на некоторых экранах
     const bottomNav = document.getElementById('bottomNav');
     if (screenId === 'loadingScreen' || screenId === 'createAdScreen') {
@@ -2112,11 +2122,56 @@ function addMessageToChat(message) {
 function loadProfileScreen() {
     if (!currentUser) return;
     
-    document.getElementById('profileUserName').textContent = `${currentUser.first_name} ${currentUser.last_name}`;
+    // Обновляем имя пользователя
+    document.getElementById('profileUserName').textContent = 
+        `${currentUser.first_name || 'Пользователь'} ${currentUser.last_name || ''}`.trim();
+    
+    // Обновляем аватар
+    updateProfileAvatar();
     
     // Загружаем информацию о подписках и рефералах
     loadExtendedProfileInfo();
     updateProfileStats();
+}
+
+// Функция для обновления аватара пользователя
+function updateProfileAvatar() {
+    const avatarElement = document.querySelector('#profileScreen .profile-header .avatar');
+    if (!avatarElement) return;
+    
+    // Очищаем текущее содержимое
+    avatarElement.innerHTML = '';
+    
+    if (currentUser.photo_url) {
+        // Используем аватар из Telegram
+        avatarElement.innerHTML = `<img src="${currentUser.photo_url}" alt="Аватар пользователя" class="avatar-img">`;
+    } else if (currentUser.avatar_url) {
+        // Используем аватар с сервера
+        avatarElement.innerHTML = `<img src="${currentUser.avatar_url}" alt="Аватар пользователя" class="avatar-img">`;
+    } else {
+        // Используем инициалы как fallback
+        const firstName = currentUser.first_name || 'П';
+        const lastName = currentUser.last_name || '';
+        const initials = (firstName.charAt(0) + (lastName.charAt(0) || '')).toUpperCase();
+        
+        // Создаем аватар с инициалами
+        avatarElement.innerHTML = `
+            <div class="avatar-fallback" style="
+                width: 100%; 
+                height: 100%; 
+                display: flex; 
+                align-items: center; 
+                justify-content: center; 
+                background: linear-gradient(135deg, #4361ee, #3a0ca3);
+                color: white;
+                font-weight: bold;
+                font-size: 2.5rem;
+                border-radius: 50%;
+            ">
+                ${initials}
+            </div>
+        `;
+    }
 }
 
 async function loadExtendedProfileInfo() {
