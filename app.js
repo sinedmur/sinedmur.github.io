@@ -56,13 +56,13 @@ async function startLoading() {
     loadingProgress = 0;
     
     try {
-        // Шаг 1: Запуск приложения
+        // Шаг 1: Инициализация
         updateLoadingStep(0);
-        await updateProgress(15);
-        await sleep(400);
+        await updateProgress(10);
+        await sleep(300);
         
         // Шаг 2: Авторизация
-        updateLoadingStep(1, 'Авторизация пользователя...');
+        updateLoadingStep(1);
         await updateProgress(30);
         
         if (!isUserInitialized && !isUserInitializing) {
@@ -70,24 +70,16 @@ async function startLoading() {
         }
         
         // Шаг 3: Загрузка данных
-        updateLoadingStep(2, 'Загрузка заданий...');
+        updateLoadingStep(2);
         await updateProgress(60);
         
         if (currentUser) {
-            // Параллельная загрузка данных
-            const loadPromises = [loadAds()];
-            
-            // Только если есть объявления, загружаем уведомления
-            if (ads && ads.length > 0) {
-                loadPromises.push(loadNotifications());
-            }
-            
-            await Promise.all(loadPromises);
+            await loadAds();
             await updateProgress(85);
         }
         
         // Шаг 4: Завершение
-        updateLoadingStep(3, 'Завершение загрузки...');
+        updateLoadingStep(3);
         await updateProgress(100);
         await sleep(200);
         
@@ -96,9 +88,7 @@ async function startLoading() {
         
     } catch (error) {
         console.error('Error during loading:', error);
-        // Показываем ошибку в подсказке
         document.getElementById('loadingHint').textContent = 'Ошибка загрузки. Перезагрузите приложение.';
-        // Даже при ошибке показываем основной интерфейс через 3 секунды
         setTimeout(completeLoading, 3000);
     }
 }
@@ -108,10 +98,10 @@ function updateLoadingStep(step, hint = '') {
     loadingStep = step;
     
     const stepNames = [
-        'Запуск приложения',
-        'Авторизация',
-        'Загрузка данных',
-        'Завершение'
+        'Инициализация приложения...',
+        'Авторизация пользователя...',
+        'Загрузка данных...',
+        'Завершение загрузки...'
     ];
     
     // Обновляем иконки шагов
@@ -135,7 +125,6 @@ function updateLoadingStep(step, hint = '') {
         document.getElementById('loadingHint').textContent = stepNames[step];
     }
 }
-
 
 // Обновление прогресса
 async function updateProgress(percent) {
