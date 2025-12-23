@@ -592,7 +592,6 @@ main {
     background-clip: text;
 }
 
-/* Обновляем расположение бейджа аукциона */
 .ad-card-category {
     display: inline-flex;
     align-items: center;
@@ -605,27 +604,24 @@ main {
     color: var(--primary-color);
     font-weight: 600;
     transition: var(--transition-fast);
-    position: relative;
-}
-
-/* Бейдж аукциона - переделываем позиционирование */
-.ad-card-category .auction-badge {
-    position: static; /* убираем абсолютное позиционирование */
-    margin-left: 8px;
-    background-color: #ffc107;
-    color: #856404;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    line-height: 1;
 }
 
 .ad-card:hover .ad-card-category {
     background: rgba(67, 97, 238, 0.2);
+}
+
+.ad-card-auction-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: linear-gradient(135deg, #ffc107, #fd7e14);
+    color: #856404;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+    vertical-align: middle;
 }
 
 .ad-card-description {
@@ -633,7 +629,6 @@ main {
     margin-bottom: 20px;
     line-height: 1.7;
     display: -webkit-box;
-    /* line-clamp: 2; */
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
