@@ -4242,7 +4242,7 @@ input:checked + .slider:before {
     }
 }
 
-/* Плавный переход
+/* Плавный переход */
 .screen {
     opacity: 0;
     transform: translateY(10px);
@@ -4261,7 +4261,7 @@ input:checked + .slider:before {
     opacity: 1;
     transform: translateY(0);
     display: block;
-} */
+}
 
 /* Скрываем шапку на экране загрузки */
 #loadingScreen .app-header {
