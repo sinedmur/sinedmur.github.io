@@ -33,6 +33,7 @@ const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
   }
 });
 
+// Простой аутентификационный middleware
 // Обновите middleware authenticate
 const authenticate = async (req, res, next) => {
   const telegramId = req.headers.authorization;
@@ -42,7 +43,7 @@ const authenticate = async (req, res, next) => {
   }
   
   try {
-    // Используем сервисную роль
+    // Используем сервисную роль для обхода RLS
     const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
       auth: {
         autoRefreshToken: false,
@@ -51,13 +52,12 @@ const authenticate = async (req, res, next) => {
     });
     
     // Ищем пользователя
-    const { data: users, error: findError } = await supabaseAdmin
+    const { data: users, error } = await supabaseAdmin
       .from('users')
       .select('*')
       .eq('telegram_id', telegramId);
     
-    if (findError) {
-      console.error('Auth query error:', findError);
+    if (error) {
       return res.status(500).json({ error: 'Database error' });
     }
     
@@ -67,65 +67,40 @@ const authenticate = async (req, res, next) => {
       // Пользователь найден
       user = users[0];
     } else {
-      // Создаем нового пользователя
-      const userData = tg.initDataUnsafe?.user;
-      
+      // Создаем нового пользователя с сервисной ролью
       const newUserData = {
         telegram_id: telegramId,
-        first_name: userData?.first_name || 'Пользователь',
-        last_name: userData?.last_name || '',
-        username: userData?.username,
-        photo_url: userData?.photo_url,
-        free_ads_available: 2,
+        first_name: 'Пользователь',
+        last_name: `#${telegramId}`,
         created_at: new Date().toISOString()
       };
       
-      console.log('Creating new user:', newUserData);
-      
       const { data: newUsers, error: createError } = await supabaseAdmin
         .from('users')
-        .insert([newUserData]) // Используем массив
-        .select('*');
+        .insert(newUserData)
+        .select();
       
       if (createError || !newUsers || newUsers.length === 0) {
-        console.error('Create user error:', createError);
-        // Создаем базового пользователя
-        user = {
-          id: Date.now(),
-          telegram_id: telegramId,
-          first_name: 'Пользователь',
-          last_name: '',
-          free_ads_available: 2,
-          created_at: new Date().toISOString()
-        };
-      } else {
-        user = newUsers[0];
+        return res.status(500).json({ 
+          error: 'Failed to create user',
+          details: createError?.message 
+        });
       }
+      
+      user = newUsers[0];
     }
     
     if (!user) {
-      user = {
-        id: Date.now(),
-        telegram_id: telegramId,
-        first_name: 'Пользователь',
-        last_name: '',
-        free_ads_available: 2
-      };
+      return res.status(404).json({ error: 'User not found' });
     }
     
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth error:', error);
-    // Создаем минимального пользователя для продолжения работы
-    req.user = {
-      id: Date.now(),
-      telegram_id: telegramId,
-      first_name: 'Пользователь',
-      last_name: '',
-      free_ads_available: 2
-    };
-    next();
+    res.status(500).json({ 
+      error: 'Authentication failed',
+      details: error.message 
+    });
   }
 };
 
@@ -140,32 +115,14 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Получить пользователя - исправленная версия
+// Получить пользователя
 app.get('/api/user', authenticate, async (req, res) => {
   try {
     if (!req.user) {
       return res.status(404).json({ error: 'User not found in request' });
     }
-    
-    // Получаем актуальные данные пользователя из базы
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', req.user.id);
-    
-    if (error) {
-      console.error('Get user error:', error);
-      return res.json({ user: req.user });
-    }
-    
-    if (users && users.length > 0) {
-      res.json({ user: users[0] });
-    } else {
-      res.json({ user: req.user });
-    }
-    
+    res.json({ user: req.user });
   } catch (error) {
-    console.error('Get user error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -232,7 +189,6 @@ app.get('/api/ads', async (req, res) => {
     
     res.json({ ads: adsWithDetails });
   } catch (error) {
-    console.error('Get ads error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -241,8 +197,6 @@ app.get('/api/ads', async (req, res) => {
 app.get('/api/ads/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
-    console.log('Get ad request for ID:', id, 'Type:', typeof id);
     
     // Пробуем получить объявление как UUID
     const { data: ad, error } = await supabase
@@ -255,11 +209,9 @@ app.get('/api/ads/:id', async (req, res) => {
       .single();
     
     if (error) {
-      console.error('Get ad error:', error);
       
       // Если ошибка связана с форматом UUID, пробуем найти по числовому ID
       if (error.code === '22P02') {
-        console.log('UUID format error, trying to find by numeric id...');
         
         // Пытаемся найти объявление с числовым полем (если оно есть)
         // Или преобразуем запрос
@@ -301,7 +253,6 @@ app.get('/api/ads/:id', async (req, res) => {
     
     res.json({ ad });
   } catch (error) {
-    console.error('Get ad error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -381,7 +332,6 @@ app.post('/api/ads/:id/bids', authenticate, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Bid error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -392,8 +342,6 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
     const { id } = req.params;
     const user = req.user;
     
-    console.log(`Delete request - Ad ID: "${id}", User ID: ${user.id}`);
-    
     // Сначала попробуем найти объявление как UUID
     let { data: ad, error: fetchError } = await supabase
       .from('ads')
@@ -402,7 +350,6 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
     
     // Если ошибка UUID, ищем альтернативными способами
     if (fetchError && fetchError.code === '22P02') {
-      console.log('UUID error, trying alternative lookup...');
       
       // Вариант 1: Ищем по numeric_id если есть такое поле
       ad = await findAdByNumericId(id, user.id);
@@ -412,8 +359,6 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
         ad = await findAdByOtherFields(id, user.id);
       }
     }
-    
-    console.log('Found ad:', ad);
     
     if (!ad || ad.length === 0) {
       return res.status(404).json({ 
@@ -443,11 +388,8 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
       .eq('id', adToDelete.id); // Используем реальный UUID из найденной записи
     
     if (deleteError) {
-      console.error('Delete ad error:', deleteError);
       throw deleteError;
     }
-    
-    console.log('Ad successfully deleted:', adToDelete.id);
     
     res.json({ 
       success: true, 
@@ -456,7 +398,6 @@ app.delete('/api/ads/:id', authenticate, async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Delete ad error:', error);
     res.status(500).json({ 
       error: 'Ошибка сервера при удалении объявления',
       details: error.message 
@@ -477,13 +418,11 @@ async function findAdByNumericId(id, userId) {
       .eq('employer_id', userId);
     
     if (error) {
-      console.error('Find by numeric_id error:', error);
       return null;
     }
     
     return data;
   } catch (error) {
-    console.error('findAdByNumericId error:', error);
     return null;
   }
 }
@@ -499,13 +438,13 @@ async function findAdByOtherFields(id, userId) {
       .limit(1);
     
     if (error) {
-      console.error('Find by other fields error:', error);
+
       return null;
     }
     
     return data;
   } catch (error) {
-    console.error('findAdByOtherFields error:', error);
+
     return null;
   }
 }
@@ -534,7 +473,7 @@ app.get('/api/ads/by-numeric/:numericId', authenticate, async (req, res) => {
       .eq('numeric_id', numericIdInt);
     
     if (error) {
-      console.error('Get ad by numeric error:', error);
+
       return res.status(500).json({ error: 'Database error' });
     }
     
@@ -544,7 +483,7 @@ app.get('/api/ads/by-numeric/:numericId', authenticate, async (req, res) => {
     
     res.json({ ad: ads[0] });
   } catch (error) {
-    console.error('Get ad by numeric error:', error);
+
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -566,7 +505,7 @@ app.get('/api/ads/:id/bids', async (req, res) => {
     if (error) throw error;
     res.json({ bids });
   } catch (error) {
-    console.error('Get bids error:', error);
+
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -595,7 +534,7 @@ app.get('/api/messages', authenticate, async (req, res) => {
     if (error) throw error;
     res.json({ messages });
   } catch (error) {
-    console.error('Get messages error:', error);
+
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -631,7 +570,7 @@ app.post('/api/messages', authenticate, async (req, res) => {
     
     res.json({ message });
   } catch (error) {
-    console.error('Send message error:', error);
+
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -687,7 +626,7 @@ app.post('/api/ads/check', authenticate, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Check ad publication error:', error);
+
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -761,7 +700,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
     res.json({ ad: ads[0] });
 
   } catch (error) {
-    console.error('Create ad error:', error);
+
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -798,7 +737,7 @@ app.post('/api/referrals/create', authenticate, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Create referral error:', error);
+
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -851,7 +790,7 @@ app.post('/api/referrals/use', authenticate, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Use referral error:', error);
+
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -905,7 +844,7 @@ app.post('/api/subscriptions/create', authenticate, async (req, res) => {
         });
         
     } catch (error) {
-        console.error('Create subscription error:', error);
+
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -925,7 +864,7 @@ app.get('/api/subscriptions/my', authenticate, async (req, res) => {
         res.json({ subscription });
         
     } catch (error) {
-        console.error('Get subscription error:', error);
+
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -1023,70 +962,9 @@ app.post('/api/user/init', authenticate, async (req, res) => {
         res.json({ user: updatedUsers[0] });
         
     } catch (error) {
-        console.error('Init user error:', error);
+
         res.status(500).json({ error: 'Server error' });
     }
-});
-
-// Обновите маршрут /api/user (или добавьте новый)
-app.post('/api/user/update-telegram', authenticate, async (req, res) => {
-  try {
-    const { 
-      username, 
-      first_name, 
-      last_name, 
-      photo_url 
-    } = req.body;
-    
-    console.log('Updating Telegram data for user:', req.user.id, req.body);
-    
-    // Создаем объект для обновления
-    const updateData = {};
-    
-    // Проверяем наличие полей и добавляем их
-    if (username !== undefined) updateData.username = username;
-    if (first_name !== undefined) updateData.first_name = first_name;
-    if (last_name !== undefined) updateData.last_name = last_name;
-    if (photo_url !== undefined) updateData.photo_url = photo_url;
-    
-    console.log('Update data:', updateData);
-    
-    // Если нечего обновлять, возвращаем текущего пользователя
-    if (Object.keys(updateData).length === 0) {
-      console.log('Nothing to update');
-      return res.json({ user: req.user });
-    }
-    
-    // Обновляем пользователя
-    const { data: updatedUsers, error } = await supabase
-      .from('users')
-      .update(updateData)
-      .eq('id', req.user.id)
-      .select('*'); // Используем select() вместо single()
-    
-    if (error) {
-      console.error('Update error:', error);
-      // В случае ошибки возвращаем текущего пользователя с обновленными локально данными
-      const mergedUser = { ...req.user, ...updateData };
-      return res.json({ user: mergedUser });
-    }
-    
-    console.log('Updated users:', updatedUsers);
-    
-    if (!updatedUsers || updatedUsers.length === 0) {
-      console.log('No users returned after update, returning merged user');
-      const mergedUser = { ...req.user, ...updateData };
-      return res.json({ user: mergedUser });
-    }
-    
-    // Возвращаем первого обновленного пользователя
-    res.json({ user: updatedUsers[0] });
-    
-  } catch (error) {
-    console.error('Update Telegram data error:', error);
-    // В случае ошибки возвращаем текущего пользователя
-    res.json({ user: req.user });
-  }
 });
 
 // WebSocket подключения
@@ -1105,6 +983,4 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Supabase connected: ${supabaseUrl ? 'Yes' : 'No'}`);
 });
