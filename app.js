@@ -926,121 +926,232 @@ function displayAdDetail(ad) {
     
     const isMyAd = ad.employer_id === currentUser.id;
     const employerName = ad.employer ? `${ad.employer.first_name} ${ad.employer.last_name}` : 'Пользователь';
+    const auctionEnded = ad.auction && ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date();
     
     container.innerHTML = `
-        <div class="ad-detail-header">
-            <div class="ad-detail-title">${ad.title}</div>
-            <div class="ad-detail-price">${ad.price} ₽</div>
-        </div>
-        
-        <div class="ad-detail-category">${categoryNames[ad.category]}</div>
-        ${ad.auction ? '<div class="ad-detail-auction"><i class="fas fa-gavel"></i> Аукцион</div>' : ''}
-        
-        <div class="ad-detail-description">
-            <h4>Описание:</h4>
-            <p>${ad.description}</p>
-        </div>
-        
-        <div class="ad-detail-meta">
-            <div class="meta-item">
-                <i class="fas fa-map-marker-alt"></i>
-                <span><strong>Местоположение:</strong> ${ad.location}</span>
-            </div>
-            <div class="meta-item">
-                <i class="fas fa-user"></i>
-                <span><strong>Автор:</strong> ${employerName}</span>
-            </div>
-            <div class="meta-item">
-                <i class="fas fa-calendar-alt"></i>
-                <span><strong>Дата публикации:</strong> ${new Date(ad.created_at).toLocaleDateString('ru-RU')}</span>
-            </div>
-            ${ad.contacts && isMyAd ? `
-                <div class="meta-item">
-                    <i class="fas fa-phone"></i>
-                    <span><strong>Контакты автора:</strong> ${ad.contacts}</span>
-                </div>
-            ` : ''}
-            ${ad.auction_ends_at ? `
-                <div class="meta-item">
-                    <i class="fas fa-clock"></i>
-                    <span><strong>Аукцион до:</strong> ${new Date(ad.auction_ends_at).toLocaleString('ru-RU')}</span>
-                </div>
-            ` : ''}
-            <div class="meta-item">
-                <i class="fas fa-info-circle"></i>
-                <span><strong>Статус:</strong> ${getStatusText(ad.status)}</span>
-            </div>
-        </div>
-        
-        ${ad.auction ? `
-            <div class="ad-detail-bids">
-                <h4>Ставки:</h4>
-                <div id="adDetailBids">
-                    Загрузка ставок...
+        <div class="ad-detail-screen">
+            <div class="ad-detail-header">
+                <button class="ad-detail-header-back" id="adDetailBackBtn">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="ad-detail-title-section">
+                    <h1 class="ad-detail-title">${ad.title}</h1>
+                    <div class="ad-detail-price">${ad.price} ₽</div>
+                    <div class="ad-detail-badges">
+                        <span class="ad-detail-badge">
+                            <i class="fas fa-tag"></i>
+                            ${categoryNames[ad.category]}
+                        </span>
+                        ${ad.auction ? `
+                            <span class="ad-detail-badge" style="background: rgba(255, 193, 7, 0.3);">
+                                <i class="fas fa-gavel"></i>
+                                ${auctionEnded ? 'Аукцион завершен' : 'Идёт аукцион'}
+                            </span>
+                        ` : ''}
+                        <span class="ad-detail-badge" style="background: ${ad.status === 'active' ? 'rgba(40, 167, 69, 0.3)' : ad.status === 'taken' ? 'rgba(255, 193, 7, 0.3)' : 'rgba(108, 117, 125, 0.3)'}">
+                            <i class="fas fa-${ad.status === 'active' ? 'check-circle' : ad.status === 'taken' ? 'clock' : 'flag'}"></i>
+                            ${getStatusText(ad.status)}
+                        </span>
+                    </div>
                 </div>
             </div>
-        ` : ''}
-        
-        <div class="ad-detail-actions">
-            <button id="backToListBtn" class="btn-secondary">
-                <i class="fas fa-arrow-left"></i> Назад к списку
-            </button>
             
-            ${!isMyAd && ad.status === 'active' && !ad.auction ? `
-                <button id="respondAdBtn" class="btn-primary" data-ad-id="${ad.id}">
-                    <i class="fas fa-check"></i> Откликнуться
-                </button>
-                <button id="openChatBtn" class="btn-secondary" data-ad-id="${ad.id}" data-user-id="${ad.employer_id}">
-                    <i class="fas fa-comment"></i> Написать
-                </button>
-            ` : ''}
+            <div class="ad-detail-container">
+                <div class="ad-detail-meta-grid">
+                    <div class="ad-detail-meta-card">
+                        <div class="ad-detail-meta-icon">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="ad-detail-meta-label">Автор</div>
+                        <div class="ad-detail-meta-value">${employerName}</div>
+                    </div>
+                    
+                    <div class="ad-detail-meta-card">
+                        <div class="ad-detail-meta-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="ad-detail-meta-label">Местоположение</div>
+                        <div class="ad-detail-meta-value">${ad.location}</div>
+                    </div>
+                    
+                    <div class="ad-detail-meta-card">
+                        <div class="ad-detail-meta-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <div class="ad-detail-meta-label">Дата</div>
+                        <div class="ad-detail-meta-value">${new Date(ad.created_at).toLocaleDateString('ru-RU')}</div>
+                    </div>
+                    
+                    ${ad.auction_ends_at ? `
+                        <div class="ad-detail-meta-card">
+                            <div class="ad-detail-meta-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="ad-detail-meta-label">${auctionEnded ? 'Завершён' : 'Завершится'}</div>
+                            <div class="ad-detail-meta-value">${new Date(ad.auction_ends_at).toLocaleString('ru-RU', { 
+                                day: 'numeric',
+                                month: 'short',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}</div>
+                        </div>
+                    ` : ''}
+                </div>
+                
+                ${ad.contacts && isMyAd ? `
+                    <div class="ad-detail-contacts">
+                        <div class="ad-detail-section-title">
+                            <i class="fas fa-address-card"></i>
+                            Контакты автора
+                        </div>
+                        <div class="contact-item">
+                            <div class="contact-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div class="contact-info">
+                                <div class="contact-label">Телефон/контакты</div>
+                                <div class="contact-value">${ad.contacts}</div>
+                            </div>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="ad-detail-section">
+                    <div class="ad-detail-section-title">
+                        <i class="fas fa-align-left"></i>
+                        Описание задания
+                    </div>
+                    <div class="ad-detail-description">
+                        ${ad.description || 'Описание не указано'}
+                    </div>
+                </div>
+                
+                ${ad.auction ? `
+                    <div class="ad-detail-auction-section">
+                        <div class="ad-detail-section-title">
+                            <i class="fas fa-gavel"></i>
+                            Аукцион
+                        </div>
+                        
+                        <div class="auction-timer">
+                            ${getTimeLeft(ad.auction_ends_at)}
+                        </div>
+                        
+                        <div class="auction-price-comparison">
+                            <div class="auction-price-item">
+                                <div class="auction-price-label">Начальная цена</div>
+                                <div class="auction-price-value initial">${ad.price} ₽</div>
+                            </div>
+                            <div class="auction-price-item">
+                                <div class="auction-price-label">Текущая ставка</div>
+                                <div class="auction-price-value current">${ad.min_bid || ad.price} ₽</div>
+                            </div>
+                        </div>
+                        
+                        ${!auctionEnded && !isMyAd ? `
+                            <div style="text-align: center; margin-top: 20px;">
+                                <button id="participateAuctionBtn" class="btn-primary" data-ad-id="${ad.id}" style="padding: 12px 24px;">
+                                    <i class="fas fa-gavel"></i> Участвовать в аукционе
+                                </button>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="bids-history-compact" id="bidsHistoryList">
+                            Загрузка истории ставок...
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="ad-detail-status">
+                    <div class="status-progress">
+                        <div class="status-progress-bar">
+                            <div class="status-progress-fill" style="width: ${
+                                ad.status === 'active' ? '33%' : 
+                                ad.status === 'taken' ? '66%' : 
+                                '100%'
+                            }"></div>
+                        </div>
+                        <div class="status-progress-text">
+                            ${getStatusText(ad.status)}
+                        </div>
+                    </div>
+                    <div class="status-description">
+                        ${ad.status === 'active' ? 'Задание активно и ждёт исполнителя' : 
+                          ad.status === 'taken' ? 'Задание в работе' : 
+                          'Задание завершено'}
+                    </div>
+                </div>
+            </div>
             
-                    ${isMyAd && ad.status === 'active' ? `
-                <button id="editAdBtn" class="btn-secondary" data-ad-id="${ad.id}">
-                    <i class="fas fa-edit"></i> Редактировать
-                </button>
-                <button id="closeAdBtn" class="btn-danger" data-ad-id="${ad.id}">
-                    <i class="fas fa-trash"></i> Удалить
-                </button>
-            ` : ''}
+            <div class="ad-detail-actions">
+                ${isMyAd ? `
+                    <button class="ad-detail-action-btn secondary" id="editAdBtn" data-ad-id="${ad.id}">
+                        <i class="fas fa-edit"></i> Редактировать
+                    </button>
+                    <button class="ad-detail-action-btn danger" id="closeAdBtn" data-ad-id="${ad.id}">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
+                ` : !isMyAd && ad.status === 'active' && !ad.auction ? `
+                    <button class="ad-detail-action-btn secondary" id="openChatBtn" data-ad-id="${ad.id}" data-user-id="${ad.employer_id}">
+                        <i class="fas fa-comment"></i> Чат
+                    </button>
+                    <button class="ad-detail-action-btn primary" id="respondAdBtn" data-ad-id="${ad.id}">
+                        <i class="fas fa-check"></i> Откликнуться
+                    </button>
+                ` : ad.auction && !auctionEnded && !isMyAd ? `
+                    <button class="ad-detail-action-btn primary" id="participateAuctionBtn2" data-ad-id="${ad.id}">
+                        <i class="fas fa-gavel"></i> Участвовать
+                    </button>
+                ` : ''}
+            </div>
         </div>
     `;
     
-    // Загружаем ставки для аукциона
+    // Загружаем историю ставок для аукциона
     if (ad.auction) {
         loadBidsForAd(ad.id);
     }
     
     // Настройка обработчиков
-    document.getElementById('backToListBtn').addEventListener('click', function() {
+    document.getElementById('adDetailBackBtn').addEventListener('click', function() {
         showScreen('mainScreen');
     });
     
-        if (!isMyAd && ad.status === 'active' && !ad.auction) {
-            document.getElementById('respondAdBtn').addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-                respondToAd(adId);
-            });
-            
-            document.getElementById('openChatBtn').addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-                const userId = this.getAttribute('data-user-id');
-                openChat(adId, userId);
+    // Остальные обработчики остаются такими же...
+    if (!isMyAd && ad.status === 'active' && !ad.auction) {
+        document.getElementById('respondAdBtn').addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            respondToAd(adId);
+        });
+        
+        document.getElementById('openChatBtn').addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            const userId = this.getAttribute('data-user-id');
+            openChat(adId, userId);
+        });
+    }
+    
+    if (ad.auction && !auctionEnded && !isMyAd) {
+        const participateBtn = document.getElementById('participateAuctionBtn') || document.getElementById('participateAuctionBtn2');
+        if (participateBtn) {
+            participateBtn.addEventListener('click', function() {
+                const adId = this.getAttribute('data-ad-id');
+                showAuctionScreen(adId);
             });
         }
-
-        if (isMyAd && ad.status === 'active') {
-            document.getElementById('editAdBtn').addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-                editAd(adId);
-            });
-            
-            document.getElementById('closeAdBtn').addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-                closeAd(adId);
-            });
-            
-        }
+    }
+    
+    if (isMyAd && ad.status === 'active') {
+        document.getElementById('editAdBtn').addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            editAd(adId);
+        });
+        
+        document.getElementById('closeAdBtn').addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            closeAd(adId);
+        });
+    }
     
     showScreen('adDetailScreen');
 }
