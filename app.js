@@ -239,94 +239,154 @@ let currentScreen = 'loadingScreen';
 
 // ============ ФУНКЦИИ АУТЕНТИФИКАЦИИ ============
 
-// Функция initUserFromTelegram - упрощаем
+// Функция initUserFromTelegram - обновленная версия
 async function initUserFromTelegram() {
-    // Если уже инициализируемся или инициализированы - выходим
-    if (isUserInitializing || isUserInitialized) {
-        console.log('User initialization already in progress or completed');
-        return;
+  // Если уже инициализируемся или инициализированы - выходим
+  if (isUserInitializing || isUserInitialized) {
+    console.log('User initialization already in progress or completed');
+    return;
+  }
+  
+  isUserInitializing = true;
+  
+  try {
+    // Используем данные из Telegram Web App
+    const userData = tg.initDataUnsafe.user;
+    
+    if (!userData) {
+      throw new Error('Telegram user data not found');
     }
     
-    isUserInitializing = true;
+    console.log('Initializing user with Telegram data:', userData);
     
-    try {
-        // Используем данные из Telegram Web App
-        const userData = tg.initDataUnsafe.user;
-        
-        if (!userData) {
-            throw new Error('Telegram user data not found');
-        }
-        
-        console.log('Initializing user with Telegram data:', userData);
-        
-        const telegramId = userData.id.toString();
-        
-        // Проверяем, есть ли уже currentUser с таким telegram_id
-        if (currentUser && currentUser.telegram_id === telegramId) {
-            console.log('User already initialized:', currentUser);
-            isUserInitialized = true;
-            return;
-        }
-        
-        // Пытаемся получить пользователя с сервера
-        const response = await fetch(`${API_BASE_URL}/user`, {
-            headers: {
-                'Authorization': telegramId
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            currentUser = data.user;
-            updateFreeAdsCounter();
-            console.log('User loaded from server:', currentUser);
-            isUserInitialized = true;
-        } else {
-            // Если сервер вернул ошибку, создаем временного пользователя
-            currentUser = {
-                id: Date.now(), // временный ID
-                telegram_id: telegramId,
-                username: userData.username,
-                first_name: userData.first_name || 'Пользователь',
-                last_name: userData.last_name || '',
-                photo_url: userData.photo_url
-            };
-            console.log('Using temporary user:', currentUser);
-            isUserInitialized = true;
-            showNotification('Используется локальный режим');
-        }
-        
-        // Обновляем аватар, если находимся на экране профиля
-        if (currentScreen === 'profileScreen') {
-            updateProfileAvatar();
-        }
+    const telegramId = userData.id.toString();
+    
+    // Проверяем, есть ли уже currentUser с таким telegram_id
+    if (currentUser && currentUser.telegram_id === telegramId) {
+      console.log('User already initialized:', currentUser);
+      isUserInitialized = true;
+      return;
+    }
+    
+    // Пытаемся получить пользователя с сервера
+    const response = await fetch(`${API_BASE_URL}/user`, {
+      headers: {
+        'Authorization': telegramId
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      currentUser = data.user;
+      
+      // Обновляем Telegram данные, если они есть
+      await updateTelegramUserData(userData);
+      
+      console.log('User loaded from server:', currentUser);
+      isUserInitialized = true;
+    } else {
+      // Если сервер вернул ошибку, создаем временного пользователя
+      currentUser = {
+        id: Date.now(), // временный ID
+        telegram_id: telegramId,
+        username: userData.username,
+        first_name: userData.first_name || 'Пользователь',
+        last_name: userData.last_name || '',
+        photo_url: userData.photo_url
+      };
+      console.log('Using temporary user:', currentUser);
+      isUserInitialized = true;
+      showNotification('Используется локальный режим');
+    }
+    
+    // Обновляем UI с данными пользователя
+    updateUserUI();
+    
+    // Инициализируем WebSocket только если он еще не инициализирован
+    if (currentUser && !socket) {
+      console.log('Initializing WebSocket for user ID:', currentUser.id);
+      initWebSocket();
+    }
+    
+  } catch (error) {
+    console.error('Error initializing user:', error);
+    // Создаем временного пользователя при ошибке
+    const userData = tg.initDataUnsafe.user;
+    if (userData) {
+      currentUser = {
+        id: Date.now(),
+        telegram_id: userData.id.toString(),
+        username: userData.username,
+        first_name: userData.first_name || 'Пользователь',
+        last_name: userData.last_name || '',
+        photo_url: userData.photo_url
+      };
+      console.log('Created temporary user due to error:', currentUser);
+      isUserInitialized = true;
+      updateUserUI();
+    }
+    showNotification(`Ошибка инициализации: ${error.message}`);
+  } finally {
+    isUserInitializing = false;
+  }
+}
 
-        // Инициализируем WebSocket только если он еще не инициализирован
-        if (currentUser && !socket) {
-            console.log('Initializing WebSocket for user ID:', currentUser.id);
-            initWebSocket();
-        }
-        
-    } catch (error) {
-        console.error('Error initializing user:', error);
-        // Создаем временного пользователя при ошибке
-        const userData = tg.initDataUnsafe.user;
-        if (userData) {
-            currentUser = {
-                id: Date.now(),
-                telegram_id: userData.id.toString(),
-                username: userData.username,
-                first_name: userData.first_name || 'Пользователь',
-                last_name: userData.last_name || '',
-                photo_url: userData.photo_url
-            };
-            console.log('Created temporary user due to error:', currentUser);
-            isUserInitialized = true;
-        }
-        showNotification(`Ошибка инициализации: ${error.message}`);
-    } finally {
-        isUserInitializing = false;
+// Новая функция для обновления Telegram данных на сервере
+async function updateTelegramUserData(telegramData) {
+  try {
+    if (!currentUser || !telegramData) return;
+    
+    const response = await fetch(`${API_BASE_URL}/user/update-telegram`, {
+      method: 'POST',
+      headers: {
+        'Authorization': currentUser.telegram_id.toString(),
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: telegramData.username,
+        first_name: telegramData.first_name,
+        last_name: telegramData.last_name,
+        photo_url: telegramData.photo_url
+      })
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      currentUser = { ...currentUser, ...data.user };
+      console.log('Telegram data updated:', data.user);
     }
+  } catch (error) {
+    console.error('Error updating Telegram data:', error);
+  }
+}
+
+// Функция для обновления UI с данными пользователя
+function updateUserUI() {
+  if (!currentUser) return;
+  
+  // Обновляем имя в профиле
+  const profileUserName = document.getElementById('profileUserName');
+  if (profileUserName) {
+    const fullName = `${currentUser.first_name || 'Пользователь'} ${currentUser.last_name || ''}`.trim();
+    profileUserName.textContent = fullName || 'Пользователь';
+  }
+  
+  // Обновляем аватар в профиле, если есть фото
+  if (currentUser.photo_url) {
+    const avatarElement = document.querySelector('.profile-header .avatar');
+    if (avatarElement) {
+      avatarElement.innerHTML = `<img src="${currentUser.photo_url}" alt="Аватар" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
+    }
+    
+    // Также обновляем аватар в шапке, если есть
+    const headerAvatar = document.querySelector('.user-info .avatar');
+    if (headerAvatar) {
+      headerAvatar.innerHTML = `<img src="${currentUser.photo_url}" alt="Аватар" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">`;
+    }
+  }
+  
+  // Обновляем статистику
+  updateProfileStats();
 }
 
 // ============ WEBSOCKET ============
@@ -427,11 +487,6 @@ function showScreen(screenId) {
     // Обновляем кнопку назад в Telegram
     updateBackButtonForScreen(screenId);
     
-    // Обновляем аватар при переходе на экран профиля
-    if (screenId === 'profileScreen' && currentUser) {
-        loadProfileScreen();
-    }
-
     // Скрываем навигацию на некоторых экранах
     const bottomNav = document.getElementById('bottomNav');
     if (screenId === 'loadingScreen' || screenId === 'createAdScreen') {
@@ -2118,72 +2173,16 @@ function addMessageToChat(message) {
 
 // ============ ПРОФИЛЬ ============
 
-// Обновленный экран профиля
+// Обновите функцию loadProfileScreen
 function loadProfileScreen() {
-    if (!currentUser) return;
-    
-    // Обновляем имя пользователя
-    document.getElementById('profileUserName').textContent = 
-        `${currentUser.first_name || 'Пользователь'} ${currentUser.last_name || ''}`.trim();
-    
-    // Обновляем аватар
-    updateProfileAvatar();
-    
-    // Загружаем информацию о подписках и рефералах
-    loadExtendedProfileInfo();
-    updateProfileStats();
+  if (!currentUser) return;
+  
+  // Используем updateUserUI вместо прямого обновления
+  updateUserUI();
+  
+  // Загружаем дополнительную информацию
+  loadExtendedProfileInfo();
 }
-
-function updateProfileAvatar() {
-    const avatarElement = document.querySelector('#profileScreen .profile-header .avatar');
-    if (!avatarElement) return;
-    
-    // Очищаем текущее содержимое
-    avatarElement.innerHTML = '';
-    
-    console.log('Current user data for avatar:', {
-        photo_url: currentUser.photo_url,
-        first_name: currentUser.first_name,
-        last_name: currentUser.last_name
-    });
-    
-    // Проверяем разные возможные источники аватара
-    let avatarUrl = currentUser.photo_url || currentUser.avatar_url;
-    
-    if (avatarUrl) {
-        // Проверяем, является ли URL полным
-        if (!avatarUrl.startsWith('http')) {
-            // Если это относительный URL, добавляем базовый путь
-            avatarUrl = `https://t.me/${avatarUrl}`;
-        }
-        
-        console.log('Loading avatar from URL:', avatarUrl);
-        
-        // Создаем изображение с обработчиками ошибок
-        const img = new Image();
-        img.onload = function() {
-            console.log('Avatar image loaded successfully');
-            avatarElement.innerHTML = `<img src="${avatarUrl}" alt="Аватар пользователя" class="avatar-img" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'avatar-fallback\\'>${getUserInitials()}</div>'">`;
-        };
-        img.onerror = function() {
-            console.log('Failed to load avatar image, using fallback');
-            avatarElement.innerHTML = `<div class="avatar-fallback">${getUserInitials()}</div>`;
-        };
-        img.src = avatarUrl;
-    } else {
-        // Используем инициалы как fallback
-        console.log('No avatar URL, using initials');
-        avatarElement.innerHTML = `<div class="avatar-fallback">${getUserInitials()}</div>`;
-    }
-}
-
-// Вспомогательная функция для получения инициалов
-function getUserInitials() {
-    const firstName = currentUser.first_name || 'П';
-    const lastName = currentUser.last_name || '';
-    return (firstName.charAt(0) + (lastName.charAt(0) || '')).toUpperCase();
-}
-
 async function loadExtendedProfileInfo() {
     // Загружаем информацию о подписке
     const subscription = await loadSubscriptionInfo();
