@@ -5241,3 +5241,15 @@ input:checked + .slider:before {
     font-weight: 600;
     color: var(--primary-color);
 }
+
+/* Стили для кнопки удаления в модальном окне */
+.modal-footer .btn-danger {
+    background: linear-gradient(135deg, #ef233c, #d90429) !important;
+    border: none;
+}
+
+.modal-footer .btn-danger:hover {
+    background: linear-gradient(135deg, #d90429, #b90e0e) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(239, 35, 60, 0.4) !important;
+}
