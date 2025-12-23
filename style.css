@@ -592,6 +592,7 @@ main {
     background-clip: text;
 }
 
+/* Обновляем расположение бейджа аукциона */
 .ad-card-category {
     display: inline-flex;
     align-items: center;
@@ -604,6 +605,23 @@ main {
     color: var(--primary-color);
     font-weight: 600;
     transition: var(--transition-fast);
+    position: relative;
+}
+
+/* Бейдж аукциона - переделываем позиционирование */
+.ad-card-category .auction-badge {
+    position: static; /* убираем абсолютное позиционирование */
+    margin-left: 8px;
+    background-color: #ffc107;
+    color: #856404;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    line-height: 1;
 }
 
 .ad-card:hover .ad-card-category {
