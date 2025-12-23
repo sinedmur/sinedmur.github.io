@@ -23,30 +23,26 @@ let isUserInitialized = false;
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
-    setupTelegramBackButton();
-    // Сразу показываем экран загрузки
-    showScreen('loadingScreen');
-    
-    // Начинаем процесс загрузки
-    await startLoading();
-    // Добавляем класс loaded после загрузки
-    setTimeout(() => {
-        document.body.classList.add('loaded');
-    }, 500);
-
-    // Инициализация пользователя
-    await initUserFromTelegram();
-    
-    // Настройка обработчиков событий
-    setupEventListeners();
-    
-    // Загрузка данных
-    if (currentUser) {
-        showScreen('mainScreen');
-        await loadAds();
-        await loadNotifications();
-        updateProfileStats();
-    }
+  setupTelegramBackButton();
+  showScreen('loadingScreen');
+  await startLoading();
+  
+  // Немедленно обновляем UI из Telegram данных
+  updateUIFromTelegram();
+  
+  // Инициализация пользователя
+  await initUserFromTelegram();
+  
+  // Настройка обработчиков
+  setupEventListeners();
+  
+  // Загрузка данных
+  if (currentUser) {
+    showScreen('mainScreen');
+    await loadAds();
+    await loadNotifications();
+    updateProfileStats();
+  }
 });
 
 // Процесс загрузки приложения
@@ -332,10 +328,23 @@ async function initUserFromTelegram() {
 }
 
 // Новая функция для обновления Telegram данных на сервере
+// Упрощенная функция обновления Telegram данных
 async function updateTelegramUserData(telegramData) {
   try {
     if (!currentUser || !telegramData) return;
     
+    // Обновляем локальные данные сразу
+    const updatedUser = {
+      ...currentUser,
+      username: telegramData.username || currentUser.username,
+      first_name: telegramData.first_name || currentUser.first_name || 'Пользователь',
+      last_name: telegramData.last_name || currentUser.last_name || '',
+      photo_url: telegramData.photo_url || currentUser.photo_url
+    };
+    
+    currentUser = updatedUser;
+    
+    // Пытаемся обновить на сервере
     const response = await fetch(`${API_BASE_URL}/user/update-telegram`, {
       method: 'POST',
       headers: {
@@ -352,41 +361,69 @@ async function updateTelegramUserData(telegramData) {
     
     if (response.ok) {
       const data = await response.json();
-      currentUser = { ...currentUser, ...data.user };
-      console.log('Telegram data updated:', data.user);
+      if (data.user) {
+        currentUser = { ...currentUser, ...data.user };
+      }
     }
+    
   } catch (error) {
     console.error('Error updating Telegram data:', error);
+    // Локальные данные уже обновлены, продолжаем
   }
 }
 
 // Функция для обновления UI с данными пользователя
+// Упрощенная функция обновления UI
 function updateUserUI() {
   if (!currentUser) return;
+  
+  const telegramData = tg?.initDataUnsafe?.user;
+  
+  // Всегда используем актуальные Telegram данные, если они есть
+  const displayFirstName = telegramData?.first_name || currentUser.first_name || 'Пользователь';
+  const displayLastName = telegramData?.last_name || currentUser.last_name || '';
+  const displayPhotoUrl = telegramData?.photo_url || currentUser.photo_url;
   
   // Обновляем имя в профиле
   const profileUserName = document.getElementById('profileUserName');
   if (profileUserName) {
-    const fullName = `${currentUser.first_name || 'Пользователь'} ${currentUser.last_name || ''}`.trim();
+    const fullName = `${displayFirstName} ${displayLastName}`.trim();
     profileUserName.textContent = fullName || 'Пользователь';
   }
   
-  // Обновляем аватар в профиле, если есть фото
-  if (currentUser.photo_url) {
-    const avatarElement = document.querySelector('.profile-header .avatar');
-    if (avatarElement) {
-      avatarElement.innerHTML = `<img src="${currentUser.photo_url}" alt="Аватар" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">`;
-    }
-    
-    // Также обновляем аватар в шапке, если есть
-    const headerAvatar = document.querySelector('.user-info .avatar');
-    if (headerAvatar) {
-      headerAvatar.innerHTML = `<img src="${currentUser.photo_url}" alt="Аватар" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;">`;
-    }
-  }
+  // Обновляем аватар
+  updateAvatar(displayPhotoUrl, displayFirstName, displayLastName);
   
   // Обновляем статистику
   updateProfileStats();
+  
+  // Обновляем счетчик бесплатных объявлений
+  updateFreeAdsCounter();
+}
+
+// Функция для быстрого обновления UI из Telegram данных
+function updateUIFromTelegram() {
+  const telegramData = tg?.initDataUnsafe?.user;
+  if (!telegramData) return;
+  
+  // Немедленно обновляем UI
+  const nameElement = document.getElementById('profileUserName');
+  if (nameElement) {
+    const fullName = `${telegramData.first_name || ''} ${telegramData.last_name || ''}`.trim();
+    nameElement.textContent = fullName || 'Пользователь';
+  }
+  
+  // Обновляем аватар
+  if (telegramData.photo_url) {
+    const avatarElement = document.querySelector('.profile-header .avatar');
+    if (avatarElement) {
+      avatarElement.innerHTML = `
+        <img src="${telegramData.photo_url}" 
+             alt="Аватар" 
+             style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+      `;
+    }
+  }
 }
 
 // ============ WEBSOCKET ============
