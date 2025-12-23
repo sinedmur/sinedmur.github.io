@@ -683,6 +683,7 @@ function createAdElement(ad) {
 
 async function loadMyAds(filter = 'active') {
     try {
+        console.log('Loading my ads with filter:', filter);
         const response = await fetch(`${API_BASE_URL}/ads?type=my&user_id=${currentUser.id}`, {
             headers: {
                 'Authorization': currentUser.telegram_id.toString()
@@ -693,6 +694,7 @@ async function loadMyAds(filter = 'active') {
         
         const data = await response.json();
         const myAds = data.ads || [];
+        console.log('Loaded my ads:', myAds.length);
         
         let filteredAds = myAds;
         if (filter === 'active') {
@@ -704,9 +706,17 @@ async function loadMyAds(filter = 'active') {
         }
         
         displayMyAds(filteredAds);
+        
+        // Обновляем счетчик в заголовке
+        const header = document.querySelector('#myAdsScreen .screen-header');
+        if (header) {
+            header.setAttribute('data-count', filteredAds.length);
+        }
+        
     } catch (error) {
         console.error('Error loading my ads:', error);
         showNotification('Ошибка при загрузке ваших заданий');
+        displayMyAds([]); // Показываем пустое состояние при ошибке
     }
 }
 
@@ -723,9 +733,16 @@ function displayMyAds(adsList) {
             </div>
         `;
         
-        document.getElementById('createFromMyAdsBtn')?.addEventListener('click', function() {
-            showScreen('createAdScreen');
-        });
+        // Обработчик для кнопки создания из пустого состояния
+        setTimeout(() => {
+            const createBtn = document.getElementById('createFromMyAdsBtn');
+            if (createBtn) {
+                createBtn.addEventListener('click', function() {
+                    showScreen('createAdScreen');
+                });
+            }
+        }, 100);
+        
         return;
     }
     
@@ -738,7 +755,7 @@ function displayMyAds(adsList) {
 
 function createMyAdElement(ad) {
     const adElement = document.createElement('div');
-    adElement.className = `my-ad-card`;
+    adElement.className = `my-ad-card ${ad.auction ? 'auction-active' : ''}`;
     
     const categoryNames = {
         delivery: 'Доставка',
@@ -753,8 +770,26 @@ function createMyAdElement(ad) {
                        ad.status === 'taken' ? '#ffc107' : 
                        ad.status === 'completed' ? '#6c757d' : '#dc3545';
     
-    // Разрешаем удаление только активных объявлений
-    const canDelete = ad.status === 'active';
+    const canDelete = ad.status === 'active'; // Разрешаем удаление только активных
+    
+    // Информация об аукционе
+    let auctionInfo = '';
+    if (ad.auction && ad.status === 'active') {
+        const timeLeft = getTimeLeft(ad.auction_ends_at);
+        const bidsCount = ad.bids_count || 0;
+        auctionInfo = `
+            <div class="my-ad-auction-info">
+                <div class="auction-bids-count">
+                    <i class="fas fa-gavel"></i>
+                    <span>${bidsCount} ставок</span>
+                </div>
+                <div class="auction-time-left">
+                    <i class="fas fa-clock"></i>
+                    <span>${timeLeft}</span>
+                </div>
+            </div>
+        `;
+    }
     
     adElement.innerHTML = `
         <div class="my-ad-header">
@@ -762,9 +797,13 @@ function createMyAdElement(ad) {
             <div class="my-ad-price">${ad.price} ₽</div>
         </div>
         <div class="my-ad-meta">
-            <span class="my-ad-category">${categoryNames[ad.category]}</span>
-            <span class="my-ad-status" style="color: ${statusColor}">${statusText}</span>
+            <div class="my-ad-category" data-category="${ad.category}">
+                ${categoryNames[ad.category]}
+                ${ad.auction ? '<span class="my-ad-auction-badge"><i class="fas fa-gavel"></i> Аукцион</span>' : ''}
+            </div>
+            <div class="my-ad-status" style="color: ${statusColor}">${statusText}</div>
         </div>
+        ${auctionInfo}
         <div class="my-ad-description">${ad.description?.substring(0, 80) || ''}${ad.description?.length > 80 ? '...' : ''}</div>
         <div class="my-ad-footer">
             <div class="my-ad-location">
@@ -772,29 +811,69 @@ function createMyAdElement(ad) {
                 <span>${ad.location}</span>
             </div>
             <div class="my-ad-actions">
-                <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
+                <button class="my-ad-action-btn details" data-ad-id="${ad.id}">
+                    <i class="fas fa-eye"></i> Подробнее
+                </button>
                 ${ad.status === 'active' ? `
-                    <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>
-                    <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">Удалить</button>
+                    <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">
+                        <i class="fas fa-edit"></i> Изменить
+                    </button>
+                    <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">
+                        <i class="fas fa-trash"></i> Удалить
+                    </button>
                 ` : ''}
             </div>
         </div>
     `;
     
-        // В функции createMyAdElement измените обработчики:
-        adElement.querySelector('.details').addEventListener('click', function() {
-            const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-            showAdDetail(adId);
-        });
-
-        if (ad.status === 'active') {
-            adElement.querySelector('.edit')?.addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-                editAd(adId);
-            });
-        }
+    // Добавляем обработчики событий
+    addMyAdEventListeners(adElement, ad);
     
     return adElement;
+}
+
+// Функция для добавления обработчиков событий к карточке
+function addMyAdEventListeners(adElement, ad) {
+    // Кнопка "Подробнее"
+    const detailsBtn = adElement.querySelector('.my-ad-action-btn.details');
+    if (detailsBtn) {
+        detailsBtn.addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            console.log('Opening ad details from my ads:', adId);
+            showAdDetail(adId);
+        });
+    }
+    
+    // Кнопка "Изменить" (только для активных)
+    const editBtn = adElement.querySelector('.my-ad-action-btn.edit');
+    if (editBtn) {
+        editBtn.addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            console.log('Editing ad:', adId);
+            editAd(adId);
+        });
+    }
+    
+    // Кнопка "Удалить" (только для активных)
+    const deleteBtn = adElement.querySelector('.my-ad-action-btn.delete');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async function() {
+            const adId = this.getAttribute('data-ad-id');
+            console.log('Deleting ad from my ads screen:', adId);
+            
+            // Блокируем кнопку во время удаления
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Удаление...';
+            
+            try {
+                await closeAd(adId);
+            } finally {
+                // Восстанавливаем кнопку
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-trash"></i> Удалить';
+            }
+        });
+    }
 }
 
 async function showAdDetail(adId) {
@@ -960,11 +1039,7 @@ function displayAdDetail(ad) {
                 const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
                 closeAd(adId);
             });
-
-            document.getElementById('my-ad-action-btn delete').addEventListener('click', function() {
-                const adId = this.getAttribute('data-ad-id'); // Не преобразуем в число!
-                closeAd(adId);
-            });
+            
         }
     
     showScreen('adDetailScreen');
@@ -1326,98 +1401,181 @@ async function createSubscription(plan) {
     }
 }
 
+// Обновленная функция редактирования задания (заглушка)
 async function editAd(adId) {
-    // Реализация редактирования задания
-    showNotification('Редактирование задания (в разработке)');
+    try {
+        const adIdStr = adId.toString();
+        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+            headers: {
+                'Authorization': currentUser.telegram_id.toString()
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Не удалось загрузить данные задания');
+        }
+        
+        const data = await response.json();
+        const ad = data.ad;
+        
+        showModal(
+            'Редактирование задания',
+            `
+            <div style="text-align: center; padding: 20px 0;">
+                <i class="fas fa-edit" style="font-size: 3rem; color: #4361ee; margin-bottom: 15px;"></i>
+                <h3 style="margin-bottom: 10px;">${ad.title}</h3>
+                <p style="color: #6c757d;">Функция редактирования в разработке</p>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: var(--border-radius); margin-top: 20px;">
+                    <p style="margin-bottom: 10px;">Вместо редактирования вы можете:</p>
+                    <ul style="text-align: left; padding-left: 20px; color: #6c757d;">
+                        <li>Удалить текущее задание и создать новое</li>
+                        <li>Обсудить изменения с исполнителем в чате</li>
+                        <li>Обновить информацию в описании через чат</li>
+                    </ul>
+                </div>
+            </div>
+            `,
+            () => {
+                console.log('Edit modal confirmed for ad:', adId);
+            },
+            'Понятно'
+        );
+        
+    } catch (error) {
+        console.error('Error in editAd:', error);
+        showNotification('Ошибка при загрузке данных задания');
+    }
 }
 
 async function closeAd(adId) {
-  try {
-    // Преобразуем ID в строку для избежания проблем с типами
-    const adIdStr = adId.toString();
-    
-    console.log('Attempting to delete ad:', {
-      adId: adIdStr,
-      userId: currentUser?.id,
-      userName: currentUser?.first_name
-    });
-    
-    // Сначала загрузим детали объявления для проверки
-    const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-      headers: {
-        'Authorization': currentUser.telegram_id.toString()
-      }
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Не удалось загрузить данные объявления');
-    }
-    
-    const data = await response.json();
-    const ad = data.ad;
-    
-    if (!ad) {
-      showNotification('Объявление не найдено');
-      return;
-    }
-    
-    // Проверяем, является ли пользователь автором
-    if (ad.employer_id !== currentUser.id) {
-      showNotification('Вы не являетесь автором этого объявления');
-      return;
-    }
-    
-    // Проверяем статус
-    if (ad.status === 'taken' || ad.status === 'completed') {
-      showNotification(`Нельзя удалить задание со статусом "${getStatusText(ad.status)}"`);
-      return;
-    }
-    
-    showModal(
-      'Удаление задания',
-      `Вы уверены, что хотите удалить задание "${ad.title}"?`,
-      async () => {
-        try {
-          const deleteResponse = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
-            method: 'DELETE',
+    try {
+        // Преобразуем ID в строку для избежания проблем с типами
+        const adIdStr = adId.toString();
+        
+        console.log('Attempting to delete ad:', {
+            adId: adIdStr,
+            userId: currentUser?.id,
+            userName: currentUser?.first_name
+        });
+        
+        // Сначала загрузим детали объявления для проверки
+        const response = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
             headers: {
-              'Authorization': currentUser.telegram_id.toString()
+                'Authorization': currentUser.telegram_id.toString()
             }
-          });
-          
-          const result = await deleteResponse.json();
-          
-          if (!deleteResponse.ok) {
-            console.error('Delete API error:', result);
-            throw new Error(result.error || `Ошибка ${deleteResponse.status}`);
-          }
-          
-          showNotification(result.message || 'Задание успешно удалено');
-          
-          // Обновляем интерфейс
-          await loadAds();
-          
-          // Если мы на экране моих заданий, обновляем и его
-          if (currentScreen === 'myAdsScreen') {
-            await loadMyAds('active');
-          }
-          
-          showScreen('mainScreen');
-          
-        } catch (deleteError) {
-          console.error('Delete error:', deleteError);
-          showNotification(`Ошибка удаления: ${deleteError.message}`);
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Не удалось загрузить данные объявления');
         }
-      },
-      'Удалить',
-      'danger' // Добавим параметр для красной кнопки
-    );
-    
-  } catch (error) {
-    console.error('Error in closeAd:', error);
-    showNotification(`Ошибка: ${error.message}`);
-  }
+        
+        const data = await response.json();
+        const ad = data.ad;
+        
+        if (!ad) {
+            showNotification('Объявление не найдено');
+            return;
+        }
+        
+        // Проверяем, является ли пользователь автором
+        if (ad.employer_id !== currentUser.id) {
+            showNotification('Вы не являетесь автором этого объявления');
+            return;
+        }
+        
+        // Проверяем статус
+        if (ad.status === 'taken' || ad.status === 'completed') {
+            showNotification(`Нельзя удалить задание со статусом "${getStatusText(ad.status)}"`);
+            return;
+        }
+        
+        // Показываем подтверждение удаления
+        showModal(
+            'Удаление задания',
+            `
+            <div style="padding: 15px 0;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #ef233c; margin-bottom: 15px;"></i>
+                    <h3 style="margin-bottom: 10px; color: var(--dark-color);">Вы уверены?</h3>
+                    <p style="color: #6c757d; line-height: 1.5;">
+                        Задание "<strong>${ad.title}</strong>" будет удалено без возможности восстановления.
+                    </p>
+                </div>
+                <div style="background: #f8f9fa; padding: 15px; border-radius: var(--border-radius); margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #6c757d;">Стоимость:</span>
+                        <span style="font-weight: 600;">${ad.price} ₽</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span style="color: #6c757d;">Категория:</span>
+                        <span style="font-weight: 600;">${getCategoryName(ad.category)}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: #6c757d;">Статус:</span>
+                        <span style="font-weight: 600; color: ${ad.status === 'active' ? '#28a745' : '#6c757d'}">
+                            ${getStatusText(ad.status)}
+                        </span>
+                    </div>
+                </div>
+                ${ad.auction ? '<p style="color: #ffc107; text-align: center;"><i class="fas fa-exclamation-circle"></i> Все ставки по аукциону также будут удалены</p>' : ''}
+            </div>
+            `,
+            async () => {
+                try {
+                    const deleteResponse = await fetch(`${API_BASE_URL}/ads/${adIdStr}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': currentUser.telegram_id.toString()
+                        }
+                    });
+                    
+                    const result = await deleteResponse.json();
+                    
+                    if (!deleteResponse.ok) {
+                        console.error('Delete API error:', result);
+                        throw new Error(result.error || `Ошибка ${deleteResponse.status}`);
+                    }
+                    
+                    showNotification(result.message || 'Задание успешно удалено');
+                    
+                    // Обновляем интерфейс
+                    await loadAds();
+                    
+                    // Перезагружаем мои задания с текущим фильтром
+                    const activeTab = document.querySelector('#myAdsScreen .tab-btn.active');
+                    const currentFilter = activeTab ? activeTab.getAttribute('data-tab') : 'active';
+                    await loadMyAds(currentFilter);
+                    
+                    // Если мы на экране деталей удаленного задания - возвращаемся
+                    if (currentScreen === 'adDetailScreen') {
+                        showScreen('myAdsScreen');
+                    }
+                    
+                } catch (deleteError) {
+                    console.error('Delete error:', deleteError);
+                    showNotification(`Ошибка удаления: ${deleteError.message}`);
+                }
+            },
+            'Удалить',
+            'danger'
+        );
+        
+    } catch (error) {
+        console.error('Error in closeAd:', error);
+        showNotification(`Ошибка: ${error.message}`);
+    }
+}
+
+function getCategoryName(category) {
+    const categories = {
+        delivery: 'Доставка',
+        cleaning: 'Уборка',
+        repair: 'Ремонт',
+        computer: 'Компьютерная помощь',
+        other: 'Другое'
+    };
+    return categories[category] || category;
 }
 
 // ============ АУКЦИОНЫ ============
@@ -2210,7 +2368,7 @@ function getStatusText(status) {
 
 // ============ МОДАЛЬНЫЕ ОКНА ============
 
-function showModal(title, message, confirmCallback) {
+function showModal(title, message, confirmCallback, confirmText = 'Подтвердить', confirmType = 'primary') {
     const modal = document.getElementById('modal');
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
@@ -2219,12 +2377,32 @@ function showModal(title, message, confirmCallback) {
     const closeModalBtn = document.getElementById('closeModalBtn');
     
     modalTitle.textContent = title;
-    modalBody.innerHTML = `<p>${message}</p>`;
+    modalBody.innerHTML = message;
+    
+    // Настраиваем кнопки в зависимости от типа
+    modalConfirmBtn.textContent = confirmText;
+    
+    // Сбрасываем стили кнопок
+    modalCancelBtn.className = 'btn-secondary';
+    modalConfirmBtn.className = 'btn-primary';
+    
+    // Применяем специальные стили для кнопок
+    if (confirmType === 'danger') {
+        modalConfirmBtn.style.background = 'linear-gradient(135deg, #ef233c, #d90429)';
+        modalConfirmBtn.style.boxShadow = '0 4px 15px rgba(239, 35, 60, 0.3)';
+    } else {
+        modalConfirmBtn.style.background = '';
+        modalConfirmBtn.style.boxShadow = '';
+    }
     
     modal.classList.add('active');
     
     const closeModal = () => {
         modal.classList.remove('active');
+        // Сбрасываем обработчики
+        modalCancelBtn.onclick = null;
+        closeModalBtn.onclick = null;
+        modalConfirmBtn.onclick = null;
     };
     
     modalCancelBtn.onclick = closeModal;
@@ -2342,18 +2520,21 @@ function setupEventListeners() {
     document.getElementById('sortFilter')?.addEventListener('change', loadAds);
     
     // Табы в моих заданиях
-    document.querySelectorAll('#myAdsScreen .tab-btn').forEach(btn => {
+        document.querySelectorAll('#myAdsScreen .tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const tab = this.getAttribute('data-tab');
             
+            // Обновляем активную вкладку
             document.querySelectorAll('#myAdsScreen .tab-btn').forEach(b => {
                 b.classList.remove('active');
             });
             this.classList.add('active');
             
+            // Загружаем задания с выбранным фильтром
             loadMyAds(tab);
         });
     });
+
     
     // Кнопки в профиле
     document.getElementById('myAdsBtn')?.addEventListener('click', function() {
