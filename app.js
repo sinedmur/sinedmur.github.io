@@ -56,50 +56,63 @@ async function startLoading() {
     loadingProgress = 0;
     
     try {
-        // Шаг 1: Инициализация
-        updateLoadingStep(0, 'Инициализация приложения...');
-        await updateProgress(20);
-        await sleep(500); // Имитация загрузки
+        // Шаг 1: Запуск приложения
+        updateLoadingStep(0);
+        await updateProgress(15);
+        await sleep(400);
         
-        // Шаг 2: Инициализация пользователя
-        updateLoadingStep(1, 'Загрузка профиля...');
-        await updateProgress(40);
+        // Шаг 2: Авторизация
+        updateLoadingStep(1, 'Авторизация пользователя...');
+        await updateProgress(30);
+        
         if (!isUserInitialized && !isUserInitializing) {
             await initUserFromTelegram();
         }
-        // Шаг 3: Загрузка основных данных
+        
+        // Шаг 3: Загрузка данных
         updateLoadingStep(2, 'Загрузка заданий...');
         await updateProgress(60);
         
         if (currentUser) {
             // Параллельная загрузка данных
-            await Promise.all([
-                loadAds(),
-                loadNotifications()
-            ]);
+            const loadPromises = [loadAds()];
             
-            await updateProgress(80);
+            // Только если есть объявления, загружаем уведомления
+            if (ads && ads.length > 0) {
+                loadPromises.push(loadNotifications());
+            }
+            
+            await Promise.all(loadPromises);
+            await updateProgress(85);
         }
         
-        // Шаг 4: Подготовка интерфейса
-        updateLoadingStep(3, 'Подготовка интерфейса...');
+        // Шаг 4: Завершение
+        updateLoadingStep(3, 'Завершение загрузки...');
         await updateProgress(100);
-        await sleep(300);
+        await sleep(200);
         
         // Загрузка завершена
         completeLoading();
         
     } catch (error) {
         console.error('Error during loading:', error);
-        // Даже при ошибке показываем основной интерфейс
-        completeLoading();
-        showNotification('Ошибка загрузки, некоторые данные могут быть недоступны');
+        // Показываем ошибку в подсказке
+        document.getElementById('loadingHint').textContent = 'Ошибка загрузки. Перезагрузите приложение.';
+        // Даже при ошибке показываем основной интерфейс через 3 секунды
+        setTimeout(completeLoading, 3000);
     }
 }
 
 // Обновление шага загрузки
 function updateLoadingStep(step, hint = '') {
     loadingStep = step;
+    
+    const stepNames = [
+        'Запуск приложения',
+        'Авторизация',
+        'Загрузка данных',
+        'Завершение'
+    ];
     
     // Обновляем иконки шагов
     const steps = document.querySelectorAll('.loading-step');
@@ -118,8 +131,11 @@ function updateLoadingStep(step, hint = '') {
     // Обновляем подсказку
     if (hint) {
         document.getElementById('loadingHint').textContent = hint;
+    } else if (stepNames[step]) {
+        document.getElementById('loadingHint').textContent = stepNames[step];
     }
 }
+
 
 // Обновление прогресса
 async function updateProgress(percent) {
