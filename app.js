@@ -638,7 +638,7 @@ function createAdElement(ad) {
         </div>
         <div class="ad-card-category" style="background-color: ${categoryColors[ad.category] + '20'}; color: ${categoryColors[ad.category]}">
             ${categoryNames[ad.category]}
-            ${ad.auction ? '<span class="auction-badge"><i class="fas fa-gavel"></i> Торги</span>' : ''}
+            ${ad.auction ? '<span class="ad-card-auction-badge"><i class="fas fa-gavel"></i> Торги</span>' : ''}
         </div>
         <div class="ad-card-description">${ad.description?.substring(0, 100) || ''}${ad.description?.length > 100 ? '...' : ''}</div>
         ${auctionInfo}
