@@ -237,79 +237,112 @@ let currentScreen = 'loadingScreen';
 // ============ ФУНКЦИИ АУТЕНТИФИКАЦИИ ============
 
 // Функция initUserFromTelegram - упрощаем
+// Обновленная функция initUserFromTelegram в app.js
 async function initUserFromTelegram() {
-    // Если уже инициализируемся или инициализированы - выходим
-    if (isUserInitializing || isUserInitialized) {
-        return;
+  // Если уже инициализируемся или инициализированы - выходим
+  if (isUserInitializing || isUserInitialized) {
+    return;
+  }
+  
+  isUserInitializing = true;
+  
+  try {
+    // Используем данные из Telegram Web App
+    const userData = tg.initDataUnsafe.user;
+    
+    if (!userData) {
+      throw new Error('Telegram user data not found');
     }
     
-    isUserInitializing = true;
+    const telegramId = userData.id.toString();
     
-    try {
-        // Используем данные из Telegram Web App
-        const userData = tg.initDataUnsafe.user;
-        
-        if (!userData) {
-            throw new Error('Telegram user data not found');
-        }
-        
-        const telegramId = userData.id.toString();
-        
-        // Проверяем, есть ли уже currentUser с таким telegram_id
-        if (currentUser && currentUser.telegram_id === telegramId) {
-            isUserInitialized = true;
-            return;
-        }
-        
-        // Пытаемся получить пользователя с сервера
-        const response = await fetch(`${API_BASE_URL}/user`, {
-            headers: {
-                'Authorization': telegramId
-            }
-        });
-        
-        if (response.ok) {
-            const data = await response.json();
-            currentUser = data.user;
-            updateFreeAdsCounter();
-            isUserInitialized = true;
-        } else {
-            // Если сервер вернул ошибку, создаем временного пользователя
-            currentUser = {
-                id: Date.now(), // временный ID
-                telegram_id: telegramId,
-                username: userData.username,
-                first_name: userData.first_name || 'Пользователь',
-                last_name: userData.last_name || '',
-                photo_url: userData.photo_url
-            };
-            isUserInitialized = true;
-            showNotification('Используется локальный режим');
-        }
-        
-        // Инициализируем WebSocket только если он еще не инициализирован
-        if (currentUser && !socket) {
-            initWebSocket();
-        }
-        
-    } catch (error) {
-        // Создаем временного пользователя при ошибке
-        const userData = tg.initDataUnsafe.user;
-        if (userData) {
-            currentUser = {
-                id: Date.now(),
-                telegram_id: userData.id.toString(),
-                username: userData.username,
-                first_name: userData.first_name || 'Пользователь',
-                last_name: userData.last_name || '',
-                photo_url: userData.photo_url
-            };
-            isUserInitialized = true;
-        }
-        showNotification(`Ошибка инициализации: ${error.message}`);
-    } finally {
-        isUserInitializing = false;
+    // Проверяем, есть ли уже currentUser с таким telegram_id
+    if (currentUser && currentUser.telegram_id === telegramId) {
+      isUserInitialized = true;
+      return;
     }
+    
+    // Пытаемся получить пользователя с сервера
+    const response = await fetch(`${API_BASE_URL}/user`, {
+      headers: {
+        'Authorization': telegramId,
+        'X-Telegram-User': JSON.stringify({
+          first_name: userData.first_name,
+          last_name: userData.last_name || '',
+          username: userData.username || null
+        })
+      }
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      currentUser = data.user;
+      updateFreeAdsCounter();
+      isUserInitialized = true;
+      
+      // Обновляем UI с именем пользователя
+      updateUserUI();
+    } else {
+      // Если сервер вернул ошибку, создаем временного пользователя
+      currentUser = {
+        id: Date.now(), // временный ID
+        telegram_id: telegramId,
+        username: userData.username,
+        first_name: userData.first_name || 'Пользователь',
+        last_name: userData.last_name || '',
+        photo_url: userData.photo_url
+      };
+      isUserInitialized = true;
+      
+      // Обновляем UI с именем пользователя
+      updateUserUI();
+      
+      showNotification('Используется локальный режим');
+    }
+    
+    // Инициализируем WebSocket только если он еще не инициализирован
+    if (currentUser && !socket) {
+      initWebSocket();
+    }
+    
+  } catch (error) {
+    // Создаем временного пользователя при ошибке
+    const userData = tg.initDataUnsafe.user;
+    if (userData) {
+      currentUser = {
+        id: Date.now(),
+        telegram_id: userData.id.toString(),
+        username: userData.username,
+        first_name: userData.first_name || 'Пользователь',
+        last_name: userData.last_name || '',
+        photo_url: userData.photo_url
+      };
+      isUserInitialized = true;
+      
+      // Обновляем UI с именем пользователя
+      updateUserUI();
+    }
+    showNotification(`Ошибка инициализации: ${error.message}`);
+  } finally {
+    isUserInitializing = false;
+  }
+}
+
+// Новая функция для обновления UI с именем пользователя
+function updateUserUI() {
+  if (!currentUser) return;
+  
+  // Обновляем имя в профиле
+  const profileUserName = document.getElementById('profileUserName');
+  if (profileUserName) {
+    profileUserName.textContent = `${currentUser.first_name} ${currentUser.last_name || ''}`.trim();
+  }
+  
+  // Обновляем другие элементы, где может отображаться имя пользователя
+  const userNameElements = document.querySelectorAll('[data-user-name]');
+  userNameElements.forEach(el => {
+    el.textContent = currentUser.first_name;
+  });
 }
 
 // ============ WEBSOCKET ============
