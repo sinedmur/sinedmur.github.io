@@ -68,14 +68,17 @@ const authenticate = async (req, res, next) => {
       // Пользователь найден
       user = users[0];
     } else {
-      // Создаем нового пользователя с сервисной ролью
+      // Обновите часть функции authenticate, где создается новый пользователь:
       const newUserData = {
         telegram_id: telegramId,
-        first_name: 'Пользователь',
-        last_name: `#${telegramId}`,
-        created_at: new Date().toISOString()
+        first_name: req.headers['telegram-first-name'] || 'Пользователь',
+        last_name: req.headers['telegram-last-name'] || '',
+        username: req.headers['telegram-username'],
+        photo_url: req.headers['telegram-photo-url'],
+        created_at: new Date().toISOString(),
+        free_ads_available: 2 // начальное количество бесплатных объявлений
       };
-      
+
       const { data: newUsers, error: createError } = await supabaseAdmin
         .from('users')
         .insert(newUserData)
@@ -987,6 +990,40 @@ app.post('/api/user/init', authenticate, async (req, res) => {
         console.error('Init user error:', error);
         res.status(500).json({ error: 'Server error' });
     }
+});
+
+// Обновите маршрут /api/user (или добавьте новый)
+app.post('/api/user/update-telegram', authenticate, async (req, res) => {
+  try {
+    const { 
+      username, 
+      first_name, 
+      last_name, 
+      photo_url 
+    } = req.body;
+    
+    const updateData = {};
+    
+    if (username) updateData.username = username;
+    if (first_name) updateData.first_name = first_name;
+    if (last_name) updateData.last_name = last_name;
+    if (photo_url) updateData.photo_url = photo_url;
+    
+    const { data: updatedUser, error } = await supabase
+      .from('users')
+      .update(updateData)
+      .eq('id', req.user.id)
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    res.json({ user: updatedUser });
+    
+  } catch (error) {
+    console.error('Update Telegram data error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // WebSocket подключения
