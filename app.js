@@ -775,7 +775,7 @@ function createMyAdElement(ad) {
                 <button class="my-ad-action-btn details" data-ad-id="${ad.id}">Подробнее</button>
                 ${ad.status === 'active' ? `
                     <button class="my-ad-action-btn edit" data-ad-id="${ad.id}">Изменить</button>
-                    <button class="my-ad-action-btn delete" data-ad-id="${ad.id}">Удалить</button>
+                    <button class="closeAdBtn" data-ad-id="${ad.id}">Удалить</button>
                 ` : ''}
             </div>
         </div>
