@@ -856,73 +856,584 @@ main {
     line-height: 1.6;
 }
 
-/* Детали объявления */
-.ad-detail-container {
-    background-color: white;
-    border-radius: var(--border-radius);
-    padding: 25px;
-    box-shadow: var(--box-shadow);
-    margin: 12px;
+/* ============ ДЕТАЛИ ОБЪЯВЛЕНИЯ - МИНИМАЛИСТИЧНЫЙ ДИЗАЙН ============ */
+
+.ad-detail-screen {
+    padding: 0;
+    background: var(--surface-color);
 }
 
 .ad-detail-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 15px;
+    padding: 20px 20px 15px;
+    background: var(--primary-gradient);
+    color: white;
+    position: relative;
+    min-height: 120px;
+}
+
+.ad-detail-header-back {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    z-index: 2;
+    transition: var(--transition);
+    backdrop-filter: blur(10px);
+}
+
+.ad-detail-header-back:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateX(-2px);
+}
+
+.ad-detail-title-section {
+    flex: 1;
+    padding-left: 50px;
 }
 
 .ad-detail-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    color: var(--dark-color);
+    margin-bottom: 8px;
+    line-height: 1.3;
+    word-wrap: break-word;
 }
 
 .ad-detail-price {
     font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--success-color);
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.ad-detail-category {
-    display: inline-block;
-    background-color: var(--primary-color);
-    color: white;
-    padding: 5px 15px;
+.ad-detail-badges {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.ad-detail-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
     border-radius: 20px;
-    font-size: 0.9rem;
-    margin-bottom: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
-.ad-detail-description {
-    background-color: var(--surface-color);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    margin-bottom: 25px;
-    line-height: 1.6;
+.ad-detail-container {
+    background: var(--surface-color);
+    border-radius: 24px 24px 0 0;
+    padding: 25px 20px 30px;
+    margin-top: -20px;
+    position: relative;
+    z-index: 1;
+    min-height: calc(100vh - 160px);
 }
 
-.ad-detail-meta {
+/* Мета информация в виде карточек */
+.ad-detail-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin: 25px 0;
+}
+
+.ad-detail-meta-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    margin-bottom: 30px;
+    align-items: center;
+    text-align: center;
+    transition: var(--transition);
+    border: 1px solid transparent;
 }
 
-.meta-item {
+.ad-detail-meta-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--box-shadow);
+}
+
+.ad-detail-meta-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(67, 97, 238, 0.1);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    color: var(--primary-color);
+    font-size: 1.2rem;
+}
+
+.ad-detail-meta-label {
+    font-size: 0.75rem;
+    color: #868e96;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.ad-detail-meta-value {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--dark-color);
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+/* Описание */
+.ad-detail-section {
+    margin: 30px 0;
+}
+
+.ad-detail-section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--dark-color);
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.meta-item i {
+.ad-detail-section-title i {
     color: var(--primary-color);
-    width: 20px;
 }
 
+.ad-detail-description {
+    background: var(--surface-color);
+    padding: 20px;
+    border-radius: 16px;
+    line-height: 1.6;
+    color: #495057;
+    border: 1px solid #f1f3f5;
+    font-size: 0.95rem;
+    white-space: pre-line;
+}
+
+/* Статус в виде прогресс-бара */
+.ad-detail-status {
+    margin: 25px 0;
+}
+
+.status-progress {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.status-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #e9ecef;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.status-progress-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.status-progress-text {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 60px;
+}
+
+.status-description {
+    font-size: 0.85rem;
+    color: #868e96;
+    text-align: center;
+}
+
+/* Кнопки действий */
 .ad-detail-actions {
+    position: sticky;
+    bottom: 0;
+    background: var(--surface-color);
+    padding: 20px;
+    border-top: 1px solid #f1f3f5;
     display: flex;
     gap: 15px;
+    margin: 40px -20px -30px;
+    z-index: 10;
+}
+
+.ad-detail-action-btn {
+    flex: 1;
+    padding: 16px 20px;
+    border-radius: var(--border-radius);
+    border: none;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 56px;
+}
+
+.ad-detail-action-btn.primary {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 20px rgba(67, 97, 238, 0.3);
+}
+
+.ad-detail-action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(67, 97, 238, 0.4);
+}
+
+.ad-detail-action-btn.secondary {
+    background: white;
+    color: var(--dark-color);
+    border: 2px solid #e9ecef;
+}
+
+.ad-detail-action-btn.secondary:hover {
+    border-color: var(--primary-color);
+    background: rgba(67, 97, 238, 0.05);
+}
+
+.ad-detail-action-btn.danger {
+    background: linear-gradient(135deg, #ef233c, #d90429);
+    color: white;
+    border: none;
+    box-shadow: 0 4px 20px rgba(239, 35, 60, 0.3);
+}
+
+.ad-detail-action-btn.danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(239, 35, 60, 0.4);
+}
+
+/* Аукцион в деталях */
+.ad-detail-auction-section {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(253, 126, 20, 0.1));
+    border-radius: 16px;
+    padding: 20px;
+    margin: 25px 0;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.auction-timer {
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    color: #856404;
+    margin: 15px 0;
+    font-family: monospace;
+}
+
+.auction-price-comparison {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+    gap: 20px;
+}
+
+.auction-price-item {
+    text-align: center;
+    flex: 1;
+}
+
+.auction-price-label {
+    font-size: 0.85rem;
+    color: #856404;
+    margin-bottom: 5px;
+}
+
+.auction-price-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.auction-price-value.initial {
+    color: #6c757d;
+}
+
+.auction-price-value.current {
+    color: var(--danger-color);
+}
+
+/* История ставок */
+.bids-history-compact {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 15px;
+}
+
+.bid-item-compact {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #f1f3f5;
+    transition: var(--transition-fast);
+}
+
+.bid-item-compact:last-child {
+    border-bottom: none;
+}
+
+.bid-item-compact:hover {
+    background: #f8f9fa;
+}
+
+.bid-user-compact {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bid-avatar-compact {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+.bid-amount-compact {
+    font-weight: 700;
+    color: var(--dark-color);
+}
+
+.bid-time-compact {
+    font-size: 0.75rem;
+    color: #868e96;
+}
+
+/* Контакты - красивый блок */
+.ad-detail-contacts {
+    background: rgba(40, 167, 69, 0.1);
+    border-radius: 16px;
+    padding: 20px;
+    margin: 25px 0;
+    border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: 12px;
+    border: 1px solid rgba(40, 167, 69, 0.1);
+}
+
+.contact-item:last-child {
+    margin-bottom: 0;
+}
+
+.contact-icon {
+    width: 40px;
+    height: 40px;
+    background: rgba(40, 167, 69, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #28a745;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.contact-info {
+    flex: 1;
+}
+
+.contact-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-bottom: 2px;
+}
+
+.contact-value {
+    font-weight: 600;
+    color: var(--dark-color);
+    word-break: break-word;
+}
+
+/* Адаптация для маленьких экранов */
+@media (max-width: 480px) {
+    .ad-detail-header {
+        padding: 20px 15px 15px;
+        min-height: 110px;
+    }
+    
+    .ad-detail-title {
+        font-size: 1.2rem;
+    }
+    
+    .ad-detail-price {
+        font-size: 1.5rem;
+    }
+    
+    .ad-detail-container {
+        padding: 20px 15px 30px;
+        border-radius: 20px 20px 0 0;
+    }
+    
+    .ad-detail-meta-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    
+    .ad-detail-meta-card {
+        padding: 14px;
+    }
+    
+    .ad-detail-meta-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+    }
+    
+    .ad-detail-actions {
+        padding: 15px;
+        margin: 30px -15px -30px;
+        flex-direction: column;
+    }
+    
+    .ad-detail-action-btn {
+        width: 100%;
+    }
+    
+    .auction-price-comparison {
+        flex-direction: column;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 360px) {
+    .ad-detail-header {
+        padding: 18px 12px 12px;
+        min-height: 100px;
+    }
+    
+    .ad-detail-title-section {
+        padding-left: 45px;
+    }
+    
+    .ad-detail-header-back {
+        width: 36px;
+        height: 36px;
+        top: 18px;
+        left: 12px;
+    }
+    
+    .ad-detail-container {
+        padding: 18px 12px 25px;
+        border-radius: 16px 16px 0 0;
+    }
+    
+    .ad-detail-meta-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ad-detail-description {
+        padding: 16px;
+        font-size: 0.9rem;
+    }
+    
+    .ad-detail-action-btn {
+        padding: 14px 16px;
+        font-size: 0.95rem;
+        min-height: 52px;
+    }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .ad-detail-header {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    }
+    
+    .ad-detail-container {
+        background: #2d2d2d;
+    }
+    
+    .ad-detail-meta-card {
+        background: #3d3d3d;
+    }
+    
+    .ad-detail-meta-value {
+        color: #e0e0e0;
+    }
+    
+    .ad-detail-description {
+        background: #3d3d3d;
+        border-color: #444;
+        color: #e0e0e0;
+    }
+    
+    .ad-detail-section-title {
+        color: #e0e0e0;
+    }
+    
+    .ad-detail-action-btn.secondary {
+        background: #3d3d3d;
+        border-color: #555;
+        color: #e0e0e0;
+    }
+    
+    .ad-detail-action-btn.secondary:hover {
+        background: #4d4d4d;
+    }
+    
+    .bid-item-compact:hover {
+        background: #3d3d3d;
+    }
+    
+    .contact-item {
+        background: #3d3d3d;
+        border-color: #555;
+    }
+    
+    .ad-detail-auction-section {
+        background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(253, 126, 20, 0.15));
+        border-color: rgba(255, 193, 7, 0.3);
+    }
+    
+    .ad-detail-contacts {
+        background: rgba(40, 167, 69, 0.15);
+        border-color: rgba(40, 167, 69, 0.3);
+    }
 }
 
 /* Профиль */
