@@ -169,7 +169,16 @@
                     
                     <div class="form-group">
                         <label for="adLocation">Местоположение *</label>
-                        <input type="text" id="adLocation" placeholder="Город или район" required>
+                        <div class="location-input-group">
+                            <input type="text" id="adLocation" placeholder="Нажмите для выбора на карте" readonly required>
+                            <button type="button" id="openMapBtn" class="btn-secondary btn-small">
+                                <i class="fas fa-map-marked-alt"></i> Выбрать на карте
+                            </button>
+                        </div>
+                        <div id="selectedCoordinates" class="coordinates-display" style="display: none;">
+                            <span>Координаты: </span>
+                            <span id="coordinatesText"></span>
+                        </div>
                     </div>
                     
                     <div class="form-group">
