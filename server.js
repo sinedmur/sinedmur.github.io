@@ -632,6 +632,7 @@ app.post('/api/ads/check', authenticate, async (req, res) => {
 });
 
 // Создание объявления с оплатой/проверкой
+// Создание объявления с оплатой/проверкой
 app.post('/api/ads', authenticate, async (req, res) => {
   try {
     const {
@@ -640,6 +641,8 @@ app.post('/api/ads', authenticate, async (req, res) => {
       category,
       price,
       location,
+      location_lat,
+      location_lng,
       contacts,
       auction,
       auction_hours
@@ -661,7 +664,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
       ).toISOString();
     }
 
-    // ✅ СОЗДАЁМ ОБЪЯВЛЕНИЕ
+    // ✅ СОЗДАЁМ ОБЪЯВЛЕНИЕ С КООРДИНАТАМИ
     const { data: ads, error } = await supabase
       .from('ads')
       .insert({
@@ -671,6 +674,8 @@ app.post('/api/ads', authenticate, async (req, res) => {
         category,
         price,
         location,
+        location_lat: location_lat ? parseFloat(location_lat) : null,
+        location_lng: location_lng ? parseFloat(location_lng) : null,
         contacts,
         auction,
         auction_ends_at,
@@ -682,7 +687,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
       throw error;
     }
 
-    // ✅ ВОТ ЗДЕСЬ УМЕНЬШАЕМ free_ads_available
+    // ✅ УМЕНЬШАЕМ free_ads_available
     const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
       auth: {
         autoRefreshToken: false,
@@ -697,15 +702,17 @@ app.post('/api/ads', authenticate, async (req, res) => {
       })
       .eq('id', user.id);
 
-    res.json({ ad: ads[0] });
+    res.json({ 
+      ad: ads[0],
+      used_free_ad: true,
+      free_ads_left: user.free_ads_available - 1
+    });
 
   } catch (error) {
-
+    console.error('Create ad error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
-
-
 
 // Реферальная система
 app.post('/api/referrals/create', authenticate, async (req, res) => {
