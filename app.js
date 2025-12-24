@@ -50,151 +50,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     // Инициализация обработчиков для карт
     initMapListeners();
-    initLocationFeatures();
-        // Проверяем доступность функций карты
-    if (!isTelegramMapsAvailable()) {
-        console.log('Telegram Maps API не доступен в этой версии WebApp');
-        // Показываем альтернативный интерфейс
-        showLocationMethodSelectionOnLoad();
-    }
 });
-
-// Показ меню выбора метода при загрузке (если API недоступен)
-function showLocationMethodSelectionOnLoad() {
-    const locationInput = document.getElementById('adLocation');
-    if (locationInput) {
-        locationInput.placeholder = "Нажмите для выбора способа указания местоположения";
-    }
-    
-    const openMapBtn = document.getElementById('openMapBtn');
-    if (openMapBtn) {
-        openMapBtn.innerHTML = '<i class="fas fa-map"></i> Выбрать местоположение';
-        openMapBtn.onclick = () => {
-            showLocationMethodSelection().then(selection => {
-                if (selection === 'map') {
-                    // В этом случае открываем через браузер (Google Maps или Яндекс.Карты)
-                    openExternalMapPicker();
-                } else if (selection === 'current') {
-                    getCurrentLocationViaBrowser();
-                } else if (selection === 'manual') {
-                    promptManualLocationInput();
-                }
-            });
-        };
-    }
-}
-
-// Открытие внешнего сервиса карт
-function openExternalMapPicker() {
-    showModal(
-        'Выбор карты',
-        `
-        <div style="text-align: center; padding: 20px 0;">
-            <i class="fas fa-map" style="font-size: 3rem; color: #4361ee; margin-bottom: 15px;"></i>
-            <h3 style="margin-bottom: 10px;">Выберите сервис карт</h3>
-            <p style="margin-bottom: 20px; color: #6c757d;">Откроется в новом окне</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn-secondary" id="openGoogleMaps">
-                    <i class="fab fa-google" style="color: #4285F4;"></i> Google Maps
-                </button>
-                <button class="btn-secondary" id="openYandexMaps">
-                    <i class="fas fa-map" style="color: #FF0000;"></i> Яндекс.Карты
-                </button>
-                <button class="btn-secondary" id="openOSM">
-                    <i class="fas fa-globe" style="color: #7BC74D;"></i> OpenStreetMap
-                </button>
-            </div>
-        </div>
-        `,
-        () => {},
-        'Отмена'
-    );
-    
-    setTimeout(() => {
-        document.getElementById('openGoogleMaps')?.addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('active');
-            window.open('https://www.google.com/maps', '_blank');
-            showNotification('Выберите местоположение в Google Maps и вернитесь в приложение');
-        });
-        
-        document.getElementById('openYandexMaps')?.addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('active');
-            window.open('https://yandex.ru/maps', '_blank');
-            showNotification('Выберите местоположение в Яндекс.Картах и вернитесь в приложение');
-        });
-        
-        document.getElementById('openOSM')?.addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('active');
-            window.open('https://www.openstreetmap.org', '_blank');
-            showNotification('Выберите местоположение в OpenStreetMap и вернитесь в приложение');
-        });
-    }, 100);
-}
-
-// Функция для отображения превью выбранного местоположения
-function showLocationPreview() {
-    if (!selectedAddress || !selectedCoordinates) return;
-    
-    const preview = document.getElementById('locationPreview');
-    const addressElement = document.getElementById('previewAddress');
-    const coordsElement = document.getElementById('previewCoords');
-    
-    if (preview && addressElement && coordsElement) {
-        addressElement.textContent = selectedAddress;
-        coordsElement.textContent = `${selectedCoordinates.lat.toFixed(6)}, ${selectedCoordinates.lng.toFixed(6)}`;
-        preview.style.display = 'flex';
-        
-        // Настраиваем обработчики кнопок превью
-        setupLocationPreviewButtons();
-    }
-}
-
-// Настройка кнопок в превью местоположения
-function setupLocationPreviewButtons() {
-    const changeBtn = document.getElementById('changeLocationBtn');
-    const clearBtn = document.getElementById('clearLocationBtn');
-    
-    if (changeBtn) {
-        changeBtn.addEventListener('click', async () => {
-            await openTelegramMapPicker();
-        });
-    }
-    
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            clearSelectedLocation();
-        });
-    }
-}
-
-// Очистка выбранного местоположения
-function clearSelectedLocation() {
-    selectedCoordinates = null;
-    selectedAddress = '';
-    selectedLocationData = null;
-    
-    // Очищаем поле ввода
-    const locationInput = document.getElementById('adLocation');
-    if (locationInput) {
-        locationInput.value = '';
-        locationInput.classList.remove('has-location');
-    }
-    
-    // Скрываем превью
-    const preview = document.getElementById('locationPreview');
-    if (preview) {
-        preview.style.display = 'none';
-    }
-    
-    // Скрываем координаты
-    const coordsDisplay = document.getElementById('selectedCoordinates');
-    if (coordsDisplay) {
-        coordsDisplay.style.display = 'none';
-    }
-    
-    showNotification('Местоположение очищено');
-}
 
 // Процесс загрузки приложения
 async function startLoading() {
@@ -1376,299 +1232,55 @@ async function respondToAd(adId) {
 // Инициализация обработчиков для карт
 function initMapListeners() {
     // Кнопка открытия карты для выбора местоположения
-    const openMapBtn = document.getElementById('openMapBtn');
-    const locationInput = document.getElementById('adLocation');
+    document.getElementById('openMapBtn')?.addEventListener('click', openTelegramMapPicker);
     
-    if (openMapBtn) {
-        openMapBtn.addEventListener('click', openTelegramMapPicker);
-    }
-    
-    if (locationInput) {
-        locationInput.addEventListener('click', function() {
-            if (this.readOnly) {
-                openTelegramMapPicker();
-            }
-        });
-    }
+    // Поле ввода местоположения тоже кликабельно
+    document.getElementById('adLocation')?.addEventListener('click', function() {
+        if (this.readOnly) {
+            openTelegramMapPicker();
+        }
+    });
 }
 
 // Открытие Telegram Map для выбора местоположения
 async function openTelegramMapPicker() {
     try {
-        // Проверяем, доступна ли функция карт в Telegram WebApp
-        if (!window.Telegram?.WebApp?.openMap) {
+        // Проверяем, доступен ли Telegram WebApp
+        if (!window.Telegram?.WebApp?.openInvoice) {
             showNotification('Функция карт доступна только в Telegram');
-            await getCurrentLocationViaBrowser(); // Fallback на браузерную геолокацию
             return;
         }
         
-        mapPickerActive = true;
-        
-        // Открываем карту Telegram для выбора местоположения
+        // Открываем карту Telegram
         const result = await tg.openMap({
             title: 'Выберите местоположение задания',
             zoom: 15,
-            locate: true, // Показать текущее местоположение пользователя
-            select: true, // Разрешить выбор местоположения
-            hint: 'Выберите точку на карте для задания',
-            radius: 500 // Радиус в метрах для уточнения местоположения
+            locate: true // Показать текущее местоположение пользователя
         });
         
         if (result && result.latitude && result.longitude) {
-            // Получаем выбранные координаты
-            selectedLocationData = {
+            // Получаем координаты
+            selectedCoordinates = {
                 lat: result.latitude,
-                lng: result.longitude,
-                address: result.address || ''
+                lng: result.longitude
             };
             
-            // Если адрес не предоставлен, получаем его через обратное геокодирование
-            if (!selectedLocationData.address) {
-                await getAddressFromCoordinates(selectedLocationData.lat, selectedLocationData.lng);
-            } else {
-                selectedAddress = selectedLocationData.address;
-            }
+            // Пробуем получить адрес по координатам
+            await getAddressFromCoordinates(selectedCoordinates.lat, selectedCoordinates.lng);
             
             // Обновляем поле ввода
             updateLocationField();
             
             showNotification('Местоположение выбрано');
-        } else {
-            showNotification('Выбор местоположения отменен');
         }
         
     } catch (error) {
         console.error('Error opening Telegram map:', error);
         showNotification('Ошибка при выборе местоположения');
         
-        // Fallback: используем браузерную геолокацию
-        await getCurrentLocationViaBrowser();
-    } finally {
-        mapPickerActive = false;
+        // Fallback: пробуем использовать геолокацию браузера
+        await getCurrentLocation();
     }
-}
-
-// Альтернативный способ через встроенный Telegram инлайн-поиск
-function openTelegramLocationPicker() {
-    try {
-        // Используем Telegram WebApp для выбора местоположения
-        if (tg && tg.showPopup) {
-            tg.showPopup({
-                title: 'Выберите местоположение',
-                message: 'Укажите местоположение задания',
-                buttons: [
-                    { id: 'current', type: 'default', text: 'Текущее местоположение' },
-                    { id: 'map', type: 'default', text: 'Выбрать на карте' },
-                    { id: 'manual', type: 'default', text: 'Ввести вручную' },
-                    { type: 'cancel' }
-                ]
-            }, (buttonId) => {
-                handleLocationPopupResponse(buttonId);
-            });
-        } else {
-            // Fallback на обычное меню
-            showLocationSelectionMenu();
-        }
-    } catch (error) {
-        showNotification('Функция выбора местоположения недоступна');
-    }
-}
-
-// Обработчик выбора из меню
-async function handleLocationPopupResponse(buttonId) {
-    switch (buttonId) {
-        case 'current':
-            await getCurrentLocationViaBrowser();
-            break;
-        case 'map':
-            await openTelegramMapPicker();
-            break;
-        case 'manual':
-            promptManualLocationInput();
-            break;
-    }
-}
-
-// Альтернативный метод: использование Telegram Bot API для выбора местоположения
-function initTelegramLocationSelection() {
-    const locationInput = document.getElementById('adLocation');
-    
-    if (!locationInput) return;
-    
-    // Создаем кнопку для открытия карты
-    locationInput.addEventListener('focus', async function() {
-        if (this.readOnly) {
-            // Показываем меню выбора способа
-            const selection = await showLocationMethodSelection();
-            if (selection === 'map') {
-                await openTelegramMapPicker();
-            } else if (selection === 'current') {
-                await getCurrentLocationViaBrowser();
-            } else if (selection === 'manual') {
-                promptManualLocationInput();
-            }
-        }
-    });
-}
-
-// Меню выбора способа определения местоположения
-async function showLocationMethodSelection() {
-    return new Promise((resolve) => {
-        showModal(
-            'Выбор местоположения',
-            `
-            <div style="text-align: center; padding: 20px 0;">
-                <i class="fas fa-map-marker-alt" style="font-size: 3rem; color: #4361ee; margin-bottom: 15px;"></i>
-                <h3 style="margin-bottom: 20px;">Как указать местоположение?</h3>
-                
-                <div class="location-method-grid">
-                    <button class="location-method-btn" id="methodMap">
-                        <i class="fas fa-map-marked-alt"></i>
-                        <span>Выбрать на карте</span>
-                        <p>Укажите точку на интерактивной карте</p>
-                    </button>
-                    
-                    <button class="location-method-btn" id="methodCurrent">
-                        <i class="fas fa-location-arrow"></i>
-                        <span>Текущее местоположение</span>
-                        <p>Использовать ваши текущие координаты</p>
-                    </button>
-                    
-                    <button class="location-method-btn" id="methodManual">
-                        <i class="fas fa-keyboard"></i>
-                        <span>Ввести адрес</span>
-                        <p>Впишите адрес вручную</p>
-                    </button>
-                </div>
-            </div>
-            `,
-            () => resolve(null),
-            'Отмена'
-        );
-        
-        // Настраиваем обработчики кнопок
-        setTimeout(() => {
-            document.getElementById('methodMap')?.addEventListener('click', () => {
-                document.getElementById('modal').classList.remove('active');
-                resolve('map');
-            });
-            
-            document.getElementById('methodCurrent')?.addEventListener('click', () => {
-                document.getElementById('modal').classList.remove('active');
-                resolve('current');
-            });
-            
-            document.getElementById('methodManual')?.addEventListener('click', () => {
-                document.getElementById('modal').classList.remove('active');
-                resolve('manual');
-            });
-        }, 100);
-    });
-}
-
-// Улучшенная функция получения текущего местоположения через браузер (fallback)
-async function getCurrentLocationViaBrowser() {
-    return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-            showNotification('Геолокация не поддерживается вашим браузером');
-            promptManualLocationInput();
-            resolve(null);
-            return;
-        }
-        
-        showNotification('Определяем ваше местоположение...');
-        
-        navigator.geolocation.getCurrentPosition(
-            async (position) => {
-                selectedCoordinates = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                };
-                
-                // Получаем адрес по координатам
-                await getAddressFromCoordinates(selectedCoordinates.lat, selectedCoordinates.lng);
-                updateLocationField();
-                
-                showNotification('Используется ваше текущее местоположение');
-                resolve(selectedCoordinates);
-            },
-            (error) => {
-                console.error('Geolocation error:', error);
-                
-                let errorMessage = 'Не удалось определить местоположение';
-                switch(error.code) {
-                    case error.PERMISSION_DENIED:
-                        errorMessage = 'Разрешите доступ к геолокации в настройках браузера';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        errorMessage = 'Информация о местоположении недоступна';
-                        break;
-                    case error.TIMEOUT:
-                        errorMessage = 'Время ожидания определения местоположения истекло';
-                        break;
-                }
-                
-                showNotification(errorMessage);
-                
-                // Предлагаем выбрать другой способ
-                setTimeout(() => {
-                    promptLocationSelectionAfterError();
-                }, 1000);
-                
-                resolve(null);
-            },
-            {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            }
-        );
-    });
-}
-
-// Запрос выбора способа после ошибки геолокации
-function promptLocationSelectionAfterError() {
-    showModal(
-        'Не удалось определить местоположение',
-        `
-        <div style="padding: 15px 0;">
-            <p style="margin-bottom: 20px;">Выберите другой способ указания местоположения:</p>
-            
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-                <button class="btn-secondary" id="retryGeolocation">
-                    <i class="fas fa-redo"></i> Повторить попытку
-                </button>
-                
-                <button class="btn-secondary" id="openMapAfterError">
-                    <i class="fas fa-map"></i> Выбрать на карте
-                </button>
-                
-                <button class="btn-secondary" id="enterManuallyAfterError">
-                    <i class="fas fa-keyboard"></i> Ввести адрес вручную
-                </button>
-            </div>
-        </div>
-        `,
-        () => {}, // Отмена
-        'Закрыть'
-    );
-    
-    setTimeout(() => {
-        document.getElementById('retryGeolocation')?.addEventListener('click', async () => {
-            document.getElementById('modal').classList.remove('active');
-            await getCurrentLocationViaBrowser();
-        });
-        
-        document.getElementById('openMapAfterError')?.addEventListener('click', async () => {
-            document.getElementById('modal').classList.remove('active');
-            await openTelegramMapPicker();
-        });
-        
-        document.getElementById('enterManuallyAfterError')?.addEventListener('click', () => {
-            document.getElementById('modal').classList.remove('active');
-            promptManualLocationInput();
-        });
-    }, 100);
 }
 
 // Получение текущего местоположения через браузер (fallback)
@@ -1763,139 +1375,16 @@ async function getAddressFromCoordinates(lat, lng) {
     }
 }
 
-// Обновляем функцию updateLocationField
+// Обновление поля местоположения
 function updateLocationField() {
     if (!selectedAddress || !selectedCoordinates) return;
     
-    const locationInput = document.getElementById('adLocation');
-    if (locationInput) {
-        locationInput.value = selectedAddress;
-        locationInput.classList.add('has-location');
-    }
-    
-    // Обновляем превью
-    showLocationPreview();
+    document.getElementById('adLocation').value = selectedAddress;
     
     // Показываем координаты
     const coordsText = `${selectedCoordinates.lat.toFixed(6)}, ${selectedCoordinates.lng.toFixed(6)}`;
-    const coordinatesText = document.getElementById('coordinatesText');
-    const selectedCoords = document.getElementById('selectedCoordinates');
-    
-    if (coordinatesText) {
-        coordinatesText.textContent = coordsText;
-    }
-    
-    if (selectedCoords) {
-        selectedCoords.style.display = 'block';
-    }
-}
-
-function isTelegramMapsAvailable() {
-    return !!(window.Telegram?.WebApp?.openMap && 
-              window.Telegram?.WebApp?.version >= 6.1);
-}
-
-// Альтернативный метод через Telegram Bot API (если основной недоступен)
-function openTelegramLocationViaBot() {
-    try {
-        // Отправляем команду боту для открытия выбора местоположения
-        if (tg && tg.sendData) {
-            tg.sendData(JSON.stringify({
-                action: 'request_location',
-                type: 'map_picker'
-            }));
-        }
-    } catch (error) {
-        console.error('Error sending location request to bot:', error);
-        showNotification('Не удалось открыть карту');
-    }
-}
-
-// Обновляем стили для индикации выбранного местоположения
-function addLocationInputStyles() {
-    const style = document.createElement('style');
-    style.textContent = `
-        .location-input-group {
-            position: relative;
-        }
-        
-        #adLocation.has-location {
-            background-color: #f0f9ff;
-            border-color: #007bff;
-        }
-        
-        #adLocation.has-location::after {
-            content: '✓';
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #28a745;
-            font-weight: bold;
-        }
-        
-        .location-method-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 15px;
-            margin: 20px 0;
-        }
-        
-        .location-method-btn {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            border: 2px solid #e9ecef;
-            border-radius: var(--border-radius);
-            background: white;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .location-method-btn:hover {
-            border-color: #007bff;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.1);
-        }
-        
-        .location-method-btn i {
-            font-size: 2rem;
-            color: #007bff;
-            margin-bottom: 10px;
-        }
-        
-        .location-method-btn span {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-        
-        .location-method-btn p {
-            font-size: 0.9rem;
-            color: #6c757d;
-            text-align: center;
-        }
-        
-        .location-preview {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: var(--border-radius);
-            margin-top: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .location-preview i {
-            color: #28a745;
-            font-size: 1.2rem;
-        }
-        
-        .location-preview span {
-            flex: 1;
-        }
-    `;
-    document.head.appendChild(style);
+    document.getElementById('coordinatesText').textContent = coordsText;
+    document.getElementById('selectedCoordinates').style.display = 'block';
 }
 
 // Запрос ручного ввода адреса
@@ -1930,12 +1419,6 @@ function promptManualLocationInput() {
     );
 }
 
-// Инициализация при загрузке
-function initLocationFeatures() {
-    initMapListeners();
-    addLocationInputStyles();
-    initTelegramLocationSelection();
-}
 
 // Обновленная функция публикации объявления
 async function publishAd() {
@@ -3561,3 +3044,11 @@ async function initApp() {
     }
 }
 
+// if (document.readyState === 'loading') {
+//     document.addEventListener('DOMContentLoaded', function() {
+//         // Экран загрузки уже показан в основном обработчике
+//     });
+// } else {
+//     // Если DOM уже загружен, запускаем загрузку
+//     startLoading();
+// }
