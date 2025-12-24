@@ -20,7 +20,8 @@ let loadingProgress = 0;
 let loadingStep = 0;
 let isUserInitializing = false;
 let isUserInitialized = false;
-
+let selectedCoordinates = null;
+let selectedAddress = '';
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
     setupTelegramBackButton();
@@ -47,6 +48,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadNotifications();
         updateProfileStats();
     }
+    // Инициализация обработчиков для карт
+    initMapListeners();
 });
 
 // Процесс загрузки приложения
@@ -556,7 +559,7 @@ function displayAds() {
     });
 }
 
-
+// Обновляем создание карточки объявления
 function createAdElement(ad) {
     const adElement = document.createElement('div');
     adElement.className = `ad-card ${ad.auction ? 'ad-card-auction' : ''}`;
@@ -580,6 +583,9 @@ function createAdElement(ad) {
     const currentBid = ad.min_bid || ad.price;
     const auctionEnded = ad.auction && ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date();
     const isMyAd = ad.employer_id === currentUser.id;
+    
+    // Проверяем наличие координат
+    const hasCoordinates = ad.location_lat && ad.location_lng;
     
     let statusBadge = '';
     if (isMyAd) {
@@ -611,6 +617,11 @@ function createAdElement(ad) {
         `;
     }
     
+    // Определяем классы для местоположения
+    const locationClasses = hasCoordinates 
+        ? 'ad-card-location clickable-location' 
+        : 'ad-card-location';
+    
     adElement.innerHTML = `
         <div class="ad-card-header">
             <div class="ad-card-title">${ad.title}</div>
@@ -623,9 +634,10 @@ function createAdElement(ad) {
         <div class="ad-card-description">${ad.description?.substring(0, 100) || ''}${ad.description?.length > 100 ? '...' : ''}</div>
         ${auctionInfo}
         <div class="ad-card-footer">
-            <div class="ad-card-location">
+            <div class="${locationClasses}" data-has-coords="${hasCoordinates}" data-ad-id="${ad.id}">
                 <i class="fas fa-map-marker-alt"></i>
                 <span>${ad.location}</span>
+                ${hasCoordinates ? '<i class="fas fa-external-link-alt" style="font-size: 0.8rem; margin-left: 5px;"></i>' : ''}
             </div>
             ${statusBadge}
         </div>
@@ -642,20 +654,29 @@ function createAdElement(ad) {
         </div>
     `;
     
-        const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
-        detailsBtn.addEventListener('click', function() {
-            const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
-            showAdDetail(adId);
+    // Добавляем обработчик клика на местоположение
+    if (hasCoordinates) {
+        const locationEl = adElement.querySelector('.ad-card-location.clickable-location');
+        locationEl.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openLocationInTelegramMap(ad);
         });
+    }
     
-        // Для кнопки отклика:
-            if (!isMyAd && ad.status === 'active' && !ad.auction) {
-                const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
-                acceptBtn.addEventListener('click', function() {
-                    const adId = this.getAttribute('data-ad-id');
-                    respondToAd(adId);
-                });
-            }
+    // Обработчики для других кнопок
+    const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
+    detailsBtn.addEventListener('click', function() {
+        const adId = this.getAttribute('data-ad-id');
+        showAdDetail(adId);
+    });
+    
+    if (!isMyAd && ad.status === 'active' && !ad.auction) {
+        const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+        acceptBtn.addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id');
+            respondToAd(adId);
+        });
+    }
     
     return adElement;
 }
@@ -892,6 +913,9 @@ function displayAdDetail(ad) {
     const employerName = ad.employer ? `${ad.employer.first_name} ${ad.employer.last_name}` : 'Пользователь';
     const auctionEnded = ad.auction && ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date();
     
+    // Проверяем наличие координат
+    const hasCoordinates = ad.location_lat && ad.location_lng;
+    
     container.innerHTML = `
         <div class="ad-detail-screen">
             <div class="ad-detail-header">
@@ -930,12 +954,23 @@ function displayAdDetail(ad) {
                         <div class="ad-detail-meta-value">${employerName}</div>
                     </div>
                     
-                    <div class="ad-detail-meta-card">
-                        <div class="ad-detail-meta-icon">
-                            <i class="fas fa-map-marker-alt"></i>
+                    <div class="ad-detail-location-card ${hasCoordinates ? 'clickable-location' : ''}" 
+                        id="locationCard" 
+                        data-has-coords="${hasCoordinates}">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div class="ad-detail-location-info">
+                            <div class="ad-detail-location-label">Местоположение</div>
+                            <div class="ad-detail-location-value">${ad.location}</div>
+                            ${hasCoordinates ? `
+                            <div class="ad-detail-location-hint">
+                                <i class="fas fa-map"></i>
+                                Нажмите для просмотра на карте
+                            </div>
+                            ` : ''}
                         </div>
-                        <div class="ad-detail-meta-label">Местоположение</div>
-                        <div class="ad-detail-meta-value">${ad.location}</div>
+                        ${hasCoordinates ? `
+                        <i class="fas fa-external-link-alt external-link-icon"></i>
+                        ` : ''}
                     </div>
                     
                     <div class="ad-detail-meta-card">
@@ -1081,6 +1116,14 @@ function displayAdDetail(ad) {
         showScreen('mainScreen');
     });
     
+    // Добавляем обработчик клика на карточку местоположения
+    if (hasCoordinates) {
+        const locationCard = container.querySelector('#locationCard');
+        locationCard.addEventListener('click', function() {
+            openLocationInTelegramMap(ad);
+        });
+    }
+
     // Остальные обработчики остаются такими же...
     if (!isMyAd && ad.status === 'active' && !ad.auction) {
         document.getElementById('respondAdBtn').addEventListener('click', function() {
@@ -1118,6 +1161,28 @@ function displayAdDetail(ad) {
     }
     
     showScreen('adDetailScreen');
+}
+
+// Открытие местоположения в Telegram Map
+function openLocationInTelegramMap(ad) {
+    if (!ad.location_lat || !ad.location_lng) return;
+    
+    try {
+        // Открываем карту Telegram с указанными координатами
+        tg.openMap({
+            title: ad.title,
+            latitude: ad.location_lat,
+            longitude: ad.location_lng,
+            zoom: 15,
+            marker: true // Показать маркер на карте
+        });
+    } catch (error) {
+        console.error('Error opening Telegram map:', error);
+        
+        // Fallback: открываем в Google Maps
+        const googleMapsUrl = `https://www.google.com/maps?q=${ad.location_lat},${ad.location_lng}`;
+        window.open(googleMapsUrl, '_blank');
+    }
 }
 
 async function respondToAd(adId) {
@@ -1164,6 +1229,197 @@ async function respondToAd(adId) {
     }
 }
 
+// Инициализация обработчиков для карт
+function initMapListeners() {
+    // Кнопка открытия карты для выбора местоположения
+    document.getElementById('openMapBtn')?.addEventListener('click', openTelegramMapPicker);
+    
+    // Поле ввода местоположения тоже кликабельно
+    document.getElementById('adLocation')?.addEventListener('click', function() {
+        if (this.readOnly) {
+            openTelegramMapPicker();
+        }
+    });
+}
+
+// Открытие Telegram Map для выбора местоположения
+async function openTelegramMapPicker() {
+    try {
+        // Проверяем, доступен ли Telegram WebApp
+        if (!window.Telegram?.WebApp?.openInvoice) {
+            showNotification('Функция карт доступна только в Telegram');
+            return;
+        }
+        
+        // Открываем карту Telegram
+        const result = await tg.openMap({
+            title: 'Выберите местоположение задания',
+            zoom: 15,
+            locate: true // Показать текущее местоположение пользователя
+        });
+        
+        if (result && result.latitude && result.longitude) {
+            // Получаем координаты
+            selectedCoordinates = {
+                lat: result.latitude,
+                lng: result.longitude
+            };
+            
+            // Пробуем получить адрес по координатам
+            await getAddressFromCoordinates(selectedCoordinates.lat, selectedCoordinates.lng);
+            
+            // Обновляем поле ввода
+            updateLocationField();
+            
+            showNotification('Местоположение выбрано');
+        }
+        
+    } catch (error) {
+        console.error('Error opening Telegram map:', error);
+        showNotification('Ошибка при выборе местоположения');
+        
+        // Fallback: пробуем использовать геолокацию браузера
+        await getCurrentLocation();
+    }
+}
+
+// Получение текущего местоположения через браузер (fallback)
+async function getCurrentLocation() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            showNotification('Геолокация не поддерживается вашим браузером');
+            resolve(null);
+            return;
+        }
+        
+        showNotification('Определяем ваше местоположение...');
+        
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                selectedCoordinates = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                await getAddressFromCoordinates(selectedCoordinates.lat, selectedCoordinates.lng);
+                updateLocationField();
+                
+                showNotification('Используется ваше текущее местоположение');
+                resolve(selectedCoordinates);
+            },
+            (error) => {
+                console.error('Geolocation error:', error);
+                
+                let errorMessage = 'Не удалось определить местоположение';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage = 'Разрешите доступ к геолокации в настройках браузера';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage = 'Информация о местоположении недоступна';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage = 'Время ожидания определения местоположения истекло';
+                        break;
+                }
+                
+                showNotification(errorMessage);
+                
+                // Предлагаем ввести адрес вручную
+                promptManualLocationInput();
+                resolve(null);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    });
+}
+
+// Получение адреса по координатам через обратное геокодирование
+async function getAddressFromCoordinates(lat, lng) {
+    try {
+        // Используем Nominatim (OpenStreetMap) для обратного геокодирования
+        const response = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+            {
+                headers: {
+                    'Accept-Language': 'ru-RU,ru',
+                    'User-Agent': 'TelegramJobApp/1.0'
+                }
+            }
+        );
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Формируем читаемый адрес
+            const address = data.display_name || 
+                           data.address?.road || 
+                           data.address?.city || 
+                           data.address?.town || 
+                           data.address?.village || 
+                           `Широта: ${lat.toFixed(6)}, Долгота: ${lng.toFixed(6)}`;
+            
+            selectedAddress = address;
+            return address;
+        } else {
+            throw new Error('Failed to get address');
+        }
+    } catch (error) {
+        // Fallback: используем координаты
+        selectedAddress = `Широта: ${lat.toFixed(6)}, Долгота: ${lng.toFixed(6)}`;
+        return selectedAddress;
+    }
+}
+
+// Обновление поля местоположения
+function updateLocationField() {
+    if (!selectedAddress || !selectedCoordinates) return;
+    
+    document.getElementById('adLocation').value = selectedAddress;
+    
+    // Показываем координаты
+    const coordsText = `${selectedCoordinates.lat.toFixed(6)}, ${selectedCoordinates.lng.toFixed(6)}`;
+    document.getElementById('coordinatesText').textContent = coordsText;
+    document.getElementById('selectedCoordinates').style.display = 'block';
+}
+
+// Запрос ручного ввода адреса
+function promptManualLocationInput() {
+    showModal(
+        'Ввод местоположения',
+        `
+        <div style="padding: 15px 0;">
+            <p style="margin-bottom: 15px;">Введите адрес вручную:</p>
+            <div class="form-group">
+                <input type="text" id="manualLocationInput" placeholder="Например: Москва, ул. Тверская, д. 1" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px;">
+            </div>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #666;">
+                <i class="fas fa-info-circle"></i>
+                Вы сможете уточнить местоположение на карте позже
+            </p>
+        </div>
+        `,
+        () => {
+            const manualInput = document.getElementById('manualLocationInput');
+            if (manualInput && manualInput.value.trim()) {
+                selectedAddress = manualInput.value.trim();
+                selectedCoordinates = null; // Координаты неизвестны
+                
+                document.getElementById('adLocation').value = selectedAddress;
+                document.getElementById('selectedCoordinates').style.display = 'none';
+                
+                showNotification('Адрес сохранен');
+            }
+        },
+        'Сохранить'
+    );
+}
+
+
 // Обновленная функция публикации объявления
 async function publishAd() {
     try {
@@ -1181,6 +1437,12 @@ async function publishAd() {
             return;
         }
         
+        // Проверяем наличие местоположения
+        if (!location) {
+            showNotification('Пожалуйста, укажите местоположение');
+            return;
+        }
+
         // Проверяем возможность публикации
         const checkResult = await checkAdPublication();
         
@@ -1211,12 +1473,22 @@ async function publishAd() {
             description,
             category,
             price,
-            location,
+            location, // текстовый адрес
+            location_lat: selectedCoordinates?.lat,
+            location_lng: selectedCoordinates?.lng,
+            location_address: selectedAddress, // полный адрес от геокодирования
             contacts,
             auction: auctionEnabled,
             payment_method: paymentMethod
         };
         
+        // Добавляем координаты, если они есть
+        if (selectedCoordinates) {
+            adData.location_lat = selectedCoordinates.lat;
+            adData.location_lng = selectedCoordinates.lng;
+            adData.location_address = selectedAddress;
+        }
+
         if (auctionEnabled) {
             const auctionHours = parseInt(document.getElementById('auctionHours').value) || 24;
             adData.auction_hours = auctionHours;
@@ -1240,12 +1512,8 @@ async function publishAd() {
         const data = await response.json();
         
         // Очистка формы
-        document.getElementById('adTitle').value = '';
-        document.getElementById('adDescription').value = '';
-        document.getElementById('adPrice').value = '1000';
-        document.getElementById('adLocation').value = '';
-        document.getElementById('adContacts').value = '';
-        document.getElementById('auctionToggle').checked = false;
+        resetForm();
+
         
         // Показываем сообщение в зависимости от типа публикации
         if (data.used_free_ad) {
@@ -1267,6 +1535,20 @@ async function publishAd() {
     } catch (error) {
         showNotification('Ошибка при создании задания: ' + error.message);
     }
+}
+
+// Сброс формы
+function resetForm() {
+    document.getElementById('adTitle').value = '';
+    document.getElementById('adDescription').value = '';
+    document.getElementById('adPrice').value = '1000';
+    document.getElementById('adLocation').value = '';
+    document.getElementById('adContacts').value = '';
+    document.getElementById('auctionToggle').checked = false;
+    document.getElementById('selectedCoordinates').style.display = 'none';
+    
+    selectedCoordinates = null;
+    selectedAddress = '';
 }
 
 function updateFreeAdsCounter() {
@@ -2237,6 +2519,8 @@ window.buySubscription = async function(plan) {
         loadProfileScreen(); // Перезагружаем профиль
     }
 };
+// Глобальные функции
+window.openLocationInTelegramMap = openLocationInTelegramMap;
 
 // Экран оплаты подписки
 async function showSubscriptionPaymentScreen(plan) {
