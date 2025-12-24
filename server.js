@@ -155,11 +155,22 @@ app.get('/api/ads', async (req, res) => {
     
     const { data: ads, error } = await query.order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
     
     // Если в объявлениях есть taken_by, получаем данные исполнителей
     const adsWithDetails = await Promise.all(ads.map(async (ad) => {
       const adData = { ...ad };
+      
+      // Преобразуем координаты в числа, если они есть
+      if (adData.location_lat) {
+        adData.location_lat = parseFloat(adData.location_lat);
+      }
+      if (adData.location_lng) {
+        adData.location_lng = parseFloat(adData.location_lng);
+      }
       
       if (ad.taken_by) {
         const { data: executor } = await supabase
@@ -188,10 +199,16 @@ app.get('/api/ads', async (req, res) => {
     }));
     
     res.json({ ads: adsWithDetails });
+    
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Get ads error:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
   }
 });
+
 
 // Получить конкретное объявление - ИСПРАВЛЕННАЯ ВЕРСИЯ С UUID
 app.get('/api/ads/:id', async (req, res) => {
@@ -209,29 +226,33 @@ app.get('/api/ads/:id', async (req, res) => {
       .single();
     
     if (error) {
-      
-      // Если ошибка связана с форматом UUID, пробуем найти по числовому ID
+      // Если ошибка связана с форматом UUID, пробуем найти альтернативно
       if (error.code === '22P02') {
-        
-        // Пытаемся найти объявление с числовым полем (если оно есть)
-        // Или преобразуем запрос
-        const { data: numericAd, error: numericError } = await supabase
+        // Пытаемся найти объявление альтернативными способами
+        const { data: alternativeAd, error: altError } = await supabase
           .from('ads')
           .select(`
             *,
             employer:users!ads_employer_id_fkey(first_name, last_name, telegram_id)
           `)
-          .eq('numeric_id', parseInt(id)) // если у вас есть numeric_id поле
+          .eq('numeric_id', parseInt(id) || 0)
           .single();
         
-        if (numericError) {
+        if (altError || !alternativeAd) {
           return res.status(404).json({ 
             error: 'Объявление не найдено',
             details: 'Invalid ID format or ad does not exist'
           });
         }
         
-        return res.json({ ad: numericAd });
+        // Преобразуем координаты
+        const adWithCoords = {
+          ...alternativeAd,
+          location_lat: alternativeAd.location_lat ? parseFloat(alternativeAd.location_lat) : null,
+          location_lng: alternativeAd.location_lng ? parseFloat(alternativeAd.location_lng) : null
+        };
+        
+        return res.json({ ad: adWithCoords });
       }
       
       return res.status(404).json({ 
@@ -239,6 +260,13 @@ app.get('/api/ads/:id', async (req, res) => {
         details: error.message 
       });
     }
+    
+    // Преобразуем координаты
+    const adWithCoords = {
+      ...ad,
+      location_lat: ad.location_lat ? parseFloat(ad.location_lat) : null,
+      location_lng: ad.location_lng ? parseFloat(ad.location_lng) : null
+    };
     
     // Если есть исполнитель, получаем и его данные
     if (ad && ad.taken_by) {
@@ -248,12 +276,16 @@ app.get('/api/ads/:id', async (req, res) => {
         .eq('id', ad.taken_by)
         .single();
       
-      ad.executor = executor;
+      adWithCoords.executor = executor;
     }
     
-    res.json({ ad });
+    res.json({ ad: adWithCoords });
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    console.error('Get ad detail error:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
   }
 });
 
@@ -640,6 +672,9 @@ app.post('/api/ads', authenticate, async (req, res) => {
       category,
       price,
       location,
+      location_lat,
+      location_lng,
+      location_address,
       contacts,
       auction,
       auction_hours
@@ -647,7 +682,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
 
     const user = req.user;
 
-    // ❗ ПРОВЕРКА ЛИМИТА
+    // Проверка лимита
     if (user.free_ads_available <= 0) {
       return res.status(403).json({
         error: 'Бесплатные объявления закончились'
@@ -661,7 +696,7 @@ app.post('/api/ads', authenticate, async (req, res) => {
       ).toISOString();
     }
 
-    // ✅ СОЗДАЁМ ОБЪЯВЛЕНИЕ
+    // Создаем объявление с координатами
     const { data: ads, error } = await supabase
       .from('ads')
       .insert({
@@ -670,7 +705,10 @@ app.post('/api/ads', authenticate, async (req, res) => {
         description,
         category,
         price,
-        location,
+        location, // текстовый адрес
+        location_lat: location_lat ? parseFloat(location_lat) : null,
+        location_lng: location_lng ? parseFloat(location_lng) : null,
+        location_address: location_address || location, // полный адрес
         contacts,
         auction,
         auction_ends_at,
@@ -679,10 +717,11 @@ app.post('/api/ads', authenticate, async (req, res) => {
       .select();
 
     if (error || !ads?.length) {
-      throw error;
+      console.error('Database error:', error);
+      throw new Error(error?.message || 'Failed to create ad');
     }
 
-    // ✅ ВОТ ЗДЕСЬ УМЕНЬШАЕМ free_ads_available
+    // Уменьшаем количество бесплатных объявлений
     const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
       auth: {
         autoRefreshToken: false,
@@ -697,11 +736,18 @@ app.post('/api/ads', authenticate, async (req, res) => {
       })
       .eq('id', user.id);
 
-    res.json({ ad: ads[0] });
+    res.json({ 
+      ad: ads[0],
+      used_free_ad: true,
+      free_ads_left: user.free_ads_available - 1
+    });
 
   } catch (error) {
-
-    res.status(500).json({ error: 'Server error' });
+    console.error('Create ad error:', error);
+    res.status(500).json({ 
+      error: 'Server error',
+      details: error.message 
+    });
   }
 });
 
