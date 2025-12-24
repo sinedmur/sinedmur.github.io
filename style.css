@@ -5787,3 +5787,201 @@ input:checked + .slider:before {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(239, 35, 60, 0.4) !important;
 }
+
+/* Стили для карт Telegram */
+.location-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.location-input-group input {
+    flex: 1;
+    cursor: pointer;
+    background: white;
+}
+
+.location-input-group input:read-only {
+    background-color: #f8f9fa;
+    border-color: #dee2e6;
+    cursor: pointer;
+}
+
+.location-input-group input:read-only:hover {
+    border-color: #007bff;
+    background-color: #fff;
+}
+
+.coordinates-display {
+    background: #f8f9fa;
+    padding: 8px 12px;
+    border-radius: 4px;
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #666;
+    border: 1px solid #e9ecef;
+}
+
+.coordinates-display span {
+    font-family: monospace;
+    color: #007bff;
+}
+
+/* Стили для кликабельного местоположения */
+.clickable-location {
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.clickable-location:hover {
+    color: #007bff;
+}
+
+.clickable-location:hover i {
+    color: #007bff;
+}
+
+/* Специфические стили для карточек */
+.ad-card-location.clickable-location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #666;
+    margin-top: 5px;
+    padding: 6px 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.ad-card-location.clickable-location:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    color: #007bff;
+}
+
+.ad-card-location.clickable-location i {
+    font-size: 0.9rem;
+}
+
+.ad-detail-location-card {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    margin: 15px 0;
+    transition: all 0.2s;
+    border: 1px solid #e9ecef;
+}
+
+.ad-detail-location-card.clickable-location:hover {
+    background: #e9ecef;
+    border-color: #007bff;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+.ad-detail-location-card i:first-child {
+    color: #007bff;
+    font-size: 1.3rem;
+}
+
+.ad-detail-location-info {
+    flex: 1;
+}
+
+.ad-detail-location-label {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 500;
+}
+
+.ad-detail-location-value {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #333;
+}
+
+.ad-detail-location-hint {
+    font-size: 0.8rem;
+    color: #28a745;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+/* Иконка внешней ссылки */
+.external-link-icon {
+    color: #6c757d;
+    font-size: 0.9rem;
+    transition: color 0.2s;
+}
+
+.ad-detail-location-card:hover .external-link-icon {
+    color: #007bff;
+}
+
+/* Кнопка выбора на карте */
+#openMapBtn {
+    white-space: nowrap;
+    padding: 8px 15px;
+    font-weight: 500;
+    min-width: 120px;
+}
+
+/* Мобильные стили */
+@media (max-width: 768px) {
+    .location-input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    #openMapBtn {
+        width: 100%;
+        padding: 10px;
+    }
+    
+    .ad-card-location.clickable-location {
+        padding: 8px 12px;
+        margin-top: 8px;
+    }
+    
+    .ad-detail-location-card {
+        padding: 12px;
+        margin: 12px 0;
+    }
+}
+
+/* Анимация для кнопки карты */
+#openMapBtn i {
+    transition: transform 0.3s;
+}
+
+#openMapBtn:hover i {
+    transform: scale(1.1);
+}
+
+/* Стили для модального окна ручного ввода */
+#manualLocationInput {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+#manualLocationInput:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
