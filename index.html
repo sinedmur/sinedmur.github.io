@@ -170,38 +170,14 @@
                     <div class="form-group">
                         <label for="adLocation">Местоположение *</label>
                         <div class="location-input-group">
-                            <input type="text" id="adLocation" placeholder="Нажмите для выбора местоположения" readonly required>
+                            <input type="text" id="adLocation" placeholder="Нажмите для выбора на карте" readonly required>
                             <button type="button" id="openMapBtn" class="btn-secondary btn-small">
                                 <i class="fas fa-map-marked-alt"></i> Выбрать на карте
                             </button>
                         </div>
-                        
-                        <!-- Превью выбранного местоположения -->
-                        <div id="locationPreview" class="location-preview-card" style="display: none;">
-                            <div class="location-preview-icon">
-                                <i class="fas fa-map-pin"></i>
-                            </div>
-                            <div class="location-preview-info">
-                                <div id="previewAddress" class="location-preview-address"></div>
-                                <div id="previewCoords" class="location-preview-coords"></div>
-                            </div>
-                            <div class="location-preview-actions">
-                                <button type="button" id="changeLocationBtn" class="btn-secondary btn-small">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button type="button" id="clearLocationBtn" class="btn-secondary btn-small">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
                         <div id="selectedCoordinates" class="coordinates-display" style="display: none;">
                             <span>Координаты: </span>
                             <span id="coordinatesText"></span>
-                        </div>
-                        
-                        <div class="location-help-text">
-                            <small><i class="fas fa-info-circle"></i> Выберите точное местоположение на карте для лучшего отображения задания</small>
                         </div>
                     </div>
                     
