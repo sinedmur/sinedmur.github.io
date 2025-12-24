@@ -20,11 +20,6 @@ let loadingProgress = 0;
 let loadingStep = 0;
 let isUserInitializing = false;
 let isUserInitialized = false;
-let locationMap = null;
-let locationViewMap = null;
-let selectedMarker = null;
-let selectedCoordinates = null;
-let selectedAddress = '';
 
 // Инициализация приложения
 document.addEventListener('DOMContentLoaded', async function() {
@@ -52,8 +47,6 @@ document.addEventListener('DOMContentLoaded', async function() {
         await loadNotifications();
         updateProfileStats();
     }
-    // Инициализация карт
-    initMapListeners();
 });
 
 // Процесс загрузки приложения
@@ -588,9 +581,6 @@ function createAdElement(ad) {
     const auctionEnded = ad.auction && ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date();
     const isMyAd = ad.employer_id === currentUser.id;
     
-    // Проверяем наличие координат
-    const hasCoordinates = ad.location_lat && ad.location_lng;
-    
     let statusBadge = '';
     if (isMyAd) {
         statusBadge = '<span class="ad-card-status" style="color: #007bff; font-weight: 600;">Мое</span>';
@@ -633,10 +623,9 @@ function createAdElement(ad) {
         <div class="ad-card-description">${ad.description?.substring(0, 100) || ''}${ad.description?.length > 100 ? '...' : ''}</div>
         ${auctionInfo}
         <div class="ad-card-footer">
-            <div class="ad-card-location" data-has-coords="${hasCoordinates}">
+            <div class="ad-card-location">
                 <i class="fas fa-map-marker-alt"></i>
                 <span>${ad.location}</span>
-                ${hasCoordinates ? '<i class="fas fa-external-link-alt" style="font-size: 0.8rem; margin-left: 5px;"></i>' : ''}
             </div>
             ${statusBadge}
         </div>
@@ -653,30 +642,20 @@ function createAdElement(ad) {
         </div>
     `;
     
-    // Добавляем обработчик клика на местоположение
-    const locationEl = adElement.querySelector('.ad-card-location');
-    if (locationEl && hasCoordinates) {
-        locationEl.style.cursor = 'pointer';
-        locationEl.addEventListener('click', function(e) {
-            e.stopPropagation(); // Предотвращаем клик по всей карточке
-            showLocationOnMap(ad);
+        const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
+        detailsBtn.addEventListener('click', function() {
+            const adId = this.getAttribute('data-ad-id'); // Оставляем как строку
+            showAdDetail(adId);
         });
-    }
     
-    // Обработчики для других кнопок
-    const detailsBtn = adElement.querySelector('.ad-card-action-btn.details');
-    detailsBtn.addEventListener('click', function() {
-        const adId = this.getAttribute('data-ad-id');
-        showAdDetail(adId);
-    });
-    
-    if (!isMyAd && ad.status === 'active' && !ad.auction) {
-        const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
-        acceptBtn.addEventListener('click', function() {
-            const adId = this.getAttribute('data-ad-id');
-            respondToAd(adId);
-        });
-    }
+        // Для кнопки отклика:
+            if (!isMyAd && ad.status === 'active' && !ad.auction) {
+                const acceptBtn = adElement.querySelector('.ad-card-action-btn.accept');
+                acceptBtn.addEventListener('click', function() {
+                    const adId = this.getAttribute('data-ad-id');
+                    respondToAd(adId);
+                });
+            }
     
     return adElement;
 }
@@ -913,9 +892,6 @@ function displayAdDetail(ad) {
     const employerName = ad.employer ? `${ad.employer.first_name} ${ad.employer.last_name}` : 'Пользователь';
     const auctionEnded = ad.auction && ad.auction_ends_at && new Date(ad.auction_ends_at) < new Date();
     
-    // Проверяем наличие координат
-    const hasCoordinates = ad.location_lat && ad.location_lng;
-    
     container.innerHTML = `
         <div class="ad-detail-screen">
             <div class="ad-detail-header">
@@ -955,23 +931,11 @@ function displayAdDetail(ad) {
                     </div>
                     
                     <div class="ad-detail-meta-card">
-                        <div class="ad-detail-location" id="locationCard" data-has-coords="${hasCoordinates}">
-                            <div class="ad-detail-meta-icon">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                            <div class="ad-detail-meta-info">
-                            <div class="ad-detail-meta-label">Местоположение</div>
-                            <div class="ad-detail-meta-value">${ad.location}</div>
-                                ${hasCoordinates ? 
-                                    `<div class="location-hint">Нажмите для просмотра на карте</div>` : 
-                                        ''
-                                }
-                            </div>
-                                ${hasCoordinates ? 
-                                    `<i class="fas fa-external-link-alt" style="margin-left: auto;"></i>` : 
-                                        ''
-                                }
+                        <div class="ad-detail-meta-icon">
+                            <i class="fas fa-map-marker-alt"></i>
                         </div>
+                        <div class="ad-detail-meta-label">Местоположение</div>
+                        <div class="ad-detail-meta-value">${ad.location}</div>
                     </div>
                     
                     <div class="ad-detail-meta-card">
@@ -1116,13 +1080,7 @@ function displayAdDetail(ad) {
     document.getElementById('adDetailBackBtn').addEventListener('click', function() {
         showScreen('mainScreen');
     });
-    // Добавляем обработчик клика на карточку местоположения
-    const locationCard = document.getElementById('locationCard');
-    if (locationCard && hasCoordinates) {
-        locationCard.addEventListener('click', function() {
-            showLocationOnMap(ad);
-        });
-    }
+    
     // Остальные обработчики остаются такими же...
     if (!isMyAd && ad.status === 'active' && !ad.auction) {
         document.getElementById('respondAdBtn').addEventListener('click', function() {
@@ -1160,122 +1118,6 @@ function displayAdDetail(ad) {
     }
     
     showScreen('adDetailScreen');
-}
-
-// Функция показа местоположения на карте
-function showLocationOnMap(ad) {
-    // Создаем контейнер для карты
-    const container = document.getElementById('adDetailContainer');
-    
-    container.innerHTML = `
-        <div class="map-view-screen">
-            <div class="screen-header">
-                <button id="backFromMapBtn" class="btn-secondary">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <h2><i class="fas fa-map-marked-alt"></i> Местоположение задания</h2>
-            </div>
-            
-            <div class="map-view-container">
-                <div id="locationViewMap"></div>
-            </div>
-            
-            <div class="map-view-actions">
-                <div class="selected-location-info">
-                    <i class="fas fa-map-pin"></i>
-                    <span>${ad.location}</span>
-                </div>
-                <button id="openInExternalMapBtn" class="btn-primary">
-                    <i class="fas fa-external-link-alt"></i> Открыть в приложении карт
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Инициализируем карту
-    setTimeout(() => {
-        initLocationViewMap(ad);
-    }, 100);
-    
-    // Настраиваем обработчики
-    document.getElementById('backFromMapBtn').addEventListener('click', function() {
-        showAdDetail(ad.id); // Возвращаемся к деталям объявления
-    });
-    
-    document.getElementById('openInExternalMapBtn').addEventListener('click', function() {
-        openInExternalMaps(ad);
-    });
-}
-
-// Инициализация карты для просмотра местоположения
-function initLocationViewMap(ad) {
-    // Если карта уже существует, удаляем её
-    if (locationViewMap) {
-        locationViewMap.remove();
-        locationViewMap = null;
-    }
-    
-    const lat = ad.location_lat;
-    const lng = ad.location_lng;
-    
-    // Создаем карту с центром на координатах объявления
-    locationViewMap = L.map('locationViewMap').setView([lat, lng], 15);
-    
-    // Добавляем слой OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 18
-    }).addTo(locationViewMap);
-    
-    // Добавляем маркер местоположения
-    L.marker([lat, lng], {
-        icon: L.divIcon({
-            html: '<i class="fas fa-map-pin" style="color: #ef233c; font-size: 30px;"></i>',
-            iconSize: [30, 30],
-            className: 'location-view-marker'
-        })
-    }).addTo(locationViewMap);
-    
-    // Добавляем круг для указания точности (если есть)
-    L.circle([lat, lng], {
-        color: '#007bff',
-        fillColor: '#007bff',
-        fillOpacity: 0.1,
-        radius: 50
-    }).addTo(locationViewMap);
-    
-    // Добавляем попап с информацией
-    L.popup()
-        .setLatLng([lat, lng])
-        .setContent(`
-            <div style="padding: 5px;">
-                <strong>${ad.title}</strong><br>
-                ${ad.location}<br>
-                <small>${ad.price} ₽</small>
-            </div>
-        `)
-        .openOn(locationViewMap);
-}
-
-// Открытие в внешнем приложении карт
-function openInExternalMaps(ad) {
-    const lat = ad.location_lat;
-    const lng = ad.location_lng;
-    
-    // Для мобильных устройств
-    if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // Открываем в Яндекс.Картах или Google Maps в зависимости от устройства
-        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            // iOS - пробуем Apple Maps, затем Google Maps
-            window.open(`https://maps.apple.com/?q=${lat},${lng}&ll=${lat},${lng}&z=15`, '_blank');
-        } else {
-            // Android - открываем в Google Maps
-            window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank');
-        }
-    } else {
-        // Для десктопов открываем в новой вкладке
-        window.open(`https://www.openstreetmap.org/?mlat=${lat}&mlon=${lng}#map=15/${lat}/${lng}`, '_blank');
-    }
 }
 
 async function respondToAd(adId) {
@@ -1322,143 +1164,6 @@ async function respondToAd(adId) {
     }
 }
 
-// Инициализация обработчиков для карт
-function initMapListeners() {
-    // Кнопка открытия карты для выбора местоположения
-    document.getElementById('openMapBtn')?.addEventListener('click', openLocationPicker);
-    
-    // Кнопка закрытия карты
-    document.getElementById('closeMapBtn')?.addEventListener('click', function() {
-        showScreen('createAdScreen');
-    });
-    
-    // Кнопка подтверждения выбора местоположения
-    document.getElementById('confirmLocationBtn')?.addEventListener('click', confirmLocation);
-}
-
-// Функция открытия карты для выбора местоположения
-async function openLocationPicker() {
-    showScreen('mapScreen');
-    
-    // Инициализируем карту с небольшой задержкой для корректного отображения
-    setTimeout(() => {
-        initLocationPickerMap();
-    }, 100);
-}
-
-// Инициализация карты для выбора местоположения
-function initLocationPickerMap() {
-    // Если карта уже инициализирована, просто обновляем её размер
-    if (locationMap) {
-        locationMap.invalidateSize();
-        return;
-    }
-    
-    // Создаем карту с центром на Москве (можно изменить на местоположение пользователя)
-    locationMap = L.map('locationMap').setView([55.7558, 37.6173], 12);
-    
-    // Добавляем слой OpenStreetMap
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap contributors',
-        maxZoom: 18
-    }).addTo(locationMap);
-    
-    // Добавляем обработчик клика по карте
-    locationMap.on('click', onMapClick);
-    
-    // Пробуем получить местоположение пользователя
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition((position) => {
-            const { latitude, longitude } = position.coords;
-            locationMap.setView([latitude, longitude], 13);
-            
-            // Добавляем маркер на текущее местоположение
-            L.marker([latitude, longitude], {
-                icon: L.divIcon({
-                    html: '<i class="fas fa-location-crosshairs" style="color: #007bff; font-size: 20px;"></i>',
-                    iconSize: [30, 30],
-                    className: 'current-location-marker'
-                })
-            }).addTo(locationMap);
-        });
-    }
-}
-
-// Обработчик клика по карте
-async function onMapClick(e) {
-    const { lat, lng } = e.latlng;
-    selectedCoordinates = { lat, lng };
-    
-    // Удаляем предыдущий маркер, если есть
-    if (selectedMarker) {
-        locationMap.removeLayer(selectedMarker);
-    }
-    
-    // Добавляем новый маркер
-    selectedMarker = L.marker([lat, lng], {
-        icon: L.divIcon({
-            html: '<i class="fas fa-map-pin" style="color: #ef233c; font-size: 24px;"></i>',
-            iconSize: [30, 30],
-            className: 'selected-location-marker'
-        })
-    }).addTo(locationMap);
-    
-    // Получаем адрес по координатам (геокодирование)
-    await getAddressFromCoordinates(lat, lng);
-    
-    // Активируем кнопку подтверждения
-    document.getElementById('confirmLocationBtn').disabled = false;
-}
-
-// Получение адреса по координатам
-async function getAddressFromCoordinates(lat, lng) {
-    try {
-        // Используем Nominatim API OpenStreetMap для геокодирования
-        const response = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
-            {
-                headers: {
-                    'Accept-Language': 'ru-RU,ru'
-                }
-            }
-        );
-        
-        if (response.ok) {
-            const data = await response.json();
-            const address = data.display_name || `Широта: ${lat.toFixed(6)}, Долгота: ${lng.toFixed(6)}`;
-            selectedAddress = address;
-            
-            // Обновляем отображение адреса
-            document.getElementById('selectedAddress').textContent = address.substring(0, 100);
-            if (address.length > 100) {
-                document.getElementById('selectedAddress').textContent += '...';
-            }
-        } else {
-            selectedAddress = `Широта: ${lat.toFixed(6)}, Долгота: ${lng.toFixed(6)}`;
-            document.getElementById('selectedAddress').textContent = selectedAddress;
-        }
-    } catch (error) {
-        selectedAddress = `Широта: ${lat.toFixed(6)}, Долгота: ${lng.toFixed(6)}`;
-        document.getElementById('selectedAddress').textContent = selectedAddress;
-    }
-}
-
-// Подтверждение выбранного местоположения
-function confirmLocation() {
-    if (!selectedCoordinates) return;
-    
-    // Сохраняем выбранное местоположение
-    document.getElementById('adLocation').value = selectedAddress;
-    
-    // Показываем координаты
-    const coordsText = `${selectedCoordinates.lat.toFixed(6)}, ${selectedCoordinates.lng.toFixed(6)}`;
-    document.getElementById('coordinatesText').textContent = coordsText;
-    document.getElementById('selectedCoordinates').style.display = 'block';
-    
-    // Возвращаемся к форме
-    showScreen('createAdScreen');
-}
-
 // Обновленная функция публикации объявления
 async function publishAd() {
     try {
@@ -1473,12 +1178,6 @@ async function publishAd() {
         // Валидация
         if (!title || !description || !location || !contacts || price < 100) {
             showNotification('Заполните все обязательные поля. Минимальная стоимость работы - 100 ₽');
-            return;
-        }
-        
-        // Проверяем наличие выбранного местоположения
-        if (!selectedCoordinates) {
-            showNotification('Пожалуйста, выберите местоположение на карте');
             return;
         }
         
@@ -1506,15 +1205,13 @@ async function publishAd() {
             paymentMethod = paymentResult.method;
         }
         
-        // Подготавливаем данные с координатами
+        // Подготавливаем данные
         const adData = {
             title,
             description,
             category,
             price,
             location,
-            location_lat: selectedCoordinates.lat,
-            location_lng: selectedCoordinates.lng,
             contacts,
             auction: auctionEnabled,
             payment_method: paymentMethod
