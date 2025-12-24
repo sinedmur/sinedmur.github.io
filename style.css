@@ -5790,10 +5790,10 @@ input:checked + .slider:before {
 
 /* Стили для карт Telegram */
 .location-input-group {
+    position: relative;
     display: flex;
     gap: 10px;
     align-items: center;
-    margin-bottom: 8px;
 }
 
 .location-input-group input {
@@ -5826,6 +5826,161 @@ input:checked + .slider:before {
 .coordinates-display span {
     font-family: monospace;
     color: #007bff;
+}
+
+#adLocation {
+    flex: 1;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#adLocation.has-location {
+    background-color: #f0f9ff;
+    border-color: #007bff;
+    color: #0056b3;
+}
+
+#adLocation:focus {
+    background-color: white;
+}
+
+#adLocation::placeholder {
+    color: #6c757d;
+    opacity: 0.8;
+}
+
+/* Стили для превью местоположения */
+.location-preview-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: var(--border-radius);
+    padding: 15px;
+    margin-top: 15px;
+    border: 1px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.location-preview-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.location-preview-info {
+    flex: 1;
+}
+
+.location-preview-address {
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 3px;
+}
+
+.location-preview-coords {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.location-preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Модальное окно выбора метода */
+.location-method-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.location-method-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    text-align: center;
+    min-height: 140px;
+    justify-content: center;
+}
+
+.location-method-btn:hover {
+    border-color: #007bff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+}
+
+.location-method-btn i {
+    font-size: 2.5rem;
+    color: #007bff;
+    margin-bottom: 12px;
+    transition: transform 0.3s ease;
+}
+
+.location-method-btn:hover i {
+    transform: scale(1.1);
+}
+
+.location-method-btn span {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #212529;
+    font-size: 1rem;
+}
+
+.location-method-btn p {
+    font-size: 0.85rem;
+    color: #6c757d;
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Адаптивность для мобильных */
+@media (max-width: 576px) {
+    .location-input-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    
+    .location-method-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .location-preview-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .location-preview-actions {
+        justify-content: center;
+    }
 }
 
 /* Стили для кликабельного местоположения */
@@ -5984,4 +6139,44 @@ input:checked + .slider:before {
     outline: none;
     border-color: #007bff;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+/* Индикатор загрузки карты */
+.map-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.map-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.map-loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 11;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
