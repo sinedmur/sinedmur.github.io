@@ -3,413 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Шабашка - подработка</title>
+    <title>Полимер56 — Трубы ПНД, фитинги, арматура в Оренбурге</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
-    <div id="app">
-        <!-- Шапка приложения -->
-        <header class="app-header">
-            <div class="logo">
-                <i class="fas fa-briefcase"></i>
-                <h1>Шабашка</h1>
+
+    <!-- Шапка (Header) -->
+    <header class="header">
+        <div class="container header__inner">
+            <a href="#" class="logo">
+                <span class="logo__text">Полимер<span class="logo__accent">56</span></span>
+                <span class="logo__sub">Оптовые и розничные поставки</span>
+            </a>
+            <nav class="nav" id="nav-menu">
+                <ul class="nav__list">
+                    <li><a href="#catalog" class="nav__link">Каталог</a></li>
+                    <li><a href="#advantages" class="nav__link">Преимущества</a></li>
+                    <li><a href="#about" class="nav__link">О нас</a></li>
+                    <li><a href="#contacts" class="nav__link">Контакты</a></li>
+                </ul>
+            </nav>
+            <div class="header__contacts">
+                <a href="tel:+73532000000" class="header__phone">
+                    <i class="fas fa-phone"></i> +7 (3532) 99-23-13
+                </a>
+                <a href="#" class="btn btn--wa">
+                    Написать
+                </a>
             </div>
-            <div class="user-info" id="userInfo">
-                <button id="notificationsBtn" class="btn-icon">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button id="profileBtn">
-                    <i class="fas fa-user"></i>
-                </button>
-            </div>
-        </header>
-
-        <!-- Основной контент -->
-        <main>
-            <!-- Экран загрузки -->
-            <section id="loadingScreen" class="screen active">
-                <div class="loading-container">
-                    <div class="loading-logo">
-                        <i class="fas fa-briefcase"></i>
-                        <h1>Шабашка</h1>
-                        <p style="margin-top: 0.5rem; opacity: 0.8; font-size: 1.1rem;">Находим работу для каждого</p>
-                    </div>
-                    
-                    <div class="loading-spinner2">
-                        <div class="spinner"></div>
-                    </div>
-                    
-                    <div class="loading-progress">
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill"></div>
-                        </div>
-                        <div class="loading-steps">
-                            <div class="loading-step active">
-                                <i class="fas fa-rocket"></i>
-                                <span>Запуск</span>
-                            </div>
-                            <div class="loading-step">
-                                <i class="fas fa-user-check"></i>
-                                <span>Авторизация</span>
-                            </div>
-                            <div class="loading-step">
-                                <i class="fas fa-tasks"></i>
-                                <span>Загрузка данных</span>
-                            </div>
-                            <div class="loading-step">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Готово</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="loading-hint" id="loadingHint">
-                        Подготавливаем приложение для вас...
-                    </div>
-                </div>
-            </section>
-            <!-- Главный экран -->
-            <section id="mainScreen" class="screen active">
-                <div class="screen-header">
-                    <h2><i class="fas fa-list-alt"></i> Доступные задания</h2>
-                    <div class="header-actions">
-                        <button id="refreshAdsBtn" class="btn-secondary">
-                            <i class="fas fa-sync-alt"></i>
-                        </button>
-                        <button id="createAdBtn" class="btn-primary">
-                            <i class="fas fa-plus"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="filter-bar">
-                    <select id="categoryFilter">
-                        <option value="all">Все категории</option>
-                        <option value="delivery">Доставка</option>
-                        <option value="cleaning">Уборка</option>
-                        <option value="repair">Ремонт</option>
-                        <option value="computer">Компьютерная помощь</option>
-                        <option value="other">Другое</option>
-                    </select>
-                    
-                    <select id="sortFilter">
-                        <option value="newest">Сначала новые</option>
-                        <option value="price_high">Цена по убыванию</option>
-                        <option value="price_low">Цена по возрастанию</option>
-                    </select>
-                </div>
-                
-                <div class="ads-list" id="adsList">
-                    <!-- Объявления будут загружены через JS -->
-                    <div class="empty-state">
-                        <i class="fas fa-search"></i>
-                        <h3>Нет доступных заданий</h3>
-                        <p>Попробуйте обновить список или создайте первое задание</p>
-                        <button id="createFirstAdBtn" class="btn-primary">Создать задание</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран создания объявления -->
-            <section id="createAdScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-plus-circle"></i> Создание задания</h2>
-                </div>
-                <div id="publicationInfo" class="publication-info">
-                    <div class="free-ads-indicator">
-                        <div>
-                            <i class="fas fa-gift"></i>
-                            <span>Бесплатных публикаций осталось: <span id="freeAdsCount">2</span></span>
-                        </div>
-                    </div>
-                    
-                    <div class="payment-notice" id="paymentNotice" style="display: none;">
-                        <div class="notice-header">
-                            <i class="fas fa-info-circle"></i>
-                            <span>Для публикации требуется оплата</span>
-                        </div>
-                        <div class="notice-body">
-                            <p>Стоимость публикации: <strong>50 ₽</strong></p>
-                            <p>Или оформите подписку для неограниченных публикаций</p>
-                            <button id="showSubscriptionBtn" class="btn-secondary btn-small">
-                                <i class="fas fa-crown"></i> Подписка
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="form-container">
-                    <div class="form-group">
-                        <label for="adTitle">Название задания *</label>
-                        <input type="text" id="adTitle" placeholder="Например: Нужно помочь с переездом" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="adCategory">Категория *</label>
-                        <select id="adCategory" required>
-                            <option value="delivery">Доставка</option>
-                            <option value="cleaning">Уборка</option>
-                            <option value="repair">Ремонт</option>
-                            <option value="computer">Компьютерная помощь</option>
-                            <option value="other">Другое</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="adDescription">Описание задачи *</label>
-                        <textarea id="adDescription" rows="4" placeholder="Опишите задачу подробно..." required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="adPrice">Стоимость работы (₽) *</label>
-                        <input type="number" id="adPrice" min="100" max="100000" value="1000" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="adLocation">Местоположение *</label>
-                        <div class="location-input-group">
-                            <input type="text" id="adLocation" placeholder="Нажмите для выбора на карте" readonly required>
-                            <button type="button" id="openMapBtn" class="btn-secondary btn-small">
-                                <i class="fas fa-map-marked-alt"></i> Выбрать на карте
-                            </button>
-                        </div>
-                        <div id="selectedCoordinates" class="coordinates-display" style="display: none;">
-                            <span>Координаты: </span>
-                            <span id="coordinatesText"></span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="adContacts">Контакты для связи *</label>
-                        <input type="text" id="adContacts" placeholder="Телефон, Telegram или другой способ связи" required>
-                    </div>
-                    
-                    <div class="auction-control">
-                        <div class="auction-toggle">
-                            <label class="switch">
-                                <input type="checkbox" id="auctionToggle">
-                                <span class="slider round"></span>
-                            </label>
-                            <span style="font-weight: 600;">Включить торги</span>
-                        </div>
-                        
-                        <div class="auction-settings" id="auctionSettings">
-                            <p>Исполнители смогут предлагать цены ниже вашей. Задание получит тот, кто предложит меньше.</p>
-                            
-                            <div class="form-group">
-                                <label for="auctionDuration">Продолжительность торгов</label>
-                                <div class="auction-timer">
-                                    <input type="number" id="auctionHours" min="1" max="72" value="24">
-                                    <span>часов</span>
-                                </div>
-                            </div>
-                            
-                            <div class="payment-warning">
-                                <i class="fas fa-info-circle"></i>
-                                <div>
-                                    <h4>Важно!</h4>
-                                    <p>После окончания торгов задание автоматически будет назначено пользователю с минимальной ставкой</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <button id="publishAdBtn" class="btn-primary btn-large">
-                        <i class="fas fa-paper-plane"></i> Опубликовать задание
-                    </button>
-                    
-                    <p class="form-note">
-                        <i class="fas fa-info-circle"></i>
-                        Все задания бесплатны для публикации. Контакты будут видны только выбранному исполнителю.
-                    </p>
-                </div>
-            </section>
-
-            <!-- Экран просмотра объявления -->
-            <section id="adDetailScreen" class="screen">
-                <div class="screen-header">
-                    <h2>Детали задания</h2>
-                </div>
-                
-                <div class="ad-detail-container" id="adDetailContainer">
-                    <!-- Детали объявления будут загружены через JS -->
-                </div>
-            </section>
-
-            <!-- Экран чата -->
-            <section id="chatScreen" class="screen">
-                <div class="screen-header chat-header">
-                    <div class="chat-user-info">
-                        <div class="chat-avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div>
-                            <h4 id="chatUserName">Пользователь</h4>
-                            <p id="chatUserStatus" class="status-online">online</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="chat-container">
-                    <div class="chat-messages" id="chatMessages">
-                        <!-- Сообщения будут загружены через JS -->
-                    </div>
-                    
-                    <div class="chat-ad-info" id="chatAdInfo">
-                        <!-- Информация об объявлении -->
-                    </div>
-                </div>
-                
-                <div class="chat-input-container">
-                    <input type="text" id="chatInput" placeholder="Введите сообщение...">
-                    <button class="btn-icon btn-primary" id="sendMessageBtn">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-            </section>
-
-            <!-- Экран моих заданий -->
-            <section id="myAdsScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-clipboard-list"></i> Мои задания</h2>
-                </div>
-                
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="active">Активные</button>
-                    <button class="tab-btn" data-tab="inProgress">В работе</button>
-                    <button class="tab-btn" data-tab="completed">Завершенные</button>
-                </div>
-                
-                <div class="my-ads-list" id="myAdsList">
-                    <!-- Мои задания будут загружены через JS -->
-                    <div class="empty-state">
-                        <i class="fas fa-clipboard"></i>
-                        <h3>У вас пока нет заданий</h3>
-                        <p>Создайте первое задание</p>
-                        <button id="createFromMyAdsBtn" class="btn-primary">Создать задание</button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран профиля -->
-            <section id="profileScreen" class="screen">
-                <div class="screen-header">
-                    <button id="closeProfileBtn" class="btn-secondary">
-                        <i class="fas fa-times"></i>
-                    </button>
-                    <h2><i class="fas fa-user-cog"></i> Профиль</h2>
-                </div>
-                
-                <div class="profile-container">
-                    <div class="profile-header">
-                        <div class="avatar">
-                            <i class="fas fa-user"></i>
-                        </div>
-                        <div class="profile-info">
-                            <h3 id="profileUserName">Пользователь</h3>
-                            <p id="profileUserStats">0 заданий создано</p>
-                        </div>
-                    </div>
-                    
-                    <div class="profile-actions">
-                        <button class="profile-action-btn" id="myAdsBtn">
-                            <i class="fas fa-clipboard-list"></i>
-                            <span>Мои задания</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        
-                        <button class="profile-action-btn" id="myBidsBtn">
-                            <i class="fas fa-gavel"></i>
-                            <span>Мои ставки</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        
-                        <button class="profile-action-btn" id="settingsBtn">
-                            <i class="fas fa-cog"></i>
-                            <span>Настройки</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                        
-                        <button class="profile-action-btn" id="helpBtn">
-                            <i class="fas fa-question-circle"></i>
-                            <span>Помощь</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-
-                        <button class="profile-action-btn" id="referralBtn">
-                            <i class="fas fa-user-plus"></i>
-                            <span>Пригласить друга</span>
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-
-                    </div>  
-                    <div class="profile-stats">
-                    </div>
-                </div>
-            </section>
-
-            <!-- Экран уведомлений -->
-            <section id="notificationsScreen" class="screen">
-                <div class="screen-header">
-                    <h2><i class="fas fa-bell"></i> Уведомления</h2>
-                    <button id="clearNotificationsBtn" class="btn-secondary">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-                
-                <div class="notifications-list" id="notificationsList">
-                    <!-- Уведомления будут загружены через JS -->
-                </div>
-            </section>
-        </main>
-
-        <!-- Нижняя навигация -->
-        <nav class="bottom-nav" id="bottomNav">
-            <button class="nav-btn active" data-screen="mainScreen">
-                <i class="fas fa-home"></i>
-                <span>Главная</span>
+            <button class="burger" id="burger-btn">
+                <span></span><span></span><span></span>
             </button>
-            <button class="nav-btn" id="createNavBtn">
-                <i class="fas fa-plus-circle"></i>
-                <span>Создать</span>
-            </button>
-            <button class="nav-btn" data-screen="myAdsScreen">
-                <i class="fas fa-clipboard-list"></i>
-                <span>Мои задания</span>
-            </button>
-            <button class="nav-btn" data-screen="profileScreen">
-                <i class="fas fa-user"></i>
-                <span>Профиль</span>
-            </button>
-        </nav>
+        </div>
+    </header>
+
+    <!-- Главный экран (Hero) -->
+    <section class="hero">
+        <div class="hero__image">
+        <!-- Замените src на путь к вашей картинке -->
+        <img src="https://images.unsplash.com/photo-1581092160562-40aa08e78837?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80" alt="Полимерные трубы ПНД">
     </div>
-
-    <!-- Модальное окно для подтверждения -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modalTitle">Подтверждение</h3>
-                <button id="closeModalBtn" class="close-modal">&times;</button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                <!-- Контент модального окна -->
-            </div>
-            <div class="modal-footer">
-                <button id="modalCancelBtn" class="btn-secondary">Отмена</button>
-                <button id="modalConfirmBtn" class="btn-primary">Подтвердить</button>
+        <div class="container">
+            <div class="hero__content">
+                <h1 class="hero__title">
+                    Выгодные полимерные трубы и фитинги <span class="text-accent">в Оренбурге</span>
+                </h1>
+                <p class="hero__subtitle">
+                    ПНД трубы, запорная арматура и сварочное оборудование со склада.<br>
+                    Режем, комплектуем, доставляем по городу и области.
+                </p>
+                <div class="hero__btns">
+                    <a href="#catalog" class="btn btn--primary">Смотреть каталог</a>
+                    <a href="#" class="btn btn--outline">Скачать прайс-лист (.xls)</a>
+                </div>
+                <div class="hero__stats">
+                    <div class="stat-item">
+                        <span class="stat-number">10+</span>
+                        <span class="stat-label">лет на рынке</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">500+</span>
+                        <span class="stat-label">позиций на складе</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-number">от 1 м</span>
+                        <span class="stat-label">продажа отрезками</span>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Уведомления -->
-    <div id="notification" class="notification">
-        <div class="notification-content">
-            <span id="notificationText"></span>
+    <!-- Каталог -->
+    <section class="section" id="catalog">
+        <div class="container">
+            <div class="section__header">
+                <h2 class="section__title">Наша продукция</h2>
+                <p class="section__desc">Всё для водоснабжения, газоснабжения и канализации в одном месте</p>
+            </div>
+            <div class="catalog-grid">
+                <div class="catalog-card">
+                    <div class="catalog-card__icon">
+                        <i class="fas fa-ruler-combined"></i>
+                    </div>
+                    <h3>Трубы ПНД</h3>
+                    <p>Технические и питьевые. Диаметры от 20 до 1200 мм. ПЭ-100, ПЭ-80.</p>
+                </div>
+                <div class="catalog-card">
+                    <div class="catalog-card__icon">
+                        <i class="fas fa-puzzle-piece"></i>
+                    </div>
+                    <h3>Фитинги</h3>
+                    <p>Муфты, тройники, отводы, заглушки. Литьевые и сегментные детали.</p>
+                </div>
+                <div class="catalog-card">
+                    <div class="catalog-card__icon">
+                        <i class="fas fa-valve"></i>
+                    </div>
+                    <h3>Запорная арматура</h3>
+                    <p>Краны шаровые, задвижки клиновые, клапаны обратные.</p>
+                </div>
+                <div class="catalog-card">
+                    <div class="catalog-card__icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3>Сварочное оборудование</h3>
+                    <p>Аппараты стыковой и муфтовой сварки. Аренда и продажа.</p>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
 
-    <script src="app.js"></script>
+    <!-- Преимущества пластиковых труб -->
+    <section class="section section--gray" id="advantages">
+        <div class="container">
+            <div class="section__header">
+                <h2 class="section__title">Забудьте о ржавчине и частых ремонтах</h2>
+                <p class="section__desc">Почему пластиковые трубы вытесняют металл и чугун</p>
+            </div>
+            <div class="advantages-grid">
+                <div class="advantage-item">
+                    <i class="fas fa-shield-virus"></i>
+                    <div>
+                        <h4>Не ржавеют и не зарастают</h4>
+                        <p>Идеальная гидравлика на 50 лет. Просвет трубы не сужается со временем.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <i class="fas fa-feather-alt"></i>
+                    <div>
+                        <h4>Малый вес</h4>
+                        <p>В разы легче металла. Дешевле перевозка, проще монтаж без тяжёлой техники.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <h4>Срок службы > 50 лет</h4>
+                        <p>Поставили и забыли. Сопоставимо со сроком жизни самого здания.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <i class="fas fa-ruble-sign"></i>
+                    <div>
+                        <h4>Низкая цена</h4>
+                        <p>Бюджет стройки под контролем. Выгоднее металлических аналогов.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <i class="fas fa-temperature-high"></i>
+                    <div>
+                        <h4>Эластичность</h4>
+                        <p>Выдерживают подвижки грунта, гидроудары и перепады температур.</p>
+                    </div>
+                </div>
+                <div class="advantage-item">
+                    <i class="fas fa-recycle"></i>
+                    <div>
+                        <h4>Экологичность</h4>
+                        <p>Безопасны для питьевой воды. Не выделяют вредных веществ.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- О компании / Как работаем -->
+    <section class="section" id="about">
+        <div class="container">
+            <div class="about-wrapper">
+                <div class="about-info">
+                    <h2 class="section__title section__title--left">Почему выбирают нас</h2>
+                    <ul class="about-list">
+                        <li><i class="fas fa-check-circle"></i> Собственный склад в Оренбурге — отгрузка день в день.</li>
+                        <li><i class="fas fa-check-circle"></i> Продажа отрезками от 1 метра — не переплачиваете за лишнее.</li>
+                        <li><i class="fas fa-check-circle"></i> Полный цикл: труба + фитинг + аппарат для сварки.</li>
+                        <li><i class="fas fa-check-circle"></i> Безналичный и наличный расчет с НДС/без НДС.</li>
+                        <li><i class="fas fa-check-circle"></i> Консультация инженера по подбору SDR и марки полиэтилена.</li>
+                    </ul>
+                </div>
+                <div class="steps-card">
+                    <h3>Как мы работаем</h3>
+                    <div class="step">
+                        <span class="step__num">01</span>
+                        <div><strong>Заявка / Звонок</strong><p>Менеджер консультирует по наличию и характеристикам.</p></div>
+                    </div>
+                    <div class="step">
+                        <span class="step__num">02</span>
+                        <div><strong>Расчет сметы</strong><p>Готовим КП и спецификацию за 30 минут.</p></div>
+                    </div>
+                    <div class="step">
+                        <span class="step__num">03</span>
+                        <div><strong>Оплата и отгрузка</strong><p>Самовывоз со склада или доставка до объекта.</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Блок -->
+    <section class="cta">
+        <div class="container cta__inner">
+            <div class="cta__text">
+                <h2>Нужна помощь с подбором?</h2>
+                <p>Инженеры помогут выбрать трубу по давлению и назначению (техническая/питьевая). Звоните или пишите в WhatsApp!</p>
+            </div>
+            <div class="cta__btns">
+                <a href="tel:+73532000000" class="btn btn--white"><i class="fas fa-phone"></i> Позвонить</a>
+                <a href="#" class="btn btn--wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Контакты и карта -->
+    <footer class="footer" id="contacts">
+        <div class="container footer__grid">
+            <div class="footer__col">
+                <a href="#" class="logo logo--footer">
+                    <span class="logo__text">Полимер<span class="logo__accent">56</span></span>
+                </a>
+                <p>Оптовая и розничная продажа полиэтиленовых труб, фитингов и оборудования в Оренбурге.</p>
+            </div>
+            <div class="footer__col">
+                <h4>Контакты</h4>
+                <p><i class="fas fa-map-marker-alt"></i> г. Оренбург, [Ваш адрес склада]</p>
+                <p><i class="fas fa-phone"></i> +7 (3532) 99-23-13</p>
+                <p><i class="fas fa-envelope"></i> polimer1756@yandex.ru</p>
+                <p><i class="fas fa-clock"></i> Пн-Пт: 09:00 – 18:00</p>
+            </div>
+            <div class="footer__col">
+                <h4>Каталог</h4>
+                <ul>
+                    <li><a href="#">Трубы ПНД</a></li>
+                    <li><a href="#">Фитинги</a></li>
+                    <li><a href="#">Запорная арматура</a></li>
+                    <li><a href="#">Сварочное оборудование</a></li>
+                </ul>
+            </div>
+            <div class="footer__col">
+                <h4>Мы на связи</h4>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    <a href="#"><i class="fab fa-telegram-plane"></i></a>
+                </div>
+                <a href="#" class="btn btn--outline btn--small" style="margin-top:1rem;">Скачать прайс</a>
+            </div>
+        </div>
+        <div class="footer__bottom">
+            <div class="container">
+                <p>© 2017-2026 Полимер56. Все права защищены. Сайт носит информационный характер.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Простое меню-бургер для мобильных
+        const burger = document.getElementById('burger-btn');
+        const nav = document.getElementById('nav-menu');
+        burger.addEventListener('click', () => {
+            nav.classList.toggle('active');
+            burger.classList.toggle('active');
+        });
+    </script>
 </body>
 </html>
