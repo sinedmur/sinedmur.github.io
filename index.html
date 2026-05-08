@@ -1,268 +1,1027 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Полимер56 — Трубы ПНД, фитинги, арматура в Оренбурге</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Столовая • Заказ еды</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      padding: 0 0 20px 0;
+      margin: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      /* Скрываем скроллбар для всего body */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    body::-webkit-scrollbar {
+      display: none;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 430px;
+      background: #111111;
+      border-radius: 0 0 32px 32px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Шапка */
+    .header {
+      padding: 20px 20px 16px;
+      background: linear-gradient(180deg, #1a1a1a 0%, #111111 100%);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #222;
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      backdrop-filter: blur(20px);
+    }
+    
+    .logo-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #ff6b35, #ff2e63);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+    
+    .header h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    
+    .header-subtitle {
+      font-size: 0.7rem;
+      color: #888;
+      letter-spacing: 0.5px;
+    }
+    
+    .bonus-badge {
+      background: rgba(255,107,53,0.15);
+      border-radius: 20px;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border: 1px solid rgba(255,107,53,0.3);
+      backdrop-filter: blur(10px);
+    }
+    .bonus-badge .star {
+      font-size: 1.1rem;
+    }
+    .bonus-badge span {
+      background: linear-gradient(135deg, #ff6b35, #ffb347);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+
+    /* Адрес доставки */
+    .delivery-section {
+      margin: 16px 20px;
+      background: #1a1a1a;
+      border-radius: 20px;
+      padding: 16px;
+      border: 1px solid #2a2a2a;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .delivery-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #ff6b35, #ff2e63, #ff6b35);
+    }
+    
+    .address-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0f0f0f;
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 1px solid #2a2a2a;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+    
+    .address-input-wrapper:focus-within {
+      border-color: #ff6b35;
+      box-shadow: 0 0 0 3px rgba(255,107,53,0.1);
+    }
+    
+    .address-icon {
+      font-size: 1.2rem;
+      color: #ff6b35;
+    }
+    
+    .address-input-wrapper input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 0.95rem;
+      width: 100%;
+      outline: none;
+      font-weight: 500;
+    }
+    
+    .address-input-wrapper input::placeholder {
+      color: #555;
+    }
+    
+    .saved-addresses {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .saved-address-btn {
+      background: #252525;
+      border: 1px solid #333;
+      color: #aaa;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    
+    .saved-address-btn:hover {
+      background: #2a2a2a;
+      border-color: #ff6b35;
+      color: #fff;
+    }
+    
+    .delivery-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    
+    .delivery-time {
+      color: #4ecb71;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .free-delivery-badge {
+      background: rgba(78,203,113,0.15);
+      color: #4ecb71;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    /* Категории */
+    .categories-wrapper {
+      position: relative;
+      padding: 0 20px;
+      margin-bottom: 16px;
+    }
+    
+    .categories {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      /* Скрываем скроллбар */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    
+    .categories::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .category-btn {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      color: #888;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+    
+    .category-btn.active {
+      background: linear-gradient(135deg, #ff6b35, #ff2e63);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    /* Сетка товаров */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 20px 16px;
+      color: #e0e0e0;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .items-count {
+      font-size: 0.8rem;
+      color: #666;
+      font-weight: 400;
+    }
+    
+    .menu-grid-wrapper {
+      padding: 0 20px;
+    }
+    
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+    
+    .dish-card {
+      background: #1a1a1a;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid #2a2a2a;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+    }
+    
+    .dish-card:hover {
+      transform: translateY(-2px);
+      border-color: #ff6b35;
+      box-shadow: 0 10px 30px rgba(255,107,53,0.2);
+    }
+    
+    .dish-card:active {
+      transform: scale(0.98);
+    }
+    
+    .dish-image {
+      width: 100%;
+      height: 140px;
+      background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.5rem;
+    }
+    
+    .dish-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .dish-image .food-emoji {
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    }
+    
+    .quick-add-overlay {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: all 0.3s ease;
+    }
+    
+    .dish-card:hover .quick-add-overlay {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .badge-popular {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: linear-gradient(135deg, #ff6b35, #ff2e63);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .badge-new {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: #4ecb71;
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .dish-info {
+      padding: 12px;
+    }
+    
+    .dish-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+    
+    .dish-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    
+    .dish-weight {
+      font-size: 0.7rem;
+      color: #666;
+    }
+    
+    .calories-badge {
+      background: rgba(255,179,71,0.15);
+      color: #ffb347;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+    
+    .price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+    
+    .price {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #fff;
+    }
+    
+    .add-to-cart-btn {
+      background: linear-gradient(135deg, #ff6b35, #ff2e63);
+      border: none;
+      color: white;
+      font-weight: 600;
+      font-size: 0.75rem;
+      padding: 6px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .add-to-cart-btn:active {
+      transform: scale(0.95);
+      opacity: 0.9;
+    }
+    
+    .in-cart-indicator {
+      background: #4ecb71;
+      color: #000;
+      font-size: 0.65rem;
+      padding: 4px 8px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    /* Корзина */
+    .cart-section {
+      margin: 20px 20px 10px;
+      background: #1a1a1a;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #2a2a2a;
+    }
+    
+    .cart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    
+    .cart-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+    
+    .clear-cart {
+      background: none;
+      border: none;
+      color: #ff2e63;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .cart-items {
+      max-height: 240px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      /* Скрываем скроллбар в корзине */
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    
+    .cart-items::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .cart-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #252525;
+      gap: 10px;
+    }
+    
+    .cart-item-info {
+      flex: 1;
+    }
+    
+    .cart-item-name {
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 2px;
+    }
+    
+    .cart-item-calories {
+      font-size: 0.7rem;
+      color: #888;
+    }
+    
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .qty-btn {
+      background: #252525;
+      border: 1px solid #333;
+      color: #fff;
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+    }
+    
+    .qty-btn:hover {
+      background: #333;
+      border-color: #ff6b35;
+    }
+    
+    .qty-number {
+      font-weight: 600;
+      min-width: 20px;
+      text-align: center;
+    }
+    
+    .cart-item-price {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: #888;
+    }
+    
+    .summary-row.total {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #2a2a2a;
+    }
+    
+    .calories-total {
+      background: rgba(255,179,71,0.1);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 12px 0;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    
+    .bonus-info {
+      background: rgba(255,107,53,0.1);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin: 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #ffb347;
+    }
+    
+    .order-button {
+      width: 100%;
+      background: linear-gradient(135deg, #ff6b35, #ff2e63);
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      padding: 16px;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .order-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 300px;
+      height: 300px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.5s ease;
+    }
+    
+    .order-button:active::after {
+      transform: translate(-50%, -50%) scale(1);
+    }
+    
+    .order-button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    .order-button:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(255,46,99,0.4);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 30px 20px;
+      color: #555;
+    }
+    
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+    
+    .footer {
+      text-align: center;
+      padding: 20px;
+      color: #444;
+      font-size: 0.7rem;
+    }
+  </style>
 </head>
 <body>
-
-    <!-- Шапка (Header) -->
-    <header class="header">
-        <div class="container header__inner">
-            <a href="#" class="logo">
-                <span class="logo__text">Полимер<span class="logo__accent">56</span></span>
-                <span class="logo__sub">Оптовые и розничные поставки</span>
-            </a>
-            <nav class="nav" id="nav-menu">
-                <ul class="nav__list">
-                    <li><a href="#catalog" class="nav__link">Каталог</a></li>
-                    <li><a href="#advantages" class="nav__link">Преимущества</a></li>
-                    <li><a href="#about" class="nav__link">О нас</a></li>
-                    <li><a href="#contacts" class="nav__link">Контакты</a></li>
-                </ul>
-            </nav>
-            <div class="header__contacts">
-                <a href="tel:+73532000000" class="header__phone">
-                    <i class="fas fa-phone"></i> +7 (3532) 99-23-13
-                </a>
-                <a href="#" class="btn btn--wa">
-                    Написать
-                </a>
-            </div>
-            <button class="burger" id="burger-btn">
-                <span></span><span></span><span></span>
-            </button>
+  <div class="app">
+    <!-- Шапка -->
+    <div class="header">
+      <div class="logo-section">
+        <div class="logo-icon">🍽️</div>
+        <div>
+          <h1>Столовка</h1>
+          <div class="header-subtitle">доставка еды</div>
         </div>
-    </header>
+      </div>
+      <div class="bonus-badge">
+        <span class="star">⭐</span>
+        <span id="bonusDisplay">120</span>
+      </div>
+    </div>
 
-    <!-- Главный экран (Hero) -->
-    <section class="hero">
-        <div class="container">
-            <div class="hero__content">
-                <h1 class="hero__title">
-                    Выгодные полимерные трубы и фитинги <span class="text-accent">в Оренбурге</span>
-                </h1>
-                <p class="hero__subtitle">
-                    ПНД трубы, запорная арматура и сварочное оборудование со склада.<br>
-                    Режем, комплектуем, доставляем по городу и области.
-                </p>
-                <div class="hero__btns">
-                    <a href="#catalog" class="btn btn--primary">Смотреть каталог</a>
-                    <a href="#" class="btn btn--outline">Скачать прайс-лист (.xls)</a>
-                </div>
-                <div class="hero__stats">
-                    <div class="stat-item">
-                        <span class="stat-number">10+</span>
-                        <span class="stat-label">лет на рынке</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number">500+</span>
-                        <span class="stat-label">позиций на складе</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-number">от 1 м</span>
-                        <span class="stat-label">продажа отрезками</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Адрес доставки -->
+    <div class="delivery-section">
+      <div class="address-input-wrapper">
+        <span class="address-icon">📍</span>
+        <input 
+          type="text" 
+          id="addressInput" 
+          placeholder="Введите адрес доставки..."
+          value="ул. Ленина, 42, кв 12"
+        >
+      </div>
+      <div class="saved-addresses">
+        <button class="saved-address-btn" onclick="setAddress('ул. Ленина, 42, кв 12')">🏠 Дом</button>
+        <button class="saved-address-btn" onclick="setAddress('пр-т Мира, 15, офис 304')">💼 Офис</button>
+        <button class="saved-address-btn" onclick="setAddress('ул. Пушкина, 7')">📍 Пушкина</button>
+      </div>
+      <div class="delivery-info" style="margin-top: 10px;">
+        <span class="delivery-time">🕐 25-35 мин</span>
+        <span id="deliveryStatus" class="free-delivery-badge">Бесплатно от 500₽</span>
+      </div>
+    </div>
 
-    <!-- Каталог -->
-    <section class="section" id="catalog">
-        <div class="container">
-            <div class="section__header">
-                <h2 class="section__title">Наша продукция</h2>
-                <p class="section__desc">Всё для водоснабжения, газоснабжения и канализации в одном месте</p>
-            </div>
-            <div class="catalog-grid">
-                <div class="catalog-card">
-                    <div class="catalog-card__icon">
-                        <i class="fas fa-ruler-combined"></i>
-                    </div>
-                    <h3>Трубы ПНД</h3>
-                    <p>Технические и питьевые. Диаметры от 20 до 1200 мм. ПЭ-100, ПЭ-80.</p>
-                </div>
-                <div class="catalog-card">
-                    <div class="catalog-card__icon">
-                        <i class="fas fa-puzzle-piece"></i>
-                    </div>
-                    <h3>Фитинги</h3>
-                    <p>Муфты, тройники, отводы, заглушки. Литьевые и сегментные детали.</p>
-                </div>
-                <div class="catalog-card">
-                    <div class="catalog-card__icon">
-                        <i class="fas fa-valve"></i>
-                    </div>
-                    <h3>Запорная арматура</h3>
-                    <p>Краны шаровые, задвижки клиновые, клапаны обратные.</p>
-                </div>
-                <div class="catalog-card">
-                    <div class="catalog-card__icon">
-                        <i class="fas fa-tools"></i>
-                    </div>
-                    <h3>Сварочное оборудование</h3>
-                    <p>Аппараты стыковой и муфтовой сварки. Аренда и продажа.</p>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Категории -->
+    <div class="categories-wrapper">
+      <div class="categories">
+        <button class="category-btn active" onclick="filterCategory('all', this)">🔥 Все</button>
+        <button class="category-btn" onclick="filterCategory('soup', this)">🍜 Супы</button>
+        <button class="category-btn" onclick="filterCategory('salad', this)">🥗 Салаты</button>
+        <button class="category-btn" onclick="filterCategory('hot', this)">🍖 Горячее</button>
+        <button class="category-btn" onclick="filterCategory('drink', this)">🥤 Напитки</button>
+        <button class="category-btn" onclick="filterCategory('dessert', this)">🍰 Десерты</button>
+        <button class="category-btn" onclick="filterCategory('combo', this)">🎁 Комбо</button>
+      </div>
+    </div>
 
-    <!-- Преимущества пластиковых труб -->
-    <section class="section section--gray" id="advantages">
-        <div class="container">
-            <div class="section__header">
-                <h2 class="section__title">Забудьте о ржавчине и частых ремонтах</h2>
-                <p class="section__desc">Почему пластиковые трубы вытесняют металл и чугун</p>
-            </div>
-            <div class="advantages-grid">
-                <div class="advantage-item">
-                    <i class="fas fa-shield-virus"></i>
-                    <div>
-                        <h4>Не ржавеют и не зарастают</h4>
-                        <p>Идеальная гидравлика на 50 лет. Просвет трубы не сужается со временем.</p>
-                    </div>
-                </div>
-                <div class="advantage-item">
-                    <i class="fas fa-feather-alt"></i>
-                    <div>
-                        <h4>Малый вес</h4>
-                        <p>В разы легче металла. Дешевле перевозка, проще монтаж без тяжёлой техники.</p>
-                    </div>
-                </div>
-                <div class="advantage-item">
-                    <i class="fas fa-clock"></i>
-                    <div>
-                        <h4>Срок службы > 50 лет</h4>
-                        <p>Поставили и забыли. Сопоставимо со сроком жизни самого здания.</p>
-                    </div>
-                </div>
-                <div class="advantage-item">
-                    <i class="fas fa-ruble-sign"></i>
-                    <div>
-                        <h4>Низкая цена</h4>
-                        <p>Бюджет стройки под контролем. Выгоднее металлических аналогов.</p>
-                    </div>
-                </div>
-                <div class="advantage-item">
-                    <i class="fas fa-temperature-high"></i>
-                    <div>
-                        <h4>Эластичность</h4>
-                        <p>Выдерживают подвижки грунта, гидроудары и перепады температур.</p>
-                    </div>
-                </div>
-                <div class="advantage-item">
-                    <i class="fas fa-recycle"></i>
-                    <div>
-                        <h4>Экологичность</h4>
-                        <p>Безопасны для питьевой воды. Не выделяют вредных веществ.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Сетка товаров -->
+    <div class="menu-grid-wrapper">
+      <div class="section-title">
+        <span>Меню</span>
+        <span class="items-count" id="itemsCount">8 блюд</span>
+      </div>
+      <div class="menu-grid" id="menuContainer"></div>
+    </div>
 
-    <!-- О компании / Как работаем -->
-    <section class="section" id="about">
-        <div class="container">
-            <div class="about-wrapper">
-                <div class="about-info">
-                    <h2 class="section__title section__title--left">Почему выбирают нас</h2>
-                    <ul class="about-list">
-                        <li><i class="fas fa-check-circle"></i> Собственный склад в Оренбурге — отгрузка день в день.</li>
-                        <li><i class="fas fa-check-circle"></i> Продажа отрезками от 1 метра — не переплачиваете за лишнее.</li>
-                        <li><i class="fas fa-check-circle"></i> Полный цикл: труба + фитинг + аппарат для сварки.</li>
-                        <li><i class="fas fa-check-circle"></i> Безналичный и наличный расчет с НДС/без НДС.</li>
-                        <li><i class="fas fa-check-circle"></i> Консультация инженера по подбору SDR и марки полиэтилена.</li>
-                    </ul>
-                </div>
-                <div class="steps-card">
-                    <h3>Как мы работаем</h3>
-                    <div class="step">
-                        <span class="step__num">01</span>
-                        <div><strong>Заявка / Звонок</strong><p>Менеджер консультирует по наличию и характеристикам.</p></div>
-                    </div>
-                    <div class="step">
-                        <span class="step__num">02</span>
-                        <div><strong>Расчет сметы</strong><p>Готовим КП и спецификацию за 30 минут.</p></div>
-                    </div>
-                    <div class="step">
-                        <span class="step__num">03</span>
-                        <div><strong>Оплата и отгрузка</strong><p>Самовывоз со склада или доставка до объекта.</p></div>
-                    </div>
-                </div>
-            </div>
+    <!-- Корзина -->
+    <div class="cart-section">
+      <div class="cart-header">
+        <span class="cart-title">🛒 Корзина</span>
+        <button class="clear-cart" onclick="clearCart()">Очистить</button>
+      </div>
+      <div id="cartContainer">
+        <div class="empty-state">
+          <div class="icon">🛍️</div>
+          <div>Выберите блюда из меню</div>
         </div>
-    </section>
+      </div>
+      <button class="order-button" id="orderButton" disabled onclick="placeOrder()">
+        Оформить заказ
+      </button>
+    </div>
+    
+    <div class="footer">
+      Оплата через Telegram • Бонусы начисляются автоматически
+    </div>
+  </div>
 
-    <!-- CTA Блок -->
-    <section class="cta">
-        <div class="container cta__inner">
-            <div class="cta__text">
-                <h2>Нужна помощь с подбором?</h2>
-                <p>Инженеры помогут выбрать трубу по давлению и назначению (техническая/питьевая). Звоните или пишите в WhatsApp!</p>
-            </div>
-            <div class="cta__btns">
-                <a href="tel:+73532000000" class="btn btn--white"><i class="fas fa-phone"></i> Позвонить</a>
-                <a href="#" class="btn btn--wa"><i class="fab fa-whatsapp"></i> WhatsApp</a>
-            </div>
-        </div>
-    </section>
+  <script>
+    (function() {
+      // Telegram WebApp
+      const tg = window.Telegram?.WebApp;
+      if (tg) {
+        tg.ready();
+        tg.expand();
+        tg.setHeaderColor('#0a0a0a');
+        tg.setBackgroundColor('#0a0a0a');
+      }
 
-    <!-- Контакты и карта -->
-    <footer class="footer" id="contacts">
-        <div class="container footer__grid">
-            <div class="footer__col">
-                <a href="#" class="logo logo--footer">
-                    <span class="logo__text">Полимер<span class="logo__accent">56</span></span>
-                </a>
-                <p>Оптовая и розничная продажа полиэтиленовых труб, фитингов и оборудования в Оренбурге.</p>
-            </div>
-            <div class="footer__col">
-                <h4>Контакты</h4>
-                <p><i class="fas fa-map-marker-alt"></i> г. Оренбург, ул. Беляевская, д. 30</p>
-                <p><i class="fas fa-phone"></i> +7 (3532) 99-23-13</p>
-                <p><i class="fas fa-envelope"></i> polimer1756@yandex.ru</p>
-                <p><i class="fas fa-clock"></i> Пн-Пт: 09:00 – 18:00</p>
-            </div>
-            <div class="footer__col">
-                <h4>Каталог</h4>
-                <ul>
-                    <li><a href="#">Трубы ПНД</a></li>
-                    <li><a href="#">Фитинги</a></li>
-                    <li><a href="#">Запорная арматура</a></li>
-                    <li><a href="#">Сварочное оборудование</a></li>
-                </ul>
-            </div>
-            <div class="footer__col">
-                <h4>Мы на связи</h4>
-                <div class="social-links">
-                    <a href="#"><i class="fab fa-whatsapp"></i></a>
-                    <a href="#"><i class="fab fa-telegram-plane"></i></a>
+      // Меню с категориями
+      const menuItems = [
+        { id: 1, name: 'Борщ с говядиной', category: 'soup', price: 280, calories: 320, weight: '350г', emoji: '🍜', badge: 'popular', image: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=300&h=200&fit=crop' },
+        { id: 2, name: 'Том Ям с креветками', category: 'soup', price: 420, calories: 280, weight: '400г', emoji: '🦐', badge: 'new', image: 'https://images.unsplash.com/photo-1562565652-a0d8f0c59eb4?w=300&h=200&fit=crop' },
+        { id: 3, name: 'Цезарь с курицей', category: 'salad', price: 350, calories: 420, weight: '300г', emoji: '🥗', badge: 'popular', image: 'https://images.unsplash.com/photo-1546793665-c74683f339c1?w=300&h=200&fit=crop' },
+        { id: 4, name: 'Греческий салат', category: 'salad', price: 290, calories: 310, weight: '280г', emoji: '🥬', badge: null, image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=300&h=200&fit=crop' },
+        { id: 5, name: 'Котлета по-киевски', category: 'hot', price: 390, calories: 580, weight: '200г', emoji: '🍗', badge: 'popular', image: 'https://images.unsplash.com/photo-1432139509613-5c4255a1d1d5?w=300&h=200&fit=crop' },
+        { id: 6, name: 'Лосось на гриле', category: 'hot', price: 520, calories: 490, weight: '250г', emoji: '🐟', badge: null, image: 'https://images.unsplash.com/photo-1467003909585-2f8a7242bdae?w=300&h=200&fit=crop' },
+        { id: 7, name: 'Паста Карбонара', category: 'hot', price: 370, calories: 650, weight: '350г', emoji: '🍝', badge: 'new', image: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?w=300&h=200&fit=crop' },
+        { id: 8, name: 'Морс клюквенный', category: 'drink', price: 90, calories: 80, weight: '500мл', emoji: '🍷', badge: null, image: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=300&h=200&fit=crop' },
+        { id: 9, name: 'Тирамису', category: 'dessert', price: 250, calories: 380, weight: '150г', emoji: '🍰', badge: 'new', image: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=300&h=200&fit=crop' },
+        { id: 10, name: 'Чизкейк Нью-Йорк', category: 'dessert', price: 280, calories: 420, weight: '170г', emoji: '🧀', badge: 'popular', image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=300&h=200&fit=crop' },
+        { id: 11, name: 'Комбо обед', category: 'combo', price: 450, calories: 850, weight: '600г', emoji: '🍱', badge: 'popular', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop' },
+        { id: 12, name: 'Бизнес ланч', category: 'combo', price: 550, calories: 720, weight: '550г', emoji: '🍽️', badge: 'new', image: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&h=200&fit=crop' }
+      ];
+
+      let cart = [];
+      let userBonuses = 120;
+      let currentCategory = 'all';
+      const DELIVERY_FREE_THRESHOLD = 500;
+      const DELIVERY_COST = 99;
+      const BONUS_RATE = 0.05;
+
+      function renderMenu(filteredCategory = 'all') {
+        const menuContainer = document.getElementById('menuContainer');
+        const filteredItems = filteredCategory === 'all' 
+          ? menuItems 
+          : menuItems.filter(item => item.category === filteredCategory);
+        
+        document.getElementById('itemsCount').textContent = `${filteredItems.length} блюд`;
+        
+        menuContainer.innerHTML = filteredItems.map(item => {
+          const inCart = cart.find(cartItem => cartItem.id === item.id);
+          const quantity = inCart ? inCart.quantity : 0;
+          
+          return `
+            <div class="dish-card">
+              <div class="dish-image">
+                ${item.badge ? `<div class="badge-${item.badge}">${item.badge === 'popular' ? 'ХИТ' : 'NEW'}</div>` : ''}
+                <img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\\'food-emoji\\'>${item.emoji}</span>'">
+                <div class="quick-add-overlay" onclick="addToCart(${item.id})">
+                  <span>+</span> Быстро
                 </div>
-                <a href="#" class="btn btn--outline btn--small" style="margin-top:1rem;">Скачать прайс</a>
+              </div>
+              <div class="dish-info">
+                <div class="dish-name">${item.name}</div>
+                <div class="dish-meta">
+                  <span class="dish-weight">${item.weight}</span>
+                  <span class="calories-badge">🔥 ${item.calories} ккал</span>
+                </div>
+                <div class="price-row">
+                  <span class="price">${item.price} ₽</span>
+                  ${quantity > 0 
+                    ? `<span class="in-cart-indicator">✓ ${quantity} шт</span>` 
+                    : `<button class="add-to-cart-btn" onclick="addToCart(${item.id})">В корзину</button>`
+                  }
+                </div>
+              </div>
             </div>
-        </div>
-        <div class="footer__bottom">
-            <div class="container">
-                <p>© 2017-2026 Полимер56. Все права защищены. Сайт носит информационный характер.</p>
-            </div>
-        </div>
-    </footer>
+          `;
+        }).join('');
+        
+        updateDeliveryStatus();
+      }
 
-    <script>
-        // Простое меню-бургер для мобильных
-        const burger = document.getElementById('burger-btn');
-        const nav = document.getElementById('nav-menu');
-        burger.addEventListener('click', () => {
-            nav.classList.toggle('active');
-            burger.classList.toggle('active');
+      window.addToCart = function(dishId) {
+        const dish = menuItems.find(d => d.id === dishId);
+        if (!dish) return;
+        
+        const existing = cart.find(item => item.id === dishId);
+        if (existing) {
+          existing.quantity += 1;
+        } else {
+          cart.push({
+            id: dish.id,
+            name: dish.name,
+            price: dish.price,
+            calories: dish.calories,
+            quantity: 1,
+            emoji: dish.emoji
+          });
+        }
+        
+        renderCart();
+        renderMenu(currentCategory);
+        
+        if (tg?.HapticFeedback) {
+          tg.HapticFeedback.impactOccurred('medium');
+        }
+      };
+
+      window.removeFromCart = function(dishId) {
+        const index = cart.findIndex(item => item.id === dishId);
+        if (index !== -1) {
+          if (cart[index].quantity > 1) {
+            cart[index].quantity -= 1;
+          } else {
+            cart.splice(index, 1);
+          }
+        }
+        renderCart();
+        renderMenu(currentCategory);
+      };
+
+      window.clearCart = function() {
+        cart = [];
+        renderCart();
+        renderMenu(currentCategory);
+      };
+
+      function calcTotals() {
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const deliveryFee = subtotal >= DELIVERY_FREE_THRESHOLD ? 0 : DELIVERY_COST;
+        const total = subtotal + deliveryFee;
+        const totalCalories = cart.reduce((sum, item) => sum + (item.calories * item.quantity), 0);
+        return { subtotal, deliveryFee, total, totalCalories };
+      }
+
+      function renderCart() {
+        const cartContainer = document.getElementById('cartContainer');
+        const orderButton = document.getElementById('orderButton');
+        
+        if (cart.length === 0) {
+          cartContainer.innerHTML = `
+            <div class="empty-state">
+              <div class="icon">🛍️</div>
+              <div>Выберите блюда из меню</div>
+            </div>
+          `;
+          orderButton.disabled = true;
+          return;
+        }
+        
+        const { subtotal, deliveryFee, total, totalCalories } = calcTotals();
+        const expectedBonus = Math.floor(total * BONUS_RATE);
+        
+        let html = '<div class="cart-items">';
+        cart.forEach(item => {
+          html += `
+            <div class="cart-item">
+              <div class="cart-item-info">
+                <div class="cart-item-name">${item.emoji} ${item.name}</div>
+                <div class="cart-item-calories">${item.calories} ккал</div>
+              </div>
+              <div class="quantity-controls">
+                <button class="qty-btn" onclick="removeFromCart(${item.id})">−</button>
+                <span class="qty-number">${item.quantity}</span>
+                <button class="qty-btn" onclick="addToCart(${item.id})">+</button>
+              </div>
+              <div class="cart-item-price">${item.price * item.quantity} ₽</div>
+            </div>
+          `;
         });
-    </script>
+        html += '</div>';
+        
+        html += `
+          <div class="summary-row">
+            <span>Стоимость блюд</span>
+            <span>${subtotal} ₽</span>
+          </div>
+          <div class="summary-row">
+            <span>Доставка</span>
+            <span>${deliveryFee === 0 ? 'Бесплатно' : deliveryFee + ' ₽'}</span>
+          </div>
+          <div class="calories-total">
+            <span>🔥 Общая калорийность</span>
+            <span><strong>${totalCalories} ккал</strong></span>
+          </div>
+          <div class="bonus-info">
+            <span>⭐</span>
+            <span>Вы получите <strong>+${expectedBonus} бонусов</strong> за этот заказ</span>
+          </div>
+          <div class="summary-row total">
+            <span>Итого к оплате</span>
+            <span>${total} ₽</span>
+          </div>
+        `;
+        
+        cartContainer.innerHTML = html;
+        orderButton.disabled = false;
+      }
+
+      function updateDeliveryStatus() {
+        const { subtotal } = calcTotals();
+        const deliveryStatus = document.getElementById('deliveryStatus');
+        if (subtotal >= DELIVERY_FREE_THRESHOLD) {
+          deliveryStatus.textContent = '🎉 Бесплатная доставка';
+          deliveryStatus.style.background = 'rgba(78,203,113,0.15)';
+          deliveryStatus.style.color = '#4ecb71';
+        } else if (subtotal > 0) {
+          const remaining = DELIVERY_FREE_THRESHOLD - subtotal;
+          deliveryStatus.textContent = `🚚 Доставка ${DELIVERY_COST}₽ (ещё ${remaining}₽ до бесплатной)`;
+          deliveryStatus.style.background = 'rgba(255,179,71,0.15)';
+          deliveryStatus.style.color = '#ffb347';
+        } else {
+          deliveryStatus.textContent = 'Бесплатно от 500₽';
+          deliveryStatus.style.background = 'rgba(78,203,113,0.15)';
+          deliveryStatus.style.color = '#4ecb71';
+        }
+      }
+
+      window.setAddress = function(address) {
+        document.getElementById('addressInput').value = address;
+        if (tg?.HapticFeedback) {
+          tg.HapticFeedback.impactOccurred('light');
+        }
+      };
+
+      window.filterCategory = function(category, buttonElement) {
+        currentCategory = category;
+        document.querySelectorAll('.category-btn').forEach(btn => btn.classList.remove('active'));
+        buttonElement.classList.add('active');
+        renderMenu(category);
+      };
+
+      window.placeOrder = function() {
+        if (cart.length === 0) return;
+        
+        const address = document.getElementById('addressInput')?.value || 'Адрес не указан';
+        const { total, totalCalories, deliveryFee } = calcTotals();
+        const earnedBonus = Math.floor(total * BONUS_RATE);
+        
+        const orderDetails = {
+          items: cart.map(i => `${i.name} x${i.quantity}`).join(', '),
+          total,
+          delivery: deliveryFee === 0 ? 'бесплатно' : `${deliveryFee} ₽`,
+          address,
+          calories: totalCalories,
+          bonusesEarned: earnedBonus
+        };
+
+        if (tg?.sendData) {
+          tg.sendData(JSON.stringify(orderDetails));
+        }
+
+        const message = `✅ Заказ оформлен!\n\n📍 Адрес: ${address}\n💰 Сумма: ${total} ₽\n🔥 Калории: ${totalCalories} ккал\n⭐ Начислено бонусов: +${earnedBonus}`;
+        
+        if (tg?.showPopup) {
+          tg.showPopup({
+            title: '🎉 Заказ принят!',
+            message: message,
+            buttons: [{ type: 'ok' }]
+          });
+        } else {
+          alert(message);
+        }
+
+        userBonuses += earnedBonus;
+        document.getElementById('bonusDisplay').textContent = userBonuses;
+        cart = [];
+        renderCart();
+        renderMenu(currentCategory);
+      };
+
+      // Инициализация
+      document.getElementById('addressInput').addEventListener('input', function() {
+        // Адрес обновляется в реальном времени
+      });
+      
+      renderMenu();
+      renderCart();
+      document.getElementById('bonusDisplay').textContent = userBonuses;
+    })();
+  </script>
 </body>
 </html>
