@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Столовая | Вкусный рацион</title>
-  <!-- Telegram Web App script -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * {
@@ -20,27 +19,42 @@
       justify-content: center;
       align-items: flex-start;
       min-height: 100vh;
-      padding: 12px 0 20px;
+      padding: 0;
       color: #2e241f;
+      height: 100vh;
+      overflow: hidden;
     }
 
     .app-container {
       width: 100%;
       max-width: 420px;
+      height: 100vh;
       background: #ffffff;
-      border-radius: 32px 32px 28px 28px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), 0 8px 16px rgba(94, 53, 31, 0.04);
+      border-radius: 0;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
       overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
-      backdrop-filter: blur(2px);
+    }
+
+    /* Верхняя часть с прокруткой */
+    .scrollable-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
     }
 
     .header {
       background: linear-gradient(135deg, #fdefe6 0%, #fbe9de 100%);
       padding: 20px 20px 16px;
       border-bottom: 1px solid rgba(188, 143, 114, 0.15);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(10px);
     }
 
     .header-top {
@@ -147,6 +161,11 @@
       padding: 16px 20px 8px;
       scrollbar-width: none;
       white-space: nowrap;
+      background: white;
+    }
+
+    .category-scroll::-webkit-scrollbar {
+      display: none;
     }
 
     .category-chip {
@@ -158,6 +177,7 @@
       color: #5e4337;
       transition: 0.2s;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .category-chip.active {
@@ -171,8 +191,6 @@
       flex-direction: column;
       gap: 14px;
       padding: 8px 20px 20px;
-      max-height: 430px;
-      overflow-y: auto;
     }
 
     .menu-item {
@@ -195,10 +213,12 @@
       align-items: center;
       justify-content: center;
       margin-right: 14px;
+      flex-shrink: 0;
     }
 
     .item-info {
       flex: 1;
+      min-width: 0;
     }
 
     .item-title {
@@ -239,6 +259,7 @@
       cursor: pointer;
       transition: 0.2s;
       background: #f3e2d6;
+      flex-shrink: 0;
     }
 
     .add-btn:active {
@@ -247,18 +268,24 @@
       transform: scale(0.92);
     }
 
+    /* Закрепленная нижняя панель */
     .cart-panel {
       background: white;
       border-top: 1px solid #f0e4db;
-      padding: 16px 20px 22px;
-      box-shadow: 0 -6px 18px rgba(0,0,0,0.03);
+      padding: 12px 20px 20px;
+      box-shadow: 0 -6px 18px rgba(0,0,0,0.05);
+      z-index: 20;
+      flex-shrink: 0;
+      /* Для iPhone с "челкой" */
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     }
 
     .cart-summary {
       display: flex;
       justify-content: space-between;
       font-weight: 600;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+      font-size: 15px;
     }
 
     .total-kcal {
@@ -290,6 +317,7 @@
       transform: scale(0.97);
     }
 
+    /* Модальное окно */
     .modal-overlay {
       position: fixed;
       top:0; left:0; width:100%; height:100%;
@@ -328,8 +356,10 @@
     .cart-item-row {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       font-size: 14px;
-      padding: 6px 0;
+      padding: 8px 0;
+      border-bottom: 1px solid #f5f0ec;
     }
 
     .close-modal {
@@ -340,49 +370,64 @@
       font-weight: 600;
       margin-top: 12px;
       cursor: pointer;
+      width: 100%;
     }
 
     .hidden {
       display: none;
     }
+
+    /* Анимация появления */
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+
+    .cart-panel {
+      animation: slideUp 0.3s ease-out;
+    }
   </style>
 </head>
 <body>
 <div class="app-container">
-  <div class="header">
-    <div class="header-top">
-      <span class="logo">🍲 Столовая</span>
-      <div class="cart-icon-wrap" id="cartIcon">
-        <span>🛒</span>
-        <span class="cart-badge" id="cartCount">0</span>
+  <!-- Прокручиваемая область -->
+  <div class="scrollable-content" id="scrollableContent">
+    <div class="header">
+      <div class="header-top">
+        <span class="logo">🍲 Столовая</span>
+        <div class="cart-icon-wrap" id="cartIcon">
+          <span>🛒</span>
+          <span class="cart-badge" id="cartCount">0</span>
+        </div>
       </div>
-    </div>
-    <div class="delivery-area">
-      <div style="width:100%">
-        <span class="address-label">📍 Район доставки</span>
-        <select id="districtSelect">
-          <option value="Экодолье">Экодолье</option>
-          <option value="Ивановка" selected>Ивановка</option>
-          <option value="Приуралье">Приуралье</option>
-        </select>
-        <div class="address-row">
-          <input type="text" class="address-input" id="addressInput" placeholder="Улица, дом, квартира" value="ул. Центральная, 5">
+      <div class="delivery-area">
+        <div style="width:100%">
+          <span class="address-label">📍 Район доставки</span>
+          <select id="districtSelect">
+            <option value="Экодолье">Экодолье</option>
+            <option value="Ивановка" selected>Ивановка</option>
+            <option value="Приуралье">Приуралье</option>
+          </select>
+          <div class="address-row">
+            <input type="text" class="address-input" id="addressInput" placeholder="Улица, дом, квартира" value="ул. Центральная, 5">
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="category-scroll" id="categoryContainer">
+      <div class="category-chip active" data-category="all">🌟 Все</div>
+      <div class="category-chip" data-category="soup">🥣 Супы</div>
+      <div class="category-chip" data-category="main">🍛 Горячее</div>
+      <div class="category-chip" data-category="salad">🥗 Салаты</div>
+      <div class="category-chip" data-category="drink">🥤 Напитки</div>
+    </div>
+
+    <div class="menu-grid" id="menuGrid"></div>
   </div>
 
-  <div class="category-scroll" id="categoryContainer">
-    <div class="category-chip active" data-category="all">🌟 Все</div>
-    <div class="category-chip" data-category="soup">🥣 Супы</div>
-    <div class="category-chip" data-category="main">🍛 Горячее</div>
-    <div class="category-chip" data-category="salad">🥗 Салаты</div>
-    <div class="category-chip" data-category="drink">🥤 Напитки</div>
-  </div>
-
-  <div class="menu-grid" id="menuGrid"></div>
-
-  <div class="cart-panel">
+  <!-- Закрепленная нижняя панель -->
+  <div class="cart-panel" id="cartPanel">
     <div class="cart-summary">
       <span>🛒 Корзина: <span id="totalPrice">0</span> ₽</span>
       <span class="total-kcal">🔥 <span id="totalKcal">0</span> ккал</span>
@@ -415,7 +460,6 @@ const CONFIG = {
 async function sendOrderToTelegram(order) {
   console.log('📤 Начинаем отправку заказа...');
   
-  // Формируем сообщение (без Markdown для надежности)
   const message = `🛎 НОВЫЙ ЗАКАЗ!
 
 📅 Дата: ${order.date}
@@ -432,10 +476,6 @@ ${order.items.map((item, i) =>
 🚀 Статус: Ожидает подтверждения`;
 
   try {
-    console.log('📡 Отправляем запрос к API...');
-    console.log('Токен:', CONFIG.BOT_TOKEN.substring(0, 10) + '...');
-    console.log('Chat ID:', CONFIG.MANAGER_CHAT_ID);
-    
     const response = await fetch(
       `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`,
       {
@@ -467,17 +507,17 @@ ${order.items.map((item, i) =>
 
 // ========== ОСНОВНОЕ ПРИЛОЖЕНИЕ ==========
 (function() {
-  // Инициализация Telegram WebApp
   const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
     tg.expand();
     console.log('✅ Telegram WebApp инициализирован');
-  } else {
-    console.log('⚠️ Telegram WebApp не обнаружен (открыто в браузере)');
+    
+    // Устанавливаем цвет верхней панели
+    tg.setHeaderColor('#fdefe6');
+    tg.setBackgroundColor('#f9f5f0');
   }
 
-  // Данные меню
   const menuData = [
     { id: 1, name: 'Борщ с говядиной', category: 'soup', price: 210, kcal: 280, emoji: '🍲' },
     { id: 2, name: 'Куриный суп', category: 'soup', price: 180, kcal: 220, emoji: '🥣' },
@@ -489,11 +529,9 @@ ${order.items.map((item, i) =>
     { id: 8, name: 'Капучино', category: 'drink', price: 140, kcal: 110, emoji: '☕' },
   ];
 
-  // Состояние
   let cart = [];
   let currentCategory = 'all';
 
-  // DOM элементы
   const menuGrid = document.getElementById('menuGrid');
   const cartCountEl = document.getElementById('cartCount');
   const totalPriceEl = document.getElementById('totalPrice');
@@ -509,8 +547,8 @@ ${order.items.map((item, i) =>
   const modalTotal = document.getElementById('modalTotal');
   const modalKcal = document.getElementById('modalKcal');
   const categoryChips = document.querySelectorAll('.category-chip');
+  const scrollableContent = document.getElementById('scrollableContent');
 
-  // Функции отрисовки
   function renderMenu() {
     const filtered = currentCategory === 'all' 
       ? menuData 
@@ -536,6 +574,10 @@ ${order.items.map((item, i) =>
       btn.addEventListener('click', (e) => {
         const id = parseInt(btn.dataset.id, 10);
         addToCart(id);
+        
+        // Анимация кнопки
+        btn.style.transform = 'scale(0.9)';
+        setTimeout(() => { btn.style.transform = ''; }, 150);
       });
     });
   }
@@ -550,6 +592,12 @@ ${order.items.map((item, i) =>
       cart.push({ ...item, quantity: 1 });
     }
     updateCartUI();
+    
+    // Пульсация значка корзины
+    const cartIcon = document.getElementById('cartIcon');
+    cartIcon.style.transform = 'scale(1.1)';
+    setTimeout(() => { cartIcon.style.transform = ''; }, 200);
+    
     if (tg?.HapticFeedback) {
       tg.HapticFeedback.impactOccurred('light');
     }
@@ -569,6 +617,14 @@ ${order.items.map((item, i) =>
     totalPriceEl.textContent = totalPrice;
     totalKcalEl.textContent = totalKcal;
     
+    // Показываем/скрываем бейдж
+    const badge = document.querySelector('.cart-badge');
+    if (totalItems === 0) {
+      badge.style.display = 'none';
+    } else {
+      badge.style.display = 'flex';
+    }
+    
     if (cartModal.classList.contains('active')) {
       renderCartModalContent();
     }
@@ -582,7 +638,7 @@ ${order.items.map((item, i) =>
         <div class="cart-item-row">
           <span>${item.name} x${item.quantity}</span>
           <span>${item.price * item.quantity} ₽</span>
-          <button style="background:none; border:none; color:#c5704a; cursor:pointer; font-weight:bold;" data-remove="${item.id}">✕</button>
+          <button style="background:none; border:none; color:#c5704a; cursor:pointer; font-weight:bold; font-size:18px;" data-remove="${item.id}">✕</button>
         </div>
       `).join('');
       
@@ -612,7 +668,6 @@ ${order.items.map((item, i) =>
     cartModal.classList.remove('active');
   }
 
-  // Оформление заказа
   async function processOrder() {
     if (cart.length === 0) {
       if (tg?.showPopup) {
@@ -640,7 +695,6 @@ ${order.items.map((item, i) =>
       return;
     }
 
-    // Формируем заказ
     const orderDetails = {
       items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
       total: cart.reduce((s, i) => s + i.price*i.quantity, 0),
@@ -651,17 +705,15 @@ ${order.items.map((item, i) =>
 
     console.log('📦 Заказ сформирован:', orderDetails);
 
-    // Показываем процесс оплаты
+    // Имитация оплаты
     if (tg?.showPopup) {
       tg.showPopup({
         title: '💳 Оплата',
         message: 'Демо-режим: оплата прошла успешно!'
       }, async () => {
-        // После подтверждения - отправляем менеджеру
         try {
           await sendOrderToTelegram(orderDetails);
           
-          // Очищаем корзину
           cart = [];
           updateCartUI();
           closeCartModal();
@@ -674,7 +726,6 @@ ${order.items.map((item, i) =>
           }
         } catch (error) {
           console.error('Ошибка:', error);
-          // Резервный метод
           const orderText = `ЗАКАЗ:\n${orderDetails.items.map(i => `${i.name} x${i.quantity}`).join('\n')}\nАдрес: ${orderDetails.address}\nСумма: ${orderDetails.total}₽`;
           
           try {
@@ -684,14 +735,12 @@ ${order.items.map((item, i) =>
             alert('❌ Ошибка отправки. Покажите заказ менеджеру:\n\n' + orderText);
           }
           
-          // Все равно очищаем корзину
           cart = [];
           updateCartUI();
           closeCartModal();
         }
       });
     } else {
-      // Обычный браузер
       try {
         await sendOrderToTelegram(orderDetails);
         alert('✅ Заказ отправлен менеджеру!');
@@ -714,27 +763,32 @@ ${order.items.map((item, i) =>
 
   checkoutBtn.addEventListener('click', processOrder);
 
-  // Категории
   categoryChips.forEach(chip => {
     chip.addEventListener('click', () => {
       categoryChips.forEach(c => c.classList.remove('active'));
       chip.classList.add('active');
       currentCategory = chip.dataset.category;
       renderMenu();
+      
+      // Прокрутка меню вверх при смене категории
+      scrollableContent.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
 
-  // Обновление адреса в модалке при изменении
   districtSelect.addEventListener('change', () => {
     if (cartModal.classList.contains('active')) {
       renderCartModalContent();
     }
   });
+  
   addressInput.addEventListener('input', () => {
     if (cartModal.classList.contains('active')) {
       modalAddress.textContent = `${districtSelect.value}, ${addressInput.value || 'адрес не указан'}`;
     }
   });
+
+  // Изначально скрываем бейдж если корзина пуста
+  document.querySelector('.cart-badge').style.display = 'none';
 
   // Старт
   renderMenu();
