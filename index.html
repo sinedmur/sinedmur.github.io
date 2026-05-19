@@ -456,24 +456,70 @@ const CONFIG = {
   MANAGER_CHAT_ID: '1019928513'
 };
 
+// ========== ПОЛУЧЕНИЕ ДАННЫХ ПОЛЬЗОВАТЕЛЯ TELEGRAM ==========
+function getTelegramUserInfo() {
+  const tg = window.Telegram?.WebApp;
+  
+  if (!tg) {
+    console.warn('⚠️ Telegram WebApp не инициализирован');
+    return {
+      id: 'неизвестен',
+      username: 'неизвестен',
+      firstName: 'Гость',
+      lastName: '',
+      fullName: 'Гость (не из Telegram)'
+    };
+  }
+
+  const user = tg.initDataUnsafe?.user;
+  
+  if (user) {
+    console.log('👤 Данные пользователя получены:', user);
+    return {
+      id: user.id || 'неизвестен',
+      username: user.username || 'не указан',
+      firstName: user.first_name || '',
+      lastName: user.last_name || '',
+      fullName: [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Пользователь'
+    };
+  } else {
+    console.warn('⚠️ Данные пользователя недоступны (возможно, запущено не в Telegram)');
+    return {
+      id: 'неизвестен',
+      username: 'неизвестен',
+      firstName: 'Гость',
+      lastName: '',
+      fullName: 'Гость (не из Telegram)'
+    };
+  }
+}
+
 // ========== ФУНКЦИЯ ОТПРАВКИ В TELEGRAM ==========
 async function sendOrderToTelegram(order) {
   console.log('📤 Начинаем отправку заказа...');
   
+  const userInfo = getTelegramUserInfo();
+  
   const message = `🛎 НОВЫЙ ЗАКАЗ!
 
-📅 Дата: ${order.date}
-📍 Адрес: ${order.address}
+👤 <b>Клиент:</b> ${userInfo.fullName}
+🆔 <b>ID клиента:</b> <code>${userInfo.id}</code>
+${userInfo.username !== 'не указан' ? `📛 <b>Username:</b> @${userInfo.username}` : ''}
 
-🍽 Состав заказа:
+📅 <b>Дата:</b> ${order.date}
+📍 <b>Адрес:</b> ${order.address}
+
+🍽 <b>Состав заказа:</b>
 ${order.items.map((item, i) => 
   `${i+1}. ${item.name} ×${item.quantity} = ${item.price * item.quantity}₽`
 ).join('\n')}
 
-💰 Сумма: ${order.total} ₽
-🔥 Калорийность: ${order.kcal} ккал
+💰 <b>Сумма:</b> ${order.total} ₽
+🔥 <b>Калорийность:</b> ${order.kcal} ккал
 
-🚀 Статус: Ожидает подтверждения`;
+🚀 <b>Статус:</b> Ожидает подтверждения
+
+<a href="tg://user?id=${userInfo.id}">📩 Написать клиенту в ЛС</a>`;
 
   try {
     const response = await fetch(
@@ -484,7 +530,8 @@ ${order.items.map((item, i) =>
         body: JSON.stringify({
           chat_id: CONFIG.MANAGER_CHAT_ID,
           text: message,
-          parse_mode: 'HTML'
+          parse_mode: 'HTML',
+          disable_web_page_preview: false
         })
       }
     );
@@ -516,6 +563,10 @@ ${order.items.map((item, i) =>
     // Устанавливаем цвет верхней панели
     tg.setHeaderColor('#fdefe6');
     tg.setBackgroundColor('#f9f5f0');
+    
+    // Выводим информацию о пользователе в консоль
+    const userInfo = getTelegramUserInfo();
+    console.log('📱 Информация о клиенте:', userInfo);
   }
 
   const menuData = [
@@ -726,7 +777,8 @@ ${order.items.map((item, i) =>
           }
         } catch (error) {
           console.error('Ошибка:', error);
-          const orderText = `ЗАКАЗ:\n${orderDetails.items.map(i => `${i.name} x${i.quantity}`).join('\n')}\nАдрес: ${orderDetails.address}\nСумма: ${orderDetails.total}₽`;
+          const userInfo = getTelegramUserInfo();
+          const orderText = `ЗАКАЗ:\nКлиент ID: ${userInfo.id}\n${orderDetails.items.map(i => `${i.name} x${i.quantity}`).join('\n')}\nАдрес: ${orderDetails.address}\nСумма: ${orderDetails.total}₽`;
           
           try {
             await navigator.clipboard.writeText(orderText);
