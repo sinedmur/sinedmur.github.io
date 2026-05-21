@@ -38,7 +38,76 @@
       position: relative;
     }
 
-    /* Верхняя часть с прокруткой */
+    /* Стили для экрана загрузки (Приватность) */
+    .privacy-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      visibility: visible;
+      opacity: 1;
+      transition: 0.3s;
+    }
+
+    .privacy-overlay.hidden-privacy {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .privacy-modal {
+      background: white;
+      border-radius: 32px;
+      padding: 32px 24px;
+      width: 90%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .privacy-modal h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+      color: #3e2c24;
+    }
+
+    .privacy-modal p {
+      font-size: 14px;
+      color: #6b584c;
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    .privacy-link {
+      color: #c5704a;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    .accept-privacy-btn {
+      background: #26211d;
+      border: none;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 14px 32px;
+      border-radius: 40px;
+      cursor: pointer;
+      width: 100%;
+      transition: 0.2s;
+    }
+
+    .accept-privacy-btn:active {
+      background: #c5704a;
+      transform: scale(0.96);
+    }
+
+    /* Остальные стили */
     .scrollable-content {
       flex: 1;
       overflow-y: auto;
@@ -126,9 +195,10 @@
       display: flex;
       align-items: center;
       gap: 4px;
+      margin-bottom: 4px;
     }
 
-    select, .address-input {
+    select, .address-input, .phone-input {
       background: #faf5f2;
       border: 1px solid #e7d7ce;
       border-radius: 16px;
@@ -140,6 +210,10 @@
       margin-top: 6px;
       width: 100%;
       font-family: inherit;
+    }
+
+    .phone-input {
+      margin-top: 8px;
     }
 
     .address-row {
@@ -268,7 +342,6 @@
       transform: scale(0.92);
     }
 
-    /* Закрепленная нижняя панель */
     .cart-panel {
       background: white;
       border-top: 1px solid #f0e4db;
@@ -276,7 +349,6 @@
       box-shadow: 0 -6px 18px rgba(0,0,0,0.05);
       z-index: 20;
       flex-shrink: 0;
-      /* Для iPhone с "челкой" */
       padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     }
 
@@ -317,7 +389,6 @@
       transform: scale(0.97);
     }
 
-    /* Модальное окно */
     .modal-overlay {
       position: fixed;
       top:0; left:0; width:100%; height:100%;
@@ -377,7 +448,6 @@
       display: none;
     }
 
-    /* Анимация появления */
     @keyframes slideUp {
       from { transform: translateY(100%); }
       to { transform: translateY(0); }
@@ -386,11 +456,33 @@
     .cart-panel {
       animation: slideUp 0.3s ease-out;
     }
+
+    .error-message {
+      color: #d44c2f;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
   </style>
 </head>
 <body>
+
+<!-- ЭКРАН ЗАГРУЗКИ (ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ) -->
+<div class="privacy-overlay" id="privacyOverlay">
+  <div class="privacy-modal">
+    <h3>🔐 Конфиденциальность</h3>
+    <p>
+      При использовании приложения вы принимаете нашу 
+      <a href="https://example.com/privacy-policy" target="_blank" class="privacy-link">политику конфиденциальности</a>.
+      Мы обрабатываем ваши данные в соответствии с законодательством.
+    </p>
+    <button class="accept-privacy-btn" id="acceptPrivacyBtn">
+      ✅ Принимаю и продолжаю
+    </button>
+  </div>
+</div>
+
 <div class="app-container">
-  <!-- Прокручиваемая область -->
   <div class="scrollable-content" id="scrollableContent">
     <div class="header">
       <div class="header-top">
@@ -411,6 +503,10 @@
           <div class="address-row">
             <input type="text" class="address-input" id="addressInput" placeholder="Улица, дом, квартира" value="ул. Центральная, 5">
           </div>
+          <!-- НОВОЕ ПОЛЕ: НОМЕР ТЕЛЕФОНА -->
+          <span class="address-label" style="margin-top: 8px;">📞 Номер телефона</span>
+          <input type="tel" class="phone-input" id="phoneInput" placeholder="+7 (999) 123-45-67" value="">
+          <div class="error-message" id="phoneError">⚠️ Введите номер телефона для связи</div>
         </div>
       </div>
     </div>
@@ -426,7 +522,6 @@
     <div class="menu-grid" id="menuGrid"></div>
   </div>
 
-  <!-- Закрепленная нижняя панель -->
   <div class="cart-panel" id="cartPanel">
     <div class="cart-summary">
       <span>🛒 Корзина: <span id="totalPrice">0</span> ₽</span>
@@ -438,12 +533,12 @@
   </div>
 </div>
 
-<!-- Модальное окно корзины -->
 <div class="modal-overlay" id="cartModal">
   <div class="modal">
     <h3>🧾 Ваш заказ</h3>
     <div class="cart-items-list" id="cartItemsList"></div>
     <p><strong>Адрес:</strong> <span id="modalAddress"></span></p>
+    <p><strong>Телефон:</strong> <span id="modalPhone"></span></p>
     <p><strong>Сумма:</strong> <span id="modalTotal"></span> ₽ | 🔥 <span id="modalKcal"></span> ккал</p>
     <button class="close-modal" id="closeModalBtn">Закрыть</button>
   </div>
@@ -505,6 +600,7 @@ async function sendOrderToTelegram(order) {
 👤 <b>Клиент:</b> ${userInfo.fullName}
 🆔 <b>ID клиента:</b> <code>${userInfo.id}</code>
 ${userInfo.username !== 'не указан' ? `📛 <b>Username:</b> @${userInfo.username}` : ''}
+📞 <b>Телефон:</b> ${order.phone}
 
 📅 <b>Дата:</b> ${order.date}
 📍 <b>Адрес:</b> ${order.address}
@@ -554,17 +650,33 @@ ${order.items.map((item, i) =>
 
 // ========== ОСНОВНОЕ ПРИЛОЖЕНИЕ ==========
 (function() {
+  // --- ЛОГИКА ПРИВАТНОСТИ ---
+  const privacyOverlay = document.getElementById('privacyOverlay');
+  const acceptPrivacyBtn = document.getElementById('acceptPrivacyBtn');
+  
+  // Проверяем, был ли уже принят (сохраняем в sessionStorage)
+  if (sessionStorage.getItem('privacyAccepted') === 'true') {
+    privacyOverlay.classList.add('hidden-privacy');
+  }
+  
+  acceptPrivacyBtn.addEventListener('click', () => {
+    sessionStorage.setItem('privacyAccepted', 'true');
+    privacyOverlay.classList.add('hidden-privacy');
+    // Небольшая вибрация при подтверждении (если доступно)
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  });
+
   const tg = window.Telegram?.WebApp;
   if (tg) {
     tg.ready();
     tg.expand();
     console.log('✅ Telegram WebApp инициализирован');
     
-    // Устанавливаем цвет верхней панели
     tg.setHeaderColor('#fdefe6');
     tg.setBackgroundColor('#f9f5f0');
     
-    // Выводим информацию о пользователе в консоль
     const userInfo = getTelegramUserInfo();
     console.log('📱 Информация о клиенте:', userInfo);
   }
@@ -589,12 +701,15 @@ ${order.items.map((item, i) =>
   const totalKcalEl = document.getElementById('totalKcal');
   const districtSelect = document.getElementById('districtSelect');
   const addressInput = document.getElementById('addressInput');
+  const phoneInput = document.getElementById('phoneInput');
+  const phoneError = document.getElementById('phoneError');
   const cartIcon = document.getElementById('cartIcon');
   const checkoutBtn = document.getElementById('checkoutBtn');
   const cartModal = document.getElementById('cartModal');
   const closeModalBtn = document.getElementById('closeModalBtn');
   const cartItemsList = document.getElementById('cartItemsList');
   const modalAddress = document.getElementById('modalAddress');
+  const modalPhone = document.getElementById('modalPhone');
   const modalTotal = document.getElementById('modalTotal');
   const modalKcal = document.getElementById('modalKcal');
   const categoryChips = document.querySelectorAll('.category-chip');
@@ -625,8 +740,6 @@ ${order.items.map((item, i) =>
       btn.addEventListener('click', (e) => {
         const id = parseInt(btn.dataset.id, 10);
         addToCart(id);
-        
-        // Анимация кнопки
         btn.style.transform = 'scale(0.9)';
         setTimeout(() => { btn.style.transform = ''; }, 150);
       });
@@ -644,10 +757,9 @@ ${order.items.map((item, i) =>
     }
     updateCartUI();
     
-    // Пульсация значка корзины
-    const cartIcon = document.getElementById('cartIcon');
-    cartIcon.style.transform = 'scale(1.1)';
-    setTimeout(() => { cartIcon.style.transform = ''; }, 200);
+    const cartIconEl = document.getElementById('cartIcon');
+    cartIconEl.style.transform = 'scale(1.1)';
+    setTimeout(() => { cartIconEl.style.transform = ''; }, 200);
     
     if (tg?.HapticFeedback) {
       tg.HapticFeedback.impactOccurred('light');
@@ -668,7 +780,6 @@ ${order.items.map((item, i) =>
     totalPriceEl.textContent = totalPrice;
     totalKcalEl.textContent = totalKcal;
     
-    // Показываем/скрываем бейдж
     const badge = document.querySelector('.cart-badge');
     if (totalItems === 0) {
       badge.style.display = 'none';
@@ -708,6 +819,7 @@ ${order.items.map((item, i) =>
     modalTotal.textContent = totalPrice;
     modalKcal.textContent = totalKcal;
     modalAddress.textContent = `${districtSelect.value}, ${addressInput.value || 'адрес не указан'}`;
+    modalPhone.textContent = phoneInput.value || 'не указан';
   }
 
   function openCartModal() {
@@ -719,7 +831,16 @@ ${order.items.map((item, i) =>
     cartModal.classList.remove('active');
   }
 
+  function validatePhone(phone) {
+    // Простая валидация: должно быть не менее 10 цифр
+    const digits = phone.replace(/\D/g, '');
+    return digits.length >= 10;
+  }
+
   async function processOrder() {
+    // Сбрасываем ошибку телефона
+    phoneError.style.display = 'none';
+    
     if (cart.length === 0) {
       if (tg?.showPopup) {
         tg.showPopup({ title: 'Корзина пуста', message: 'Добавьте блюда для заказа' });
@@ -731,11 +852,23 @@ ${order.items.map((item, i) =>
     
     const district = districtSelect.value;
     const address = addressInput.value.trim();
+    const phone = phoneInput.value.trim();
+    
     if (!address) {
       if (tg?.showPopup) {
         tg.showPopup({ title: 'Адрес', message: 'Укажите точный адрес доставки' });
       } else {
         alert('Укажите адрес доставки');
+      }
+      return;
+    }
+
+    // ПРОВЕРКА ТЕЛЕФОНА
+    if (!validatePhone(phone)) {
+      phoneError.style.display = 'block';
+      phoneInput.focus();
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.notificationOccurred('error');
       }
       return;
     }
@@ -751,6 +884,7 @@ ${order.items.map((item, i) =>
       total: cart.reduce((s, i) => s + i.price*i.quantity, 0),
       kcal: cart.reduce((s, i) => s + i.kcal*i.quantity, 0),
       address: `${district}, ${address}`,
+      phone: phone, // ДОБАВЛЕН НОМЕР ТЕЛЕФОНА
       date: new Date().toLocaleString('ru-RU'),
     };
 
@@ -772,13 +906,13 @@ ${order.items.map((item, i) =>
           if (tg?.showPopup) {
             tg.showPopup({
               title: '✅ Заказ оформлен',
-              message: `Менеджер получил заказ!\nАдрес: ${orderDetails.address}`
+              message: `Менеджер получил заказ!\nАдрес: ${orderDetails.address}\nТелефон: ${phone}`
             });
           }
         } catch (error) {
           console.error('Ошибка:', error);
           const userInfo = getTelegramUserInfo();
-          const orderText = `ЗАКАЗ:\nКлиент ID: ${userInfo.id}\n${orderDetails.items.map(i => `${i.name} x${i.quantity}`).join('\n')}\nАдрес: ${orderDetails.address}\nСумма: ${orderDetails.total}₽`;
+          const orderText = `ЗАКАЗ:\nКлиент ID: ${userInfo.id}\nТелефон: ${phone}\n${orderDetails.items.map(i => `${i.name} x${i.quantity}`).join('\n')}\nАдрес: ${orderDetails.address}\nСумма: ${orderDetails.total}₽`;
           
           try {
             await navigator.clipboard.writeText(orderText);
@@ -821,8 +955,6 @@ ${order.items.map((item, i) =>
       chip.classList.add('active');
       currentCategory = chip.dataset.category;
       renderMenu();
-      
-      // Прокрутка меню вверх при смене категории
       scrollableContent.scrollTo({ top: 0, behavior: 'smooth' });
     });
   });
@@ -839,10 +971,16 @@ ${order.items.map((item, i) =>
     }
   });
 
-  // Изначально скрываем бейдж если корзина пуста
+  phoneInput.addEventListener('input', () => {
+    phoneError.style.display = 'none';
+    if (cartModal.classList.contains('active')) {
+      modalPhone.textContent = phoneInput.value || 'не указан';
+    }
+  });
+
+  // Скрываем бейдж при старте
   document.querySelector('.cart-badge').style.display = 'none';
 
-  // Старт
   renderMenu();
   updateCartUI();
   console.log('🍲 Приложение столовой готово к работе!');
