@@ -589,9 +589,9 @@ function getTelegramUserInfo() {
   }
 }
 
-// ========== ФУНКЦИЯ ОТПРАВКИ В TELEGRAM ==========
+// ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ==========
 async function sendOrderToTelegram(order) {
-  console.log('📤 Начинаем отправку заказа...');
+  console.log('📤 Начинаем отправку заказа через Telegram WebApp...');
   
   const userInfo = getTelegramUserInfo();
   
@@ -617,31 +617,43 @@ ${order.items.map((item, i) =>
 
 <a href="tg://user?id=${userInfo.id}">📩 Написать клиенту в ЛС</a>`;
 
+  // Параметры для отправки через Telegram API
+  const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`;
+  const body = JSON.stringify({
+    chat_id: CONFIG.MANAGER_CHAT_ID,
+    text: message,
+    parse_mode: 'HTML',
+    disable_web_page_preview: false
+  });
+
   try {
-    const response = await fetch(
-      `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: CONFIG.MANAGER_CHAT_ID,
-          text: message,
-          parse_mode: 'HTML',
-          disable_web_page_preview: false
-        })
-      }
-    );
-
-    const data = await response.json();
-    console.log('📬 Ответ API:', data);
-
-    if (data.ok) {
-      console.log('✅ Сообщение успешно отправлено!');
-      return { success: true };
+    // Проверяем, доступен ли метод fetch у Telegram Mini App
+    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.fetch === 'function') {
+        console.log('✅ Используем встроенный метод Telegram WebApp fetch');
+        // Вызываем fetch через библиотеку Telegram, чтобы запрос шел через их прокси
+        const response = await window.Telegram.WebApp.fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        });
+        const data = await response.json();
+        console.log('📬 Ответ API:', data);
+        if (!data.ok) throw new Error(data.description);
     } else {
-      console.error('❌ Ошибка API:', data.description);
-      throw new Error(data.description);
+        // Fallback на обычный fetch, если вдруг библиотека Telegram еще не загрузилась полностью
+        console.warn('⚠️ Telegram WebApp fetch не найден. Используем стандартный fetch (может не работать с MTProto)');
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body
+        });
+        const data = await response.json();
+        console.log('📬 Ответ API:', data);
+        if (!data.ok) throw new Error(data.description);
     }
+
+    console.log('✅ Сообщение успешно отправлено!');
+    return { success: true };
   } catch (error) {
     console.error('❌ Ошибка отправки:', error.message);
     throw error;
