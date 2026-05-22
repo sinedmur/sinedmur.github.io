@@ -86,7 +86,7 @@
       color: #c5704a;
       font-weight: 600;
       text-decoration: underline;
-      cursor: pointer;
+      
     }
 
     .accept-privacy-btn {
@@ -97,7 +97,7 @@
       font-size: 16px;
       padding: 14px 32px;
       border-radius: 40px;
-      cursor: pointer;
+      
       width: 100%;
       transition: 0.2s;
     }
@@ -152,7 +152,7 @@
       justify-content: center;
       box-shadow: 0 6px 14px rgba(140, 90, 50, 0.08);
       position: relative;
-      cursor: pointer;
+      
       transition: 0.2s;
     }
 
@@ -250,7 +250,7 @@
       font-weight: 600;
       color: #5e4337;
       transition: 0.2s;
-      cursor: pointer;
+      
       flex-shrink: 0;
     }
 
@@ -330,7 +330,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      
       transition: 0.2s;
       background: #f3e2d6;
       flex-shrink: 0;
@@ -379,7 +379,7 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      cursor: pointer;
+      
       transition: 0.25s;
       letter-spacing: 0.3px;
     }
@@ -440,7 +440,7 @@
       padding: 12px 24px;
       font-weight: 600;
       margin-top: 12px;
-      cursor: pointer;
+      
       width: 100%;
     }
 
@@ -781,7 +781,7 @@ async function sendOrderToTelegram(order) {
         <div class="cart-item-row">
           <span>${item.name} x${item.quantity}</span>
           <span>${item.price * item.quantity} ₽</span>
-          <button style="background:none; border:none; color:#c5704a; cursor:pointer; font-weight:bold; font-size:18px;" data-remove="${item.id}">✕</button>
+          <button style="background:none; border:none; color:#c5704a; font-weight:bold; font-size:18px;" data-remove="${item.id}">✕</button>
         </div>
       `).join('');
       
