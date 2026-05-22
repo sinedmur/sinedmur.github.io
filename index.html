@@ -589,11 +589,14 @@ function getTelegramUserInfo() {
   }
 }
 
-// ========== ИСПРАВЛЕННАЯ ФУНКЦИЯ ОТПРАВКИ ==========
 async function sendOrderToTelegram(order) {
-  console.log('📤 Начинаем отправку заказа через Telegram WebApp...');
+  console.log('📤 ===== НАЧАЛО ОТПРАВКИ ЗАКАЗА =====');
   
   const userInfo = getTelegramUserInfo();
+  console.log('👤 Информация о пользователе:', userInfo);
+  console.log('📦 Данные заказа:', order);
+  console.log('🔑 Используемый BOT_TOKEN:', CONFIG.BOT_TOKEN.substring(0, 8) + '...');
+  console.log('📬 MANAGER_CHAT_ID:', CONFIG.MANAGER_CHAT_ID);
   
   const message = `🛎 НОВЫЙ ЗАКАЗ!
 
@@ -617,47 +620,119 @@ ${order.items.map((item, i) =>
 
 <a href="tg://user?id=${userInfo.id}">📩 Написать клиенту в ЛС</a>`;
 
-  // Параметры для отправки через Telegram API
   const url = `https://api.telegram.org/bot${CONFIG.BOT_TOKEN}/sendMessage`;
-  const body = JSON.stringify({
+  const requestBody = {
     chat_id: CONFIG.MANAGER_CHAT_ID,
     text: message,
     parse_mode: 'HTML',
     disable_web_page_preview: false
-  });
+  };
 
-  try {
-    // Проверяем, доступен ли метод fetch у Telegram Mini App
-    if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.fetch === 'function') {
-        console.log('✅ Используем встроенный метод Telegram WebApp fetch');
-        // Вызываем fetch через библиотеку Telegram, чтобы запрос шел через их прокси
+  console.log('🌐 URL запроса:', url);
+  console.log('📨 Тело запроса:', JSON.stringify(requestBody, null, 2));
+
+  // Пробуем 3 разных метода отправки
+  const methods = [
+    {
+      name: 'WebApp.fetch',
+      fn: async () => {
+        if (!window.Telegram?.WebApp?.fetch) {
+          throw new Error('Метод WebApp.fetch недоступен');
+        }
+        console.log('🔄 Пробуем метод: WebApp.fetch');
         const response = await window.Telegram.WebApp.fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: body
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
         });
-        const data = await response.json();
-        console.log('📬 Ответ API:', data);
-        if (!data.ok) throw new Error(data.description);
-    } else {
-        // Fallback на обычный fetch, если вдруг библиотека Telegram еще не загрузилась полностью
-        console.warn('⚠️ Telegram WebApp fetch не найден. Используем стандартный fetch (может не работать с MTProto)');
+        return response;
+      }
+    },
+    {
+      name: 'Обычный fetch',
+      fn: async () => {
+        console.log('🔄 Пробуем метод: обычный fetch');
         const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: body
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody)
         });
-        const data = await response.json();
-        console.log('📬 Ответ API:', data);
-        if (!data.ok) throw new Error(data.description);
+        return response;
+      }
+    },
+    {
+      name: 'XMLHttpRequest',
+      fn: async () => {
+        console.log('🔄 Пробуем метод: XMLHttpRequest');
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', url, true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve({
+                ok: true,
+                status: xhr.status,
+                json: () => Promise.resolve(JSON.parse(xhr.responseText))
+              });
+            } else {
+              reject(new Error(`HTTP ${xhr.status}: ${xhr.statusText}`));
+            }
+          };
+          
+          xhr.onerror = () => {
+            reject(new Error('Сетевая ошибка XHR'));
+          };
+          
+          xhr.ontimeout = () => {
+            reject(new Error('Таймаут XHR'));
+          };
+          
+          xhr.timeout = 15000;
+          xhr.send(JSON.stringify(requestBody));
+        });
+      }
     }
+  ];
 
-    console.log('✅ Сообщение успешно отправлено!');
-    return { success: true };
-  } catch (error) {
-    console.error('❌ Ошибка отправки:', error.message);
-    throw error;
+  let lastError = null;
+
+  for (const method of methods) {
+    try {
+      console.log(`\n🔵 Пробуем метод: ${method.name}`);
+      const response = await method.fn();
+      
+      console.log(`📊 Статус ответа:`, response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`❌ Ошибка HTTP ${response.status}:`, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+      
+      const data = await response.json();
+      console.log('📬 Полный ответ API:', data);
+      
+      if (data.ok) {
+        console.log(`✅ УСПЕХ! Метод ${method.name} сработал!`);
+        console.log('📨 Результат:', data.result);
+        console.log('===== КОНЕЦ ОТПРАВКИ =====');
+        return { success: true, method: method.name };
+      } else {
+        throw new Error(`API Error: ${data.description}`);
+      }
+    } catch (error) {
+      console.error(`❌ Метод ${method.name} провалился:`, error.message);
+      lastError = error;
+    }
   }
+
+  console.error('\n❌ ВСЕ МЕТОДЫ ОТПРАВКИ ПРОВАЛИЛИСЬ!');
+  console.error('Последняя ошибка:', lastError?.message);
+  console.log('===== КОНЕЦ ОТПРАВКИ (С ОШИБКОЙ) =====');
+  
+  throw new Error(`Все методы отправки не сработали. Последняя ошибка: ${lastError?.message}`);
 }
 
 // ========== ОСНОВНОЕ ПРИЛОЖЕНИЕ ==========
