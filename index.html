@@ -514,9 +514,11 @@
     <div class="category-scroll" id="categoryContainer">
       <div class="category-chip active" data-category="all">🌟 Все</div>
       <div class="category-chip" data-category="soup">🥣 Супы</div>
-      <div class="category-chip" data-category="main">🍛 Горячее</div>
+      <div class="category-chip" data-category="hot">🍲 Горячие блюда</div>
+      <div class="category-chip" data-category="garnish">🍚 Гарниры</div>
       <div class="category-chip" data-category="salad">🥗 Салаты</div>
-      <div class="category-chip" data-category="drink">🥤 Напитки</div>
+      <div class="category-chip" data-category="fish">🐟 Рыба</div>
+      <div class="category-chip" data-category="baking">🥐 Выпечка</div>
     </div>
 
     <div class="menu-grid" id="menuGrid"></div>
@@ -662,15 +664,47 @@ async function sendOrderToTelegram(order) {
     console.log('📱 Информация о клиенте:', userInfo);
   }
 
+  // НОВОЕ МЕНЮ
   const menuData = [
-    { id: 1, name: 'Борщ с говядиной', category: 'soup', price: 210, kcal: 280, emoji: '🍲' },
-    { id: 2, name: 'Куриный суп', category: 'soup', price: 180, kcal: 220, emoji: '🥣' },
-    { id: 3, name: 'Котлета с пюре', category: 'main', price: 290, kcal: 520, emoji: '🍛' },
-    { id: 4, name: 'Паста болоньезе', category: 'main', price: 310, kcal: 610, emoji: '🍝' },
-    { id: 5, name: 'Цезарь с курицей', category: 'salad', price: 260, kcal: 340, emoji: '🥗' },
-    { id: 6, name: 'Греческий салат', category: 'salad', price: 230, kcal: 290, emoji: '🥬' },
-    { id: 7, name: 'Морс ягодный', category: 'drink', price: 90, kcal: 80, emoji: '🍹' },
-    { id: 8, name: 'Капучино', category: 'drink', price: 140, kcal: 110, emoji: '☕' },
+    // Супы
+    { id: 1, name: 'Суп в ассортименте (200г)', category: 'soup', price: 80, kcal: 150, emoji: '🍲' },
+    { id: 2, name: 'Суп в ассортименте (300г)', category: 'soup', price: 100, kcal: 220, emoji: '🍲' },
+    { id: 3, name: 'Солянка (200г)', category: 'soup', price: 90, kcal: 180, emoji: '🥘' },
+    { id: 4, name: 'Солянка (300г)', category: 'soup', price: 120, kcal: 260, emoji: '🥘' },
+    
+    // Горячие блюда
+    { id: 5, name: 'Котлета 20% (100г)', category: 'hot', price: 140, kcal: 280, emoji: '🍖' },
+    { id: 6, name: 'Зраза масло/сыр', category: 'hot', price: 160, kcal: 320, emoji: '🧀' },
+    { id: 7, name: 'Гнездо', category: 'hot', price: 160, kcal: 300, emoji: '🪺' },
+    { id: 8, name: 'Котлета мясная (100г)', category: 'hot', price: 120, kcal: 250, emoji: '🍗' },
+    { id: 9, name: 'Котлета куриная (100г)', category: 'hot', price: 120, kcal: 220, emoji: '🍗' },
+    { id: 10, name: 'Отбивная свинина (100г)', category: 'hot', price: 150, kcal: 310, emoji: '🥩' },
+    { id: 11, name: 'Отбивная курица (100г)', category: 'hot', price: 150, kcal: 270, emoji: '🍗' },
+    { id: 12, name: 'Гуляш говядина (100г)', category: 'hot', price: 200, kcal: 240, emoji: '🥘' },
+    { id: 13, name: 'Гуляш свинина (100г)', category: 'hot', price: 140, kcal: 280, emoji: '🥘' },
+    { id: 14, name: 'Печень говяжья отбив', category: 'hot', price: 190, kcal: 210, emoji: '🫕' },
+    { id: 15, name: 'Печень куриная (100г)', category: 'hot', price: 120, kcal: 190, emoji: '🫕' },
+    { id: 16, name: 'Оладья (120г)', category: 'hot', price: 160, kcal: 350, emoji: '🥞' },
+    
+    // Гарниры
+    { id: 17, name: 'Гарнир (100г)', category: 'garnish', price: 80, kcal: 200, emoji: '🍚' },
+    
+    // Салаты
+    { id: 18, name: 'Салат овощной', category: 'salad', price: 70, kcal: 80, emoji: '🥗' },
+    { id: 19, name: 'Салат мясной', category: 'salad', price: 80, kcal: 150, emoji: '🥗' },
+    
+    // Рыба
+    { id: 20, name: 'Минтай (100г)', category: 'fish', price: 180, kcal: 140, emoji: '🐟' },
+    { id: 21, name: 'Люля (100г)', category: 'fish', price: 150, kcal: 250, emoji: '🍢' },
+    { id: 22, name: 'Рулет кур', category: 'fish', price: 170, kcal: 230, emoji: '🍥' },
+    
+    // Выпечка
+    { id: 23, name: 'Сочник', category: 'baking', price: 80, kcal: 300, emoji: '🥐' },
+    { id: 24, name: 'Плов (230г)', category: 'baking', price: 170, kcal: 420, emoji: '🍛' },
+    { id: 25, name: 'Голубец', category: 'baking', price: 120, kcal: 200, emoji: '🫔' },
+    { id: 26, name: 'Бифштекс с яйцом', category: 'baking', price: 140, kcal: 350, emoji: '🍳' },
+    { id: 27, name: 'Зразы', category: 'baking', price: 140, kcal: 310, emoji: '🧆' },
+    { id: 28, name: 'Макароны по флотски (250г)', category: 'baking', price: 160, kcal: 450, emoji: '🍝' }
   ];
 
   let cart = [];
