@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Столовая | TMA 2026</title>
+  <title>Столовая | Доставка еды</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     * {
@@ -247,17 +247,25 @@
       background: #f9f9fb;
       transform: scale(0.98);
     }
-    .item-emoji {
-      font-size: 38px;
-      margin-bottom: 8px;
-      background: #f9f9fc;
-      border-radius: 18px;
-      width: 56px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+  .item-emoji {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9fc;
+}
+
+.item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* чтобы фото заполняло блок без искажений */
+  display: block;
+}
+
     .item-title {
       font-weight: 620;
       font-size: 14px;
@@ -649,34 +657,34 @@ async function sendOrderToTelegram(order) {
   }
 
   const menuData = [
-    { id: 1, name: 'Суп ассорти 200г', category: 'soup', price: 80, kcal: 150, emoji: '🍲' },
-    { id: 2, name: 'Суп ассорти 300г', category: 'soup', price: 100, kcal: 220, emoji: '🍲' },
-    { id: 3, name: 'Солянка 200г', category: 'soup', price: 90, kcal: 180, emoji: '🥘' },
-    { id: 4, name: 'Солянка 300г', category: 'soup', price: 120, kcal: 260, emoji: '🥘' },
-    { id: 5, name: 'Котлета 20%', category: 'hot', price: 140, kcal: 280, emoji: '🍖' },
-    { id: 6, name: 'Зраза масло/сыр', category: 'hot', price: 160, kcal: 320, emoji: '🧀' },
-    { id: 7, name: 'Гнездо', category: 'hot', price: 160, kcal: 300, emoji: '🪺' },
-    { id: 8, name: 'Котлета мясная', category: 'hot', price: 120, kcal: 250, emoji: '🍗' },
-    { id: 9, name: 'Котлета куриная', category: 'hot', price: 120, kcal: 220, emoji: '🍗' },
-    { id: 10, name: 'Отбивная свинина', category: 'hot', price: 150, kcal: 310, emoji: '🥩' },
-    { id: 11, name: 'Отбивная курица', category: 'hot', price: 150, kcal: 270, emoji: '🍗' },
-    { id: 12, name: 'Гуляш говядина', category: 'hot', price: 200, kcal: 240, emoji: '🥘' },
-    { id: 13, name: 'Гуляш свинина', category: 'hot', price: 140, kcal: 280, emoji: '🥘' },
-    { id: 14, name: 'Печень говяжья', category: 'hot', price: 190, kcal: 210, emoji: '🫕' },
-    { id: 15, name: 'Печень куриная', category: 'hot', price: 120, kcal: 190, emoji: '🫕' },
-    { id: 16, name: 'Оладья 120г', category: 'hot', price: 160, kcal: 350, emoji: '🥞' },
-    { id: 17, name: 'Гарнир 100г', category: 'garnish', price: 80, kcal: 200, emoji: '🍚' },
-    { id: 18, name: 'Салат овощной', category: 'salad', price: 70, kcal: 80, emoji: '🥗' },
-    { id: 19, name: 'Салат мясной', category: 'salad', price: 80, kcal: 150, emoji: '🥗' },
-    { id: 20, name: 'Минтай 100г', category: 'fish', price: 180, kcal: 140, emoji: '🐟' },
-    { id: 21, name: 'Люля 100г', category: 'fish', price: 150, kcal: 250, emoji: '🍢' },
-    { id: 22, name: 'Рулет кур', category: 'fish', price: 170, kcal: 230, emoji: '🍥' },
-    { id: 23, name: 'Сочник', category: 'baking', price: 80, kcal: 300, emoji: '🥐' },
-    { id: 24, name: 'Плов 230г', category: 'baking', price: 170, kcal: 420, emoji: '🍛' },
-    { id: 25, name: 'Голубец', category: 'baking', price: 120, kcal: 200, emoji: '🫔' },
-    { id: 26, name: 'Бифштекс с яйцом', category: 'baking', price: 140, kcal: 350, emoji: '🍳' },
-    { id: 27, name: 'Зразы', category: 'baking', price: 140, kcal: 310, emoji: '🧆' },
-    { id: 28, name: 'Макароны по-флотски', category: 'baking', price: 160, kcal: 450, emoji: '🍝' }
+    { id: 1, name: 'Суп ассорти 200г', category: 'soup', price: 80, kcal: 150, image: 'https://img.iamcook.ru/old/upl/recipes/cat/u-d7606d7a68a7365d1911bcfa29f64b4a.JPG' },
+    { id: 2, name: 'Суп ассорти 300г', category: 'soup', price: 100, kcal: 220, image: 'https://img.iamcook.ru/old/upl/recipes/cat/u-d7606d7a68a7365d1911bcfa29f64b4a.JPG' },
+    { id: 3, name: 'Солянка 200г', category: 'soup', price: 90, kcal: 180, image: 'https://img.iamcook.ru/2021/upl/recipes/cat/u-8411276647d2d9f43962f916f61772be.jpg' },
+    { id: 4, name: 'Солянка 300г', category: 'soup', price: 120, kcal: 260, image: 'https://img.iamcook.ru/2021/upl/recipes/cat/u-8411276647d2d9f43962f916f61772be.jpg' },
+    { id: 5, name: 'Котлета гов. 100г', category: 'hot', price: 140, kcal: 280, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3c6HAKq_prb_ITMoN8Z7CWXbS8QCSeeEOpQ&s' },
+    { id: 6, name: 'Зраза масло/сыр', category: 'hot', price: 160, kcal: 320, image: 'https://images.gastronom.ru/hU9_FbDX0FOONx8e_qNgCJD45WIy5eRMTiuEuCKoo4Q/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzQ3MmFmMGVhLTkyNTUtNGM5OC05MzU4LTYwOTVmZmQ1OTBiZC5qcGc.webp' },
+    { id: 7, name: 'Гнездо', category: 'hot', price: 160, kcal: 300, image: 'https://images.gastronom.ru/E8fr75XaLj-EtZ-0Z5H-92kRQsRkwHMG0vw_17oooPY/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzY2ZGFmOTdlLThkMDItNGFiZi1hYWQxLTg2NDRlNTU2ZjhjMC5qcGc.webp' },
+    { id: 8, name: 'Котлета мясная', category: 'hot', price: 120, kcal: 250, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSaGHmp4Itd3sIyyFQX_8CsnEZp4ZDUv_pOw&s' },
+    { id: 9, name: 'Котлета куриная', category: 'hot', price: 120, kcal: 220, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXmfV9rgbq0jNb7sdUfoXdMb8tmCXyCI_BFg&s' },
+    { id: 10, name: 'Отбивная из свинины', category: 'hot', price: 150, kcal: 310, image: 'https://lefood.menu/wp-content/uploads/w_images/2023/11/recept-96044-1240x827.jpg' },
+    { id: 11, name: 'Отбивная куриная', category: 'hot', price: 150, kcal: 270, image: 'https://prostokvashino.ru/upload/resize_cache/iblock/b73/800_800_0/b735e11834bd050a1a7121cf8da16868.jpg' },
+    { id: 12, name: 'Гуляш говяжий', category: 'hot', price: 200, kcal: 240, image: 'https://myasoed.market/upload/w_645/69c3ec184239b-glCopy.jpg' },
+    { id: 13, name: 'Гуляш из свинины', category: 'hot', price: 140, kcal: 280, image: 'https://opis-cdn.tinkoffjournal.ru/mercury/04-pork-goulash.jpg' },
+    { id: 14, name: 'Печень говяжья', category: 'hot', price: 190, kcal: 210, image: 'https://s0.rbk.ru/v6_top_pics/media/img/2/27/347619531429272.webp' },
+    { id: 15, name: 'Печень куриная', category: 'hot', price: 120, kcal: 190, image: 'https://static.1000.menu/img/content-v2/6d/d6/39956/kurinaya-pechen-s-lukom-na-skovorode-jarenaya_1645250798_4_max.jpg' },
+    { id: 16, name: 'Оладья 120г', category: 'baking', price: 160, kcal: 350, image: 'https://img.iamcook.ru/2018/upl/recipes/cat/u-305929b9bb27384dbaff4c7ecb60db3f.JPG' },
+    { id: 17, name: 'Гарнир 100г', category: 'garnish', price: 80, kcal: 200, image: 'https://kopilka-kulinara.ru/upload/information_system_57/5/0/3/item_5038/item_5038.webp' },
+    { id: 18, name: 'Салат овощной', category: 'salad', price: 70, kcal: 80, image: 'https://www.batoni-kafe.ru/images/cms/data/products-fo/salaty/100001314_salat_ovownoj_po-domashnemu.webp' },
+    { id: 19, name: 'Салат мясной', category: 'salad', price: 80, kcal: 150, image: 'https://vkusno-raznosti.ru/wp-content/uploads/2017/07/salat-govyadina-s-ogurcami-42.jpg' },
+    { id: 20, name: 'Минтай 100г', category: 'fish', price: 180, kcal: 140, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVgEchOHJU056pfEC4y5y5_BquwJUc4VQpiw&s' },
+    { id: 21, name: 'Люля 100г', category: 'hot', price: 150, kcal: 250, image: 'https://images.gastronom.ru/KJvxolCZE-P2DEGtFQVNwBINDNWt1xfVDZ6nTy233lY/pr:article-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzL2I4YWI1YmVkLTM0NjMtNDRiMy05ODdjLTk5Mzc2NDUyY2I2ZS5qcGc.webp' },
+    { id: 22, name: 'Куриный рулет', category: 'hot', price: 170, kcal: 230, image: 'https://images.gastronom.ru/5xKSIAhge_NZ3u5niLp76PFg0rJiW37G0Yf7jpxC9Cc/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzL2U3MGE0MTdmLTg5OWYtNDY0MC1iNzk5LTNmOTcwOTNkOTIzYi5qcGc.webp' },
+    { id: 23, name: 'Сочник', category: 'baking', price: 80, kcal: 300, image: 'https://images.gastronom.ru/oFhe-VBGlGX3ZXJzfFFzEDT4RH0_1eftwgQgXM-lm8A/pr:article-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzEwYmI3Nzk2LTJhMmItNDBlMi1iOGMxLWMxNjY3ZDZjMDA2ZS5qcGc.webp' },
+    { id: 24, name: 'Плов 230г', category: 'hot', price: 170, kcal: 420, image: 'https://images.gastronom.ru/aovMYcGLbHtuJwEZdn2yUPxww-dA-zfM3dexGT3u-JY/pr:content-group-preview-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzL2U3ODk0OGExLWE0ZjQtNGRjNS1hZjNiLTQ2MmNhMmY5ODgyNi5qcGc.webp' },
+    { id: 25, name: 'Голубец', category: 'hot', price: 120, kcal: 200, image: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Holubtsi.jpg' },
+    { id: 26, name: 'Бифштекс с яйцом', category: 'hot', price: 140, kcal: 350, image: 'https://images.gastronom.ru/JI21GFgrLRrX3LZsUl0To7e6iD-Tx3DPV7fHq0WCNaM/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzY0Y2U0MzA5LWI3NGUtNDg5Ny1hOTU3LTIyNzgwNTQ0ZjczYi5qcGc.webp' },
+    { id: 27, name: 'Зразы', category: 'hot', price: 140, kcal: 310, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5V_PSEh3RdqMckHo8GmeqqJbru-gD0L7kpg&s' },
+    { id: 28, name: 'Макароны по-флотски', category: 'hot', price: 160, kcal: 450, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRR_QnmWwJWyAF5ubXCNPIrbKYbhyqw3HdDMw&s' }
   ];
 
   let cart = [];
@@ -699,7 +707,11 @@ async function sendOrderToTelegram(order) {
     const filtered = currentCategory === 'all' ? menuData : menuData.filter(i => i.category === currentCategory);
     menuGrid.innerHTML = filtered.map(item => `
       <div class="menu-item">
-        <div class="item-emoji">${item.emoji}</div>
+        <div class="item-emoji">
+  <img src="${item.image}" alt="${item.name}" class="item-image" 
+       onerror="this.src='https://via.placeholder.com/120?text=🍲'" 
+       loading="lazy">
+</div>
         <div class="item-title">${item.name}</div>
         <div class="item-kcal">🔥 ${item.kcal} ккал</div>
         <div class="item-bottom">
