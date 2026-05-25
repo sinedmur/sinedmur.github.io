@@ -424,7 +424,7 @@
       z-index: 2000;
       visibility: hidden;
       opacity: 0;
-      transition: 0.25s;
+      transition: opacity 0.25s, visibility 0.25s;
     }
     .checkout-popup-overlay.active {
       visibility: visible;
@@ -438,10 +438,11 @@
       padding: 24px 20px 28px;
       box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
       transform: translateY(100%);
-      transition: 0.25s ease-out;
+      transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
       display: flex;
       flex-direction: column;
       gap: 18px;
+      touch-action: none; /* важно для свайпа */
     }
     .checkout-popup-overlay.active .checkout-popup {
       transform: translateY(0);
@@ -567,7 +568,7 @@
 
 <!-- Попап для адреса и телефона -->
 <div class="checkout-popup-overlay" id="checkoutPopup">
-  <div class="checkout-popup">
+  <div class="checkout-popup" id="checkoutPopupInner">
     <div class="popup-handle"></div>
     <div class="popup-title">📋 Оформление заказа</div>
     <div>
@@ -702,6 +703,7 @@ async function sendOrderToTelegram(order) {
   const popupTotalPrice = document.getElementById('popupTotalPrice');
   const popupTotalKcal = document.getElementById('popupTotalKcal');
   const popupPhoneError = document.getElementById('popupPhoneError');
+  const checkoutPopupInner = document.getElementById('checkoutPopupInner');
 
   function renderMenu() {
     const filtered = currentCategory === 'all' ? menuData : menuData.filter(i => i.category === currentCategory);
@@ -795,11 +797,62 @@ async function sendOrderToTelegram(order) {
     popupTotalKcal.textContent = cart.reduce((s, i) => s + i.kcal * i.quantity, 0);
     popupPhoneError.style.display = 'none';
     checkoutPopup.classList.add('active');
+    // Сброс смещения при открытии
+    checkoutPopupInner.style.transform = '';
   }
 
   function closeCheckoutPopup() {
     checkoutPopup.classList.remove('active');
+    checkoutPopupInner.style.transform = '';
   }
+
+  // --- ЛОГИКА СВАЙПА ВНИЗ ДЛЯ ЗАКРЫТИЯ ---
+  let startY = 0;
+  let currentY = 0;
+  let isDragging = false;
+
+  checkoutPopupInner.addEventListener('touchstart', (e) => {
+    // Разрешаем свайп только если тянем за сам попап (или ручку), но не за input/select
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
+    startY = e.touches[0].clientY;
+    isDragging = true;
+    checkoutPopupInner.style.transition = 'none'; // убираем анимацию во время перетаскивания
+  }, { passive: true });
+
+  window.addEventListener('touchmove', (e) => {
+    if (!isDragging || !checkoutPopup.classList.contains('active')) return;
+    currentY = e.touches[0].clientY;
+    let diff = currentY - startY;
+    // Тянем только вниз (diff > 0)
+    if (diff > 0) {
+      checkoutPopupInner.style.transform = `translateY(${diff}px)`;
+      // Предотвращаем скролл страницы позади, когда тянем попап
+      e.preventDefault();
+    } else {
+      checkoutPopupInner.style.transform = '';
+    }
+  }, { passive: false });
+
+  window.addEventListener('touchend', () => {
+    if (!isDragging || !checkoutPopup.classList.contains('active')) {
+      isDragging = false;
+      return;
+    }
+    isDragging = false;
+    checkoutPopupInner.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    
+    const diff = currentY - startY;
+    // Если сдвинули больше 100px вниз — закрываем
+    if (diff > 100) {
+      closeCheckoutPopup();
+    } else {
+      // Возвращаем на место
+      checkoutPopupInner.style.transform = '';
+    }
+    // Сброс значений
+    startY = 0;
+    currentY = 0;
+  });
 
   async function processOrderFromPopup() {
     const phone = document.getElementById('popupPhone').value.trim();
