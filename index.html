@@ -1,14 +1,857 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>MAX Трубы</title>
-    <script type="module" crossorigin src="/assets/index-DK9ERvjz.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-C2cvzqn0.css">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="https://st.max.ru/js/max-web-app.js"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Столовая | Доставка еды</title>
+  <script src="https://st.max.ru/js/max-web-app.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f7f7f8;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+      color: #222;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      height: 100vh;
+      background: #ffffff;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 0 30px rgba(0,0,0,0.03);
+    }
+
+    /* Privacy */
+    .privacy-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: 0.3s;
+    }
+    .privacy-overlay.hidden-privacy {
+      visibility: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .privacy-modal {
+      background: white;
+      border-radius: 28px;
+      padding: 28px 22px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 35px rgba(0,0,0,0.15);
+    }
+    .privacy-modal h3 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      font-weight: 650;
+    }
+    .privacy-modal p {
+      font-size: 14px;
+      color: #6b6b70;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    .privacy-link {
+      color: #007aff;
+      font-weight: 600;
+      text-decoration: none;
+    }
+    .accept-privacy-btn {
+      background: #007aff;
+      border: none;
+      color: white;
+      font-weight: 650;
+      font-size: 16px;
+      padding: 14px 28px;
+      border-radius: 40px;
+      width: 100%;
+      transition: 0.2s;
+      
+    }
+    .accept-privacy-btn:active {
+      background: #005bbf;
+      transform: scale(0.97);
+    }
+
+    .scrollable-content {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 8px;
+      background: #f7f7f8;
+    }
+
+    .header {
+      background: #ffffff;
+      padding: 16px 16px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f0f0f2;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #000;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .cart-icon-wrap {
+      background: #f2f2f7;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      
+      transition: 0.2s;
+    }
+    .cart-icon-wrap:active {
+      background: #e5e5ea;
+      transform: scale(0.94);
+    }
+    .cart-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #ff3b30;
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 12px;
+      min-width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+    }
+
+    /* Стиль для промо-блока */
+    .promo-banner {
+      background: linear-gradient(135deg, #fff5f5 0%, #fff0e0 100%);
+      margin: 12px 16px 4px;
+      padding: 14px 16px;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 1px solid #ffe0d0;
+      box-shadow: 0 4px 10px rgba(255, 100, 50, 0.08);
+      backdrop-filter: blur(2px);
+    }
+    .promo-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .promo-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: #c44b1c;
+      letter-spacing: -0.2px;
+    }
+    .promo-sub {
+      font-size: 13px;
+      color: #7b4a38;
+      font-weight: 500;
+    }
+    .promo-emoji {
+      font-size: 32px;
+      background: #ffffffcc;
+      border-radius: 16px;
+      padding: 6px 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+
+    .category-scroll {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 12px 16px;
+      scrollbar-width: none;
+      white-space: nowrap;
+      background: #ffffff;
+      border-bottom: 1px solid #f0f0f2;
+    }
+    .category-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .category-chip {
+      background: #f2f2f7;
+      border-radius: 40px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 590;
+      color: #3a3a3c;
+      transition: 0.2s;
+      flex-shrink: 0;
+      
+    }
+    .category-chip.active {
+      background: #007aff;
+      color: white;
+      font-weight: 600;
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 12px 16px 20px;
+    }
+
+    .menu-item {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 14px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+      border: 1px solid #f1f1f4;
+      transition: 0.1s;
+    }
+    .menu-item:active {
+      background: #f9f9fb;
+      transform: scale(0.98);
+    }
+  .item-emoji {
+  width: 100%;
+  height: 120px;
+  margin-bottom: 8px;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9f9fc;
+}
+
+.item-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* чтобы фото заполняло блок без искажений */
+  display: block;
+}
+
+    .item-title {
+      font-weight: 620;
+      font-size: 14px;
+      line-height: 1.3;
+      margin-bottom: 4px;
+      color: #1c1c1e;
+    }
+    .item-kcal {
+      font-size: 12px;
+      color: #8e8e93;
+      margin-bottom: 10px;
+    }
+    .item-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      margin-top: auto;
+    }
+    .price {
+      font-weight: 680;
+      font-size: 16px;
+      color: #000;
+    }
+    .add-btn {
+      background: #f2f2f7;
+      border: none;
+      border-radius: 30px;
+      width: 36px;
+      height: 36px;
+      font-size: 20px;
+      font-weight: 500;
+      color: #007aff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      
+      transition: 0.2s;
+    }
+    .add-btn:active {
+      background: #007aff;
+      color: white;
+      transform: scale(0.9);
+    }
+
+    .cart-panel {
+      background: #ffffff;
+      border-top: 1px solid #f0f0f2;
+      padding: 12px 16px 16px;
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.02);
+      z-index: 20;
+      flex-shrink: 0;
+      padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    }
+    .cart-summary {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 590;
+      margin-bottom: 10px;
+      font-size: 14px;
+      color: #3a3a3c;
+    }
+    .total-kcal {
+      color: #8e8e93;
+      font-size: 13px;
+    }
+    .checkout-btn {
+      width: 100%;
+      background: #007aff;
+      border: none;
+      color: white;
+      font-weight: 650;
+      font-size: 16px;
+      padding: 14px;
+      border-radius: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      
+      transition: 0.2s;
+    }
+    .checkout-btn:active {
+      background: #005bbf;
+      transform: scale(0.97);
+    }
+
+    /* Модальное окно корзины */
+    .cart-modal-overlay {
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1500;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.2s;
+    }
+    .cart-modal-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .cart-modal {
+      background: white;
+      border-radius: 32px;
+      padding: 24px 20px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+    }
+    .cart-items-list {
+      text-align: left;
+      margin: 16px 0;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .cart-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f7;
+    }
+    .remove-item-btn {
+      background: none;
+      border: none;
+      color: #ff3b30;
+      font-weight: bold;
+      font-size: 18px;
+      
+      padding: 0 6px;
+    }
+    .close-cart-modal {
+      background: #f2f2f7;
+      border: none;
+      border-radius: 30px;
+      padding: 12px 24px;
+      font-weight: 600;
+      margin-top: 12px;
+      width: 100%;
+    }
+
+    /* Попап оформления */
+    .checkout-popup-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 2000;
+      visibility: hidden;
+      opacity: 0;
+      transition: 0.25s;
+    }
+    .checkout-popup-overlay.active {
+      visibility: visible;
+      opacity: 1;
+    }
+    .checkout-popup {
+      background: #ffffff;
+      width: 100%;
+      max-width: 420px;
+      border-radius: 28px 28px 0 0;
+      padding: 24px 20px 28px;
+      box-shadow: 0 -10px 30px rgba(0,0,0,0.1);
+      transform: translateY(100%);
+      transition: 0.25s ease-out;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .checkout-popup-overlay.active .checkout-popup {
+      transform: translateY(0);
+    }
+    .popup-handle {
+      width: 36px;
+      height: 5px;
+      background: #d1d1d6;
+      border-radius: 10px;
+      align-self: center;
+      margin-bottom: 6px;
+    }
+    .popup-title {
+      font-size: 20px;
+      font-weight: 650;
+      color: #000;
+    }
+    .field-label {
+      font-size: 13px;
+      font-weight: 590;
+      color: #6d6d72;
+      margin-bottom: 4px;
+    }
+    select, .address-input, .phone-input {
+      background: #f5f5fa;
+      border: 1px solid #e5e5ea;
+      border-radius: 16px;
+      padding: 13px 15px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #000;
+      outline: none;
+      width: 100%;
+      font-family: inherit;
+    }
+    .popup-total-row {
+      display: flex;
+      justify-content: space-between;
+      font-weight: 620;
+      font-size: 16px;
+      padding: 8px 0;
+      border-top: 1px solid #f0f0f2;
+    }
+    .confirm-order-btn {
+      background: #007aff;
+      border: none;
+      color: white;
+      font-weight: 650;
+      font-size: 17px;
+      padding: 15px;
+      border-radius: 40px;
+      width: 100%;
+      
+    }
+    .error-message {
+      color: #ff3b30;
+      font-size: 12px;
+      margin-top: 4px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="privacy-overlay" id="privacyOverlay">
+  <div class="privacy-modal">
+    <h3>🔐 Конфиденциальность</h3>
+    <p>Принимая условия, вы соглашаетесь с <a href="#" class="privacy-link">политикой обработки данных</a>.</p>
+    <button class="accept-privacy-btn" id="acceptPrivacyBtn">✅ Принять и продолжить</button>
+  </div>
+</div>
+
+<div class="app-container">
+  <div class="scrollable-content" id="scrollableContent">
+    <div class="header">
+      <span class="logo">🍲 Столовая</span>
+      <div class="cart-icon-wrap" id="cartIcon">
+        <span>🛒</span>
+        <span class="cart-badge" id="cartCount">0</span>
+      </div>
+    </div>
+
+    <!-- 🔥 Промо-блок, призывающий к покупке, прямо над категориями -->
+    <div class="promo-banner">
+      <div class="promo-text">
+        <span class="promo-title">🔥 Горячее предложение</span>
+        <span class="promo-sub">Закажи домашний обед – быстро и вкусно!</span>
+      </div>
+      <div class="promo-emoji">🍽️</div>
+    </div>
+
+    <div class="category-scroll" id="categoryContainer">
+      <div class="category-chip active" data-category="all">🌟 Все</div>
+      <div class="category-chip" data-category="soup">🥣 Супы</div>
+      <div class="category-chip" data-category="hot">🍲 Горячее</div>
+      <div class="category-chip" data-category="garnish">🍚 Гарниры</div>
+      <div class="category-chip" data-category="salad">🥗 Салаты</div>
+      <div class="category-chip" data-category="fish">🐟 Рыба</div>
+      <div class="category-chip" data-category="baking">🥐 Выпечка</div>
+    </div>
+
+    <div class="menu-grid" id="menuGrid"></div>
+  </div>
+
+  <div class="cart-panel">
+    <div class="cart-summary">
+      <span>🛒 <span id="totalPrice">0</span> ₽</span>
+      <span class="total-kcal">🔥 <span id="totalKcal">0</span> ккал</span>
+    </div>
+    <button class="checkout-btn" id="checkoutBtn">💳 Оплатить</button>
+  </div>
+</div>
+
+<!-- Модальное окно корзины (восстановлено) -->
+<div class="cart-modal-overlay" id="cartModal">
+  <div class="cart-modal">
+    <h3>🧾 Корзина</h3>
+    <div class="cart-items-list" id="cartItemsList"></div>
+    <p style="margin-top:8px"><strong>Сумма:</strong> <span id="modalTotal">0</span> ₽ | 🔥 <span id="modalKcal">0</span> ккал</p>
+    <button class="close-cart-modal" id="closeCartModalBtn">Закрыть</button>
+  </div>
+</div>
+
+<!-- Попап для адреса и телефона -->
+<div class="checkout-popup-overlay" id="checkoutPopup">
+  <div class="checkout-popup">
+    <div class="popup-handle"></div>
+    <div class="popup-title">📋 Оформление заказа</div>
+    <div>
+      <div class="field-label">📍 Район доставки</div>
+      <select id="popupDistrict">
+        <option value="Экодолье">Экодолье</option>
+        <option value="Ивановка" selected>Ивановка</option>
+        <option value="Приуралье">Приуралье</option>
+      </select>
+    </div>
+    <div>
+      <div class="field-label">🏠 Адрес</div>
+      <input type="text" class="address-input" id="popupAddress" placeholder="Улица, дом, кв." value="ул. Центральная, 5">
+    </div>
+    <div>
+      <div class="field-label">📞 Телефон</div>
+      <input type="tel" class="phone-input" id="popupPhone" placeholder="+7 999 123-45-67" value="">
+      <div class="error-message" id="popupPhoneError">⚠️ Введите номер телефона</div>
+    </div>
+    <div class="popup-total-row">
+      <span>Итого:</span>
+      <span><strong><span id="popupTotalPrice">0</span> ₽</strong> · 🔥 <span id="popupTotalKcal">0</span> ккал</span>
+    </div>
+    <button class="confirm-order-btn" id="confirmOrderBtn">✅ Подтвердить заказ</button>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  MANAGER_CHAT_ID: '1019928513'
+};
+
+function getMaxUserInfo() {
+  const webApp = window.WebApp;
+  const initData = webApp?.initDataUnsafe;
+  const user = initData?.user;
+  if (!webApp || !user) {
+    return { id: 'unknown', username: 'unknown', firstName: 'Гость', lastName: '', fullName: 'Гость' };
+  }
+
+  return {
+    id: user.id || 'unknown',
+    username: user.username || '',
+    firstName: user.first_name || '',
+    lastName: user.last_name || '',
+    fullName: [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Пользователь'
+  };
+}
+
+async function sendOrderToManager(order) {
+  const userInfo = getMaxUserInfo();
+  const payload = {
+    userName: userInfo.fullName,
+    userId: userInfo.id,
+    userUsername: userInfo.username,
+    phone: order.phone,
+    date: order.date,
+    address: order.address,
+    items: order.items,
+    total: order.total,
+    kcal: order.kcal,
+    managerChatId: CONFIG.MANAGER_CHAT_ID
+  };
+  console.log('Order payload:', payload);
+  return { success: true };
+}
+
+(function() {
+  const privacyOverlay = document.getElementById('privacyOverlay');
+  if (sessionStorage.getItem('privacyAccepted') === 'true') {
+    privacyOverlay.classList.add('hidden-privacy');
+  }
+  document.getElementById('acceptPrivacyBtn').addEventListener('click', () => {
+    sessionStorage.setItem('privacyAccepted', 'true');
+    privacyOverlay.classList.add('hidden-privacy');
+  });
+
+  const webApp = window.WebApp;
+  function showMessage(text) {
+    if (webApp?.showAlert) {
+      webApp.showAlert(text);
+      return;
+    }
+    alert(text);
+  }
+
+  if (webApp) {
+    webApp.ready?.();
+  }
+
+  const menuData = [
+    { id: 1, name: 'Суп ассорти 200г', category: 'soup', price: 80, kcal: 150, image: 'https://img.iamcook.ru/old/upl/recipes/cat/u-d7606d7a68a7365d1911bcfa29f64b4a.JPG' },
+    { id: 2, name: 'Суп ассорти 300г', category: 'soup', price: 100, kcal: 220, image: 'https://img.iamcook.ru/old/upl/recipes/cat/u-d7606d7a68a7365d1911bcfa29f64b4a.JPG' },
+    { id: 3, name: 'Солянка 200г', category: 'soup', price: 90, kcal: 180, image: 'https://img.iamcook.ru/2021/upl/recipes/cat/u-8411276647d2d9f43962f916f61772be.jpg' },
+    { id: 4, name: 'Солянка 300г', category: 'soup', price: 120, kcal: 260, image: 'https://img.iamcook.ru/2021/upl/recipes/cat/u-8411276647d2d9f43962f916f61772be.jpg' },
+    { id: 5, name: 'Котлета гов. 100г', category: 'hot', price: 140, kcal: 280, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3c6HAKq_prb_ITMoN8Z7CWXbS8QCSeeEOpQ&s' },
+    { id: 6, name: 'Зраза масло/сыр', category: 'hot', price: 160, kcal: 320, image: 'https://images.gastronom.ru/hU9_FbDX0FOONx8e_qNgCJD45WIy5eRMTiuEuCKoo4Q/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzQ3MmFmMGVhLTkyNTUtNGM5OC05MzU4LTYwOTVmZmQ1OTBiZC5qcGc.webp' },
+    { id: 7, name: 'Гнездо', category: 'hot', price: 160, kcal: 300, image: 'https://images.gastronom.ru/E8fr75XaLj-EtZ-0Z5H-92kRQsRkwHMG0vw_17oooPY/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzY2ZGFmOTdlLThkMDItNGFiZi1hYWQxLTg2NDRlNTU2ZjhjMC5qcGc.webp' },
+    { id: 8, name: 'Котлета мясная', category: 'hot', price: 120, kcal: 250, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTSaGHmp4Itd3sIyyFQX_8CsnEZp4ZDUv_pOw&s' },
+    { id: 9, name: 'Котлета куриная', category: 'hot', price: 120, kcal: 220, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQXmfV9rgbq0jNb7sdUfoXdMb8tmCXyCI_BFg&s' },
+    { id: 10, name: 'Отбивная из свинины', category: 'hot', price: 150, kcal: 310, image: 'https://lefood.menu/wp-content/uploads/w_images/2023/11/recept-96044-1240x827.jpg' },
+    { id: 11, name: 'Отбивная куриная', category: 'hot', price: 150, kcal: 270, image: 'https://prostokvashino.ru/upload/resize_cache/iblock/b73/800_800_0/b735e11834bd050a1a7121cf8da16868.jpg' },
+    { id: 12, name: 'Гуляш говяжий', category: 'hot', price: 200, kcal: 240, image: 'https://myasoed.market/upload/w_645/69c3ec184239b-glCopy.jpg' },
+    { id: 13, name: 'Гуляш из свинины', category: 'hot', price: 140, kcal: 280, image: 'https://opis-cdn.tinkoffjournal.ru/mercury/04-pork-goulash.jpg' },
+    { id: 14, name: 'Печень говяжья', category: 'hot', price: 190, kcal: 210, image: 'https://s0.rbk.ru/v6_top_pics/media/img/2/27/347619531429272.webp' },
+    { id: 15, name: 'Печень куриная', category: 'hot', price: 120, kcal: 190, image: 'https://static.1000.menu/img/content-v2/6d/d6/39956/kurinaya-pechen-s-lukom-na-skovorode-jarenaya_1645250798_4_max.jpg' },
+    { id: 16, name: 'Оладья 120г', category: 'baking', price: 160, kcal: 350, image: 'https://img.iamcook.ru/2018/upl/recipes/cat/u-305929b9bb27384dbaff4c7ecb60db3f.JPG' },
+    { id: 17, name: 'Гарнир 100г', category: 'garnish', price: 80, kcal: 200, image: 'https://kopilka-kulinara.ru/upload/information_system_57/5/0/3/item_5038/item_5038.webp' },
+    { id: 18, name: 'Салат овощной', category: 'salad', price: 70, kcal: 80, image: 'https://www.batoni-kafe.ru/images/cms/data/products-fo/salaty/100001314_salat_ovownoj_po-domashnemu.webp' },
+    { id: 19, name: 'Салат мясной', category: 'salad', price: 80, kcal: 150, image: 'https://vkusno-raznosti.ru/wp-content/uploads/2017/07/salat-govyadina-s-ogurcami-42.jpg' },
+    { id: 20, name: 'Минтай 100г', category: 'fish', price: 180, kcal: 140, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVgEchOHJU056pfEC4y5y5_BquwJUc4VQpiw&s' },
+    { id: 21, name: 'Люля 100г', category: 'hot', price: 150, kcal: 250, image: 'https://images.gastronom.ru/KJvxolCZE-P2DEGtFQVNwBINDNWt1xfVDZ6nTy233lY/pr:article-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzL2I4YWI1YmVkLTM0NjMtNDRiMy05ODdjLTk5Mzc2NDUyY2I2ZS5qcGc.webp' },
+    { id: 22, name: 'Куриный рулет', category: 'hot', price: 170, kcal: 230, image: 'https://images.gastronom.ru/5xKSIAhge_NZ3u5niLp76PFg0rJiW37G0Yf7jpxC9Cc/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzL2U3MGE0MTdmLTg5OWYtNDY0MC1iNzk5LTNmOTcwOTNkOTIzYi5qcGc.webp' },
+    { id: 23, name: 'Сочник', category: 'baking', price: 80, kcal: 300, image: 'https://images.gastronom.ru/oFhe-VBGlGX3ZXJzfFFzEDT4RH0_1eftwgQgXM-lm8A/pr:article-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzEwYmI3Nzk2LTJhMmItNDBlMi1iOGMxLWMxNjY3ZDZjMDA2ZS5qcGc.webp' },
+    { id: 24, name: 'Плов 230г', category: 'hot', price: 170, kcal: 420, image: 'https://images.gastronom.ru/aovMYcGLbHtuJwEZdn2yUPxww-dA-zfM3dexGT3u-JY/pr:content-group-preview-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzL2U3ODk0OGExLWE0ZjQtNGRjNS1hZjNiLTQ2MmNhMmY5ODgyNi5qcGc.webp' },
+    { id: 25, name: 'Голубец', category: 'hot', price: 120, kcal: 200, image: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Holubtsi.jpg' },
+    { id: 26, name: 'Бифштекс с яйцом', category: 'hot', price: 140, kcal: 350, image: 'https://images.gastronom.ru/JI21GFgrLRrX3LZsUl0To7e6iD-Tx3DPV7fHq0WCNaM/pr:recipe-cover-image/g:ce/rs:auto:0:0:0/L2Ntcy9hbGwtaW1hZ2VzLzY0Y2U0MzA5LWI3NGUtNDg5Ny1hOTU3LTIyNzgwNTQ0ZjczYi5qcGc.webp' },
+    { id: 27, name: 'Зразы', category: 'hot', price: 140, kcal: 310, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR5V_PSEh3RdqMckHo8GmeqqJbru-gD0L7kpg&s' },
+    { id: 28, name: 'Макароны по-флотски', category: 'hot', price: 160, kcal: 450, image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRR_QnmWwJWyAF5ubXCNPIrbKYbhyqw3HdDMw&s' }
+  ];
+
+  let cart = [];
+  let currentCategory = 'all';
+
+  const menuGrid = document.getElementById('menuGrid');
+  const cartCountEl = document.getElementById('cartCount');
+  const totalPriceEl = document.getElementById('totalPrice');
+  const totalKcalEl = document.getElementById('totalKcal');
+  const cartModal = document.getElementById('cartModal');
+  const cartItemsList = document.getElementById('cartItemsList');
+  const modalTotal = document.getElementById('modalTotal');
+  const modalKcal = document.getElementById('modalKcal');
+  const checkoutPopup = document.getElementById('checkoutPopup');
+  const popupTotalPrice = document.getElementById('popupTotalPrice');
+  const popupTotalKcal = document.getElementById('popupTotalKcal');
+  const popupPhoneError = document.getElementById('popupPhoneError');
+
+  function renderMenu() {
+    const filtered = currentCategory === 'all' ? menuData : menuData.filter(i => i.category === currentCategory);
+    menuGrid.innerHTML = filtered.map(item => `
+      <div class="menu-item">
+        <div class="item-emoji">
+  <img src="${item.image}" alt="${item.name}" class="item-image" 
+       onerror="this.src='https://via.placeholder.com/120?text=🍲'" 
+       loading="lazy">
+</div>
+        <div class="item-title">${item.name}</div>
+        <div class="item-kcal">🔥 ${item.kcal} ккал</div>
+        <div class="item-bottom">
+          <span class="price">${item.price} ₽</span>
+          <button class="add-btn" data-id="${item.id}">+</button>
+        </div>
+      </div>
+    `).join('');
+    document.querySelectorAll('.add-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        addToCart(parseInt(btn.dataset.id, 10));
+      });
+    });
+  }
+
+  function addToCart(id) {
+    const item = menuData.find(m => m.id === id);
+    if (!item) return;
+    const existing = cart.find(c => c.id === id);
+    existing ? existing.quantity++ : cart.push({...item, quantity: 1});
+    updateCartUI();
+  }
+
+  function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    updateCartUI();
+    renderCartModalContent();
+  }
+
+  function updateCartUI() {
+    const totalItems = cart.reduce((s, i) => s + i.quantity, 0);
+    const totalPrice = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    const totalKcal = cart.reduce((s, i) => s + i.kcal * i.quantity, 0);
+    cartCountEl.textContent = totalItems;
+    totalPriceEl.textContent = totalPrice;
+    totalKcalEl.textContent = totalKcal;
+    document.querySelector('.cart-badge').style.display = totalItems === 0 ? 'none' : 'flex';
+    if (cartModal.classList.contains('active')) {
+      renderCartModalContent();
+    }
+  }
+
+  function renderCartModalContent() {
+    if (cart.length === 0) {
+      cartItemsList.innerHTML = '<p style="text-align:center; color:#8e8e93;">Корзина пуста</p>';
+      modalTotal.textContent = '0';
+      modalKcal.textContent = '0';
+      return;
+    }
+    cartItemsList.innerHTML = cart.map(item => `
+      <div class="cart-item-row">
+        <span>${item.name} x${item.quantity}</span>
+        <span>${item.price * item.quantity} ₽</span>
+        <button class="remove-item-btn" data-remove="${item.id}">✕</button>
+      </div>
+    `).join('');
+    document.querySelectorAll('[data-remove]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        removeFromCart(parseInt(btn.dataset.remove, 10));
+      });
+    });
+    modalTotal.textContent = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    modalKcal.textContent = cart.reduce((s, i) => s + i.kcal * i.quantity, 0);
+  }
+
+  function openCartModal() {
+    renderCartModalContent();
+    cartModal.classList.add('active');
+  }
+
+  function closeCartModal() {
+    cartModal.classList.remove('active');
+  }
+
+  function openCheckoutPopup() {
+    if (cart.length === 0) {
+      showMessage('Добавьте блюда в корзину');
+      return;
+    }
+    popupTotalPrice.textContent = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+    popupTotalKcal.textContent = cart.reduce((s, i) => s + i.kcal * i.quantity, 0);
+    popupPhoneError.style.display = 'none';
+    checkoutPopup.classList.add('active');
+  }
+
+  function closeCheckoutPopup() {
+    checkoutPopup.classList.remove('active');
+  }
+
+  async function processOrderFromPopup() {
+    const phone = document.getElementById('popupPhone').value.trim();
+    if (phone.replace(/\D/g, '').length < 10) {
+      popupPhoneError.style.display = 'block';
+      return;
+    }
+    const district = document.getElementById('popupDistrict').value;
+    const address = document.getElementById('popupAddress').value.trim();
+    if (!address) { showMessage('Укажите адрес'); return; }
+
+    const orderDetails = {
+      items: cart.map(i => ({ name: i.name, quantity: i.quantity, price: i.price })),
+      total: cart.reduce((s, i) => s + i.price*i.quantity, 0),
+      kcal: cart.reduce((s, i) => s + i.kcal*i.quantity, 0),
+      address: `${district}, ${address}`,
+      phone: phone,
+      date: new Date().toLocaleString('ru-RU'),
+    };
+    try {
+      await sendOrderToManager(orderDetails);
+      cart = [];
+      updateCartUI();
+      closeCheckoutPopup();
+      showMessage('✅ Заказ отправлен менеджеру!');
+    } catch (e) {
+      showMessage('Ошибка отправки. Попробуйте позже.');
+    }
+  }
+
+  document.getElementById('cartIcon').addEventListener('click', openCartModal);
+  document.getElementById('closeCartModalBtn').addEventListener('click', closeCartModal);
+  cartModal.addEventListener('click', (e) => { if (e.target === cartModal) closeCartModal(); });
+  document.getElementById('checkoutBtn').addEventListener('click', openCheckoutPopup);
+  document.getElementById('confirmOrderBtn').addEventListener('click', processOrderFromPopup);
+  checkoutPopup.addEventListener('click', (e) => { if (e.target === checkoutPopup) closeCheckoutPopup(); });
+
+  document.querySelectorAll('.category-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('.category-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      currentCategory = chip.dataset.category;
+      renderMenu();
+    });
+  });
+
+  renderMenu();
+  updateCartUI();
+  document.querySelector('.cart-badge').style.display = 'none';
+})();
+</script>
+</body>
 </html>
